@@ -1,0 +1,10 @@
+node_modules/.cache
+build.tar
+test
+build
+public/data
+public/summary*
+public/def/old
+public/def/jnk
+public/simplified
+

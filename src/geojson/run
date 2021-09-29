@@ -1,0 +1,7 @@
+###./create.pl  -f world500Kb.json -f world3Mb.json -f world20Mb.json -c Norway Sweden Denmark Finland -o custom_world.js
+
+#
+./json2geojson.pl  -o metarea.js -f ../../public/simplified/Metarea19*.json
+./json2geojson.pl  -o banker.js -f ../../public/simplified/Fiskebank_*.json
+#
+###./json2geojson.pl  -o test.json -f ../../public/simplified/Metarea19_A1.json

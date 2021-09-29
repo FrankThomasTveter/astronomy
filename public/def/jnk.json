@@ -1,0 +1,3 @@
+    "monitoring":[{"color":"LightSalmon", "range": [82800000,null]}, 
+		  {"color":"Lime",        "range": [null,    10800000]}, 
+		  {"color":"Yellow",      "range": [null,    null]}],

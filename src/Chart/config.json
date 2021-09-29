@@ -1,0 +1,210 @@
+{
+    "center": [10, 60],
+    "geojsonObject": {
+        "type": "FeatureCollection",
+        "features": [
+            {
+		"type": "Feature",
+		"properties": {
+		    "kind": "county",
+		    "name": "Wyandotte",
+		    "state": "KS"
+		},
+		"geometry": {
+		    "type": "MultiPolygon",
+		    "coordinates": [
+			[
+			    [
+				[-94.8627, 39.202],
+				[-94.901, 39.202],
+				[-94.9065, 38.9884],
+				[-94.8682, 39.0596],
+				[-94.6053, 39.0432],
+				[-94.6053, 39.1144],
+				[-94.5998, 39.1582],
+				[-94.7422, 39.1691],
+				[-94.7751, 39.202],
+				[-94.8627, 39.202]
+			    ]
+			]
+		    ]
+		}
+            }
+        ]
+    },
+    "geojsonObject2": {
+        "type": "FeatureCollection",
+        "features": [
+            {
+		"type": "Feature",
+		"properties": {
+		    "kind": "county",
+		    "name": "Johnson",
+		    "state": "KS"
+		},
+		"geometry": {
+		    "type": "MultiPolygon",
+		    "coordinates": [
+			[
+			    [
+				[-94.9065, 38.9884],
+				[-95.0544, 38.9829],
+				[-95.0544, 38.7365],
+				[-94.9668, 38.7365],
+				[-94.6108, 38.7365],
+				[-94.6108, 38.846],
+				[-94.6053, 39.0432],
+				[-94.8682, 39.0596],
+				[-94.9065, 38.9884]
+			    ]
+			]
+		    ]
+		}
+            }
+        ]
+    },
+    "geojsonObject3": {
+	"type":"FeatureCollection",
+	"features":[
+	    {"type": "Feature",
+	     "geometry": {"type": "Point", "coordinates": [10.75, 59.916667]},
+	     "properties": {"city": "oslo", "country": "no", "region": "12",
+			    "geopoint": [59.916667, 10.75],
+			    "longitude": 10.75, "latitude": 59.916667,
+			    "accentcity": "Oslo", "population": 808690}},
+	    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [8.0, 58.166667]}, "properties": {"city": "kristiansand", "country": "no", "region": "19", "geopoint": [58.166667, 8.0], "longitude": 8.0, "latitude": 58.166667, "accentcity": "Kristiansand", "population": 63784}},
+	    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [10.211667, 59.7425]}, "properties": {"city": "drammen", "country": "no", "region": "04", "geopoint": [59.7425, 10.211667], "longitude": 10.211667, "latitude": 59.7425, "accentcity": "Drammen", "population": 90692}},
+	    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [7.75, 63.116667]}, "properties": {"city": "kristiansund", "country": "no", "region": "08", "geopoint": [63.116667, 7.75], "longitude": 7.75, "latitude": 63.116667, "accentcity": "Kristiansund", "population": 16904}},
+	    {"type": "Feature", "geometry": {"type": "Point", "coordinates": [9.65, 59.65]}, "properties": {"city": "kongsberg", "country": "no", "region": "04", "geopoint": [59.65, 9.65], "longitude": 9.65, "latitude": 59.65, "accentcity": "Kongsberg", "population": 17849}}
+	]
+    },
+    "kansasCityLonLat": [-94.579228, 39.135386],
+    "blueSpringsLonLat": [-94.279851, 39.03412],
+    "markerImage24" : "https://cdn2.iconfinder.com/data/icons/social-media-and-payment/64/-47-24.png",
+    "markerImage32" : "https://cdn2.iconfinder.com/data/icons/social-media-and-payment/64/-47-32.png",
+    "markerImage64" : "https://cdn2.iconfinder.com/data/icons/social-media-and-payment/64/-47-64.png",
+    "predefinedStyles" : {
+	"icons": {
+	    "symbol": {
+		"symbolType": "image",
+		"src": "data/icon.png",
+		"size": [18, 28],
+		"color": "lightyellow",
+		"rotateWithView": false,
+		"offset": [0, 9]
+	    }
+	},
+	"triangles": {
+	    "symbol": {
+		"symbolType": "triangle",
+		"size": 18,
+		"color": [
+		    "interpolate",
+		    ["linear"],
+		    ["get", "population"],
+		    20000,
+		    "#5aca5b",
+		    300000,
+		    "#ff6a19" ],
+		"rotateWithView": true
+	    }
+	},
+	"triangles-latitude": {
+	    "symbol": {
+		"symbolType": "triangle",
+		"size": [
+		    "interpolate",
+		    ["linear"],
+		    ["get", "population"],
+		    40000,
+		    12,
+		    2000000,
+		    24 ],
+		"color": [
+		    "interpolate",
+		    ["linear"],
+		    ["get", "latitude"],
+		    -60,
+		    "#ff14c3",
+		    -20,
+		    "#ff621d",
+		    20,
+		    "#ffed02",
+		    60,
+		    "#00ff67" ],
+		"offset": [0, 0],
+		"opacity": 0.95
+	    }
+	},
+	"circles": {
+	    "symbol": {
+		"symbolType": "circle",
+		"size": [
+		    "interpolate",
+		    ["linear"],
+		    ["get", "population"],
+		    40000,
+		    8,
+		    2000000,
+		    28 ],
+		"color": "#006688",
+		"rotateWithView": false,
+		"offset": [0, 0],
+		"opacity": [
+		    "interpolate",
+		    ["linear"],
+		    ["get", "population"],
+		    40000,
+		    0.6,
+		    2000000,
+		    0.92 ]
+	    }
+	},
+	"circles-zoom": {
+	    "symbol": {
+		"symbolType": "circle",
+		"size": ["interpolate", ["exponential", 2.5], ["zoom"], 2, 1, 14, 32],
+		"color": "#240572",
+		"offset": [0, 0],
+		"opacity": 0.95
+	    }
+	},
+	"rotating-bars": {
+	    "probability":0.1,
+	    "symbol": {
+		"symbolType": "square",
+		"rotation": ["*", ["time"], 0.1],
+		"size": [
+		    "array",
+		    5,
+		    [
+			"interpolate",
+			["linear"],
+			["get", "population"],
+			20000,
+			10,
+			600000,
+			80 ] ],
+		"color": [
+		    "interpolate",
+		    ["linear"],
+		    ["get", "population"],
+		    20000,
+		    "#ff0000",
+		    600000,
+		    "#ffd700" ],
+		"offset": [
+		    "array",
+		    0,
+		    [
+			"interpolate",
+			["linear"],
+			["get", "population"],
+			20000,
+			2,
+			300000,
+			14 ] ]
+	    }
+	}
+    }
+}

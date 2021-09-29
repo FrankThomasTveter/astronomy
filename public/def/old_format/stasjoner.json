@@ -1,0 +1,79 @@
+{
+    "thrs":{
+	"Phenomenon":{
+	    "Vindkast":{"Method":{"mb0":{"key":"max", ">": [0,2,10,25] },
+				  "p50":{"key":"max", ">": [0,2,10,25] },
+				  "p65":{"key":"max", ">": [0,10,25] },
+				   "p100":{"key":"max", ">": [0,25] }}},
+	    "Styrtregn":{"Duration":{ "1t" :{"key":"max", ">": [0,15,20] },
+                                "3t" :{"key":"max", ">": [0,25,30] }}},
+	    "Regn":{"Method":{"mb0":{"key":"max", ">": [0,5,10,25] },
+			               "p50":{"key":"max", ">": [0,5,10,25] },
+			               "p65":{"key":"max", ">": [0,10,25] },
+                           "p100":{"key":"max", ">": [0,25] }}}
+	}
+    },
+    "default":{"thrs":{"lat":"maxlat","lon":"maxlon","unit":"Unit","key":"yrp"}},
+    "summaries":["summary_stasjoner"],
+    "fragments":[".*G[234]"],
+    "colors":{
+	"background":["rgb(36,230,36)","rgb(0,109,219)","rgb(73,0,146)","rgb(146,0,0)"],
+	"foreground":["black","white","white","white"]
+    },
+    "keys":{
+    "other":[
+	"Phenomenon","date","dtg","Partner","Type","Region","Place","Station","Airport","Duration",
+	"Model","Method","Issued","Output","ILS_direction","Unit"
+    ],
+	"trash":["cnt","lat","lon",
+		 "max","maxlat","maxlon",
+		 "min","minlat","minlon",
+		 "epoch","level","value",
+		 "Unit","a1600","a1000",
+		 "a400","a100","f70","gust","yrp","rr","DMC",
+             "f90","f95","f98","lead","day","rrmax"
+		],
+	"select":{"val":{},"where":{},"cnt":{},"range":{}}
+    },
+    "order":{
+	"Duration":["1t","3t","6t","12t","24t"],
+	"Output":["1t","3t","6t","12t","24t"],
+	"Method":["mb0","p50","p65","p100"],
+	"Phenomenon":["Middelvind","Vindkast","Styrtregn","Regn","Vannstand","Fire Index","Skogbrann","Ising på skip","Polart lavtrykk","Polare lavtrykk","Turbulens"],
+    "Station":["Viker","Oscarsborg","Oslo","Helgeroa","Tregde","Stavanger","Bergen","Måløy","Ålesund","Kristiansund","Heimsjø",
+    "Trondheim","Rørvik","Bodø","Narvik","Kabelvåg","Andenes","Harstad","Tromsø","Hammerfest","Honningsvåg","Vardø","Ny Ålesund","Ny-Ålesund"],
+    "Region":["Innlandet","Viken Øst","Oslo","Viken Vest","Vestfold og telemark","Agder","Rogaland","Vestland","Møre og romsdal","Trøndelag",
+    "Nordland","Troms og Finnmark","Indre Skagerrak","Ytre Skagerrak","Fisker","Fladen","Utsira Sør","Utsira Nord",
+    "Viking","Aust-Tampen","Storegga","Frøyabanken","Haltenbanken","Storegga-Haltenbanken-0m","Sklinnabanken","Trænabanken",
+    "Ytre Vestfjorden","Røstbanken","Vesterålsbankene","Bankene u Troms","Tromsøflaket","Hjelmsøybanken","Nordkappbanken","Nordbanken",
+    "Kildinbanken","Amundsenbassenget","Dype Wandelhav","Gakkelryggen","Nansenbassenget","Bankene i Wandelhavet","Nordlige Belgica bank",
+    "Lenadypet","Yermakplataet","Litkedypet","Bankene nord for Svalbard","A1","A2","A3","A4","A5","B1","B2","B3","B4","B5","C2","C3","C4",
+    "C5","D2","D3","Dype D4","E2","E3","Dype E4","F2","F3"],
+    "Airport":["Førde","Sandane","Ørsta-Volda","Værnes","Brønnøysund","Mosjøen","Sandnessjøen","Mo i Rana",
+    "Harstad-Narvik","Svolvær","Leknes","Bardufoss","Tromsø","Hasvik","Hammerfest","Honningsvåg","Mehamn","Svalbard"],
+    "Aerodrome":["ENBL","ENSD","ENOV","ENVA","ENBN","ENMS","ENST","ENRA","ENEV","ENSH","ENLK","ENDU","ENTC","ENHK",
+    "ENHF","ENHV","ENMH","ENSB"]
+    },
+    "priority":["dtg","date","Unit","Type","Model","Partner","Output","Duration",
+		"Phenomenon","Airport","Station","Place","Region","Method","Issued"],
+    "state":{"viewMode":0,"cellMode":0,"layoutMode":0,"tooltip":0},
+    "home":{"path":[],"val":{"Partner":[]}},
+    "tooltip":{"keys":["Phenomenon","Region","Duration","Airport","alarm_key","alarm_val","Model","Method","dtg","lat","lon","gust","rr"],
+	       "select":["Phenomenon","Duration"],
+	       "sort":["Duration","Phenomenon","Region"],
+               "click":["Phenomenon","Region","Duration","Output","Airport","dtg"]
+	      },
+    "polygons":{"dir":"simplified/","seperator":"_","keys":["Type","Region","Request"]},
+    "custom":{},
+    "visible":["Reload","Undo","Redo","Mode","ViewPath","Tooltip"],
+    "svg":{"key":"Phenomenon","svgs":{
+
+"Vindkast":"<svg width=\"Size\" height=\"Size\" fill=\"none\"><path fill=\"#fff\" fill-rule=\"evenodd\" d=\"M31.556 28.24a1.5 1.5 0 0 1-1.302 2.245H1.7A1.5 1.5 0 0 1 .398 28.24L14.675 3.256a1.5 1.5 0 0 1 2.604 0l14.277 24.985z\" clip-rule=\"evenodd\"/><path fill=\"bg\" fill-rule=\"evenodd\" d=\"M30.277 30a1 1 0 0 0 .868-1.496L16.868 3.519a1 1 0 0 0-1.736 0L.855 28.504A1 1 0 0 0 1.723 30h28.554z\" clip-rule=\"evenodd\"/><path fill=\"#908715\" fill-rule=\"evenodd\" d=\"M31.277 29a1 1 0 0 0-.132-.496L16.868 3.519a1 1 0 0 0-1.736 0L.855 28.504A1 1 0 0 0 1.723 30h28.554a1 1 0 0 0 1-1zM16.434 3.767l14.277 24.985a.501.501 0 0 1-.434.748H1.723a.5.5 0 0 1-.434-.748L15.566 3.767a.5.5 0 0 1 .868 0z\" clip-rule=\"evenodd\"/><path fill=\"fg\" fill-rule=\"evenodd\" d=\"M16 16a1 1 0 0 0-1 1h-1a2 2 0 1 1 2 2v-1a1 1 0 1 0 0-2zm2 10a1 1 0 0 1-1-1h-1a2 2 0 1 0 2-2v1a1 1 0 1 1 0 2zm2.5-7.5a1 1 0 0 0-1 1h-1a2 2 0 1 1 2 2v-1a1 1 0 1 0 0-2z\" clip-rule=\"evenodd\"/><path fill=\"fg\" d=\"M9 18h7v1H9zm0 2.5h11.5v1H9zM9 23h9v1H9z\"/></svg>",
+
+"Regn":"<svg width=\"Size\" height=\"Size\" fill=\"none\"><path fill=\"#fff\" fill-rule=\"evenodd\" d=\"M31.556 28.24a1.5 1.5 0 0 1-1.302 2.245H1.7A1.5 1.5 0 0 1 .398 28.24L14.675 3.256a1.5 1.5 0 0 1 2.604 0l14.277 24.985z\" clip-rule=\"evenodd\"/><path fill=\"bg\" fill-rule=\"evenodd\" d=\"M30.277 30a1 1 0 0 0 .868-1.496L16.868 3.519a1 1 0 0 0-1.736 0L.855 28.504A1 1 0 0 0 1.723 30h28.554z\" clip-rule=\"evenodd\"/><path fill=\"#908715\" fill-rule=\"evenodd\" d=\"M31.277 29a1 1 0 0 0-.132-.496L16.868 3.519a1 1 0 0 0-1.736 0L.855 28.504A1 1 0 0 0 1.723 30h28.554a1 1 0 0 0 1-1zM16.434 3.767l14.277 24.985a.5.5 0 0 1-.434.748H1.723a.5.5 0 0 1-.434-.748L15.566 3.767a.5.5 0 0 1 .868 0z\" clip-rule=\"evenodd\"/><path fill=\"fg\" d=\"M16 15c-3.314 0-6 2.955-6 6.6h12c0-3.645-2.686-6.6-6-6.6z\"/><path stroke=\"fg\" d=\"M16 21v4.619a1 1 0 0 0 .31.724v0a1 1 0 0 0 1.38 0l.31-.295\"/></svg>",
+
+
+"Styrtregn":"<svg width=\"Size\" height=\"Size\" fill=\"none\"><path fill=\"#fff\" fill-rule=\"evenodd\" d=\"M31.556 28.24a1.5 1.5 0 0 1-1.302 2.245H1.7A1.5 1.5 0 0 1 .398 28.24L14.675 3.256a1.5 1.5 0 0 1 2.604 0l14.277 24.985z\" clip-rule=\"evenodd\"/><path fill=\"bg\" fill-rule=\"evenodd\" d=\"M30.277 30a1 1 0 0 0 .868-1.496L16.868 3.519a1 1 0 0 0-1.736 0L.855 28.504A1 1 0 0 0 1.723 30h28.554z\" clip-rule=\"evenodd\"/><path fill=\"#908715\" fill-rule=\"evenodd\" d=\"M31.277 29a1 1 0 0 0-.132-.496L16.868 3.519a1 1 0 0 0-1.736 0L.855 28.504A1 1 0 0 0 1.723 30h28.554a1 1 0 0 0 1-1zM16.434 3.767l14.277 24.985a.501.501 0 0 1-.434.748H1.723a.5.5 0 0 1-.434-.748L15.566 3.767a.5.5 0 0 1 .868 0z\" clip-rule=\"evenodd\"/><path fill=\"fg\" fill-rule=\"evenodd\" d=\"M11.583 23.32L10.586 27h1.036l.997-3.68h-1.036zm2.667 0L13.253 27h1.036l.997-3.68H14.25zm2.666 0L15.92 27h1.037l.996-3.68h-1.036zm2.667 0L18.586 27h1.036l.997-3.68h-1.036z\" clip-rule=\"evenodd\"/><path fill=\"fg\" d=\"M21.137 17.421l-.201-.098-.078-.298A3.898 3.898 0 0 0 17.065 14a3.805 3.805 0 0 0-3.189 1.745l-.197.291h-.5a1.63 1.63 0 0 0-1.397.757l-.163.256h-.303c-.626.04-1.213.32-1.64.78A2.606 2.606 0 0 0 9 19.41v.14a2.572 2.572 0 0 0 .652 1.78 2.514 2.514 0 0 0 1.629.803h8.948a2.327 2.327 0 0 0 1.652-.734c.143-.158.272-.33.384-.511.096-.198.174-.405.233-.617a2.52 2.52 0 0 0 .07-.594 2.445 2.445 0 0 0-1.432-2.257z\"/></svg>"
+
+}}
+}

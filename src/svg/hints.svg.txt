@@ -1,0 +1,39 @@
+##
+## HOW TO CHANGE THE (SVG) ICONS
+##
+## 1. Edit the svg-file with inkscape:
+
+ inkscape Middelvind.svg
+
+## 2. Save file as "PLAIN SVG":
+
+Click: File->Save As->"Plain SVG(*.svg)"->SAVE
+
+## 3. Create defaults.json input:
+
+./extract.pl Middelvind.svg
+
+## 4. paste result into defaults.json
+{
+...
+"svg":{ "key":{...}, "svgs":{<insert here>} },
+...
+}
+
+##
+## Technical notes on inkscape
+##
+
+inkscape:
+    Fit the document size to the picture size:
+    Menu File->Document Properties. In the Custom size panel, open Resize page to content, then click Resize page to drawing or selection.
+    
+    Remove unused DEF's:
+    File->Vacuum Defs.
+    
+    Optimize SVG':
+    File -> Save as... -> Optimized SVG. Tick "Enable viewboxing in the save dialog. This operation will do several things, in particular, insert correct viewBox, width and height attributes.
+    
+    Remove non-standard SVG/Inkscape XML:
+    File -> Save as... -> plain SVG (Since this operation will remove layers and other Inkscape specific information, keep a copy of the old file if necessary). As of Jan 2014, this can trigger a display error as shown in Using Inkscape for web animation. Reopen the saved file and the blackness may be gone ....
+

@@ -1,0 +1,8 @@
+
+ogr2ogr -f CSV ArnaVassdrag.csv Nedborsfelter_Vassdrag/ArnaVassdrag_Nedborsfelt.shp -lco GEOMETRY=AS_WKT -t_srs WGS84
+ogr2ogr -f CSV NestunVasdrag.csv Nedborsfelter_Vassdrag/NestunVasdrag_Nedborsfelt.shp -lco GEOMETRY=AS_WKT -t_srs WGS84
+ogr2ogr -f CSV Starefossen.csv Nedborsfelter_Vassdrag/Starefossen_nedborsfelt.shp -lco GEOMETRY=AS_WKT -t_srs WGS84
+
+./extract.pl ArnaVassdrag.csv ArnaVassdrag.xml ArnaVassdrag.asc
+./extract.pl NestunVasdrag.csv NestunVasdrag.xml NestunVasdrag.asc
+./extract.pl Starefossen.csv Starefossen.xml Starefossen.asc

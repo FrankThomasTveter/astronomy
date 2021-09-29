@@ -1,0 +1,6 @@
+--2020-11-10 09:52:10--  https://api.met.no/weatherapi/locationforecast/1.9/?lat=23.10
+Resolving api.met.no (api.met.no)... 157.249.177.128
+Connecting to api.met.no (api.met.no)|157.249.177.128|:443... connected.
+HTTP request sent, awaiting response... 400 Bad Request
+2020-11-10 09:52:10 ERROR 400: Bad Request.
+
