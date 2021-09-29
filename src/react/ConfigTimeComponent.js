@@ -33,8 +33,9 @@ class ConfigTime extends Component {
 	} else if (visible !== undefined) {
 	    var cls={button:classes.button};
  	    this.onClick = event => {console.log("Launch time...");};
+	    var style={background:"black"};
 	    return (<div className={classes.tableFile}>
-		    <Button
+		    <Button  style={style}
                     className={classes.button}
                     onClick={this.onClick}
 	            title={"Show Time Config"}
