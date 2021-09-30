@@ -16,6 +16,7 @@ import Colors from '../lib/ColorsLib';
 import File from '../lib/FileLib';
 import Database from '../lib/DatabaseLib';
 import Default from '../lib/DefaultLib';
+import Astro from '../lib/AstroLib';
 import Html from '../lib/HtmlLib';
 import Layout from '../lib/LayoutLib';
 import Custom from '../lib/CustomLib';
@@ -141,6 +142,7 @@ class App extends Component {
 	super(props);
 	this.state={
 	    Default:   new Default()   ,
+	    Astro:     new Astro()   ,
 	    Colors:    new Colors()    ,
 	    Layout:    new Layout()    ,
 	    Path:      new Path()      ,
@@ -183,21 +185,13 @@ class App extends Component {
     componentDidMount() {
 	var state=this.state;
 	state.Default.init(state);
-        state.Colors.init(state);
-        state.Path.init(state);
-        state.Layout.init(state);
-        state.Threshold.init(state);
-        state.Custom.init(state);
+	state.Astro.init(state);
         state.Settings.init(state);
-	state.Default.loadSetupFile(state,"",
-				  [state.Default.processSetupFile,
-				   state.Default.storeInitState,
-				   state.Default.loadUrl,
-				   state.Default.mergeState,
+	state.Default.loadUrl(state,"",
+				  [state.Default.mergeState,
 				   state.Default.checkState,
 				   state.Default.storeHomeState,
-				   state.Database.loadSummary,
-				   state.Database.updateLoop]
+				   state.Astro.updateLoop]
 				 );
     };
     componentWillUnmount() {
