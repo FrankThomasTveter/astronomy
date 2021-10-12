@@ -8,12 +8,7 @@ import Popup from 'react-popup';
 import './react-popup.css';
 
 const styles = theme => ({
-    file: {
-	display: 'inline-block',
-        marginRight: 'auto',
-	height:'100%',
-    },
-    tableFile: {
+    buttonWrapper: {
 	display: 'inline-block',
         marginRight: 'auto',
     },
@@ -32,11 +27,16 @@ class ConfigTime extends Component {
 	    return null;
 	} else if (visible !== undefined) {
 	    var cls={button:classes.button};
- 	    this.onClick = event => {console.log("Launch time...");};
-	    var style={background:"black"};
-	    return (<div className={classes.tableFile}>
-		    <Button  style={style}
-                    className={classes.button}
+ 	    this.onClick = event => {state.Astro.toggle(state,"time");};
+	    var classname;
+	    if (state.Astro.show(state,"time")) {
+		classname=classes.button;
+	    } else {
+		classname=classes.buttonInvisible;
+	    };
+	    return (<div className={classes.buttonWrapper}>
+		    <Button
+                    className={classname}
                     onClick={this.onClick}
 	            title={"Show Time Config"}
 		    >

@@ -96,6 +96,38 @@ function Show() {
 	    console.log("No react-config available.");
 	}
     };
+    this.showTime=function(state) {
+	state.Utils.pushUrl(state);
+	if (state.React.Time !== undefined) {
+	    state.React.Time.show(state); // forceUpdate()
+	} else {
+	    console.log("No react-time available.");
+	}
+    };
+    this.showLocation=function(state) {
+	state.Utils.pushUrl(state);
+	if (state.React.Location !== undefined) {
+	    state.React.Location.show(state); // forceUpdate()
+	} else {
+	    console.log("No react-location available.");
+	}
+    };
+    this.showCriteria=function(state) {
+	state.Utils.pushUrl(state);
+	if (state.React.Criteria !== undefined) {
+	    state.React.Criteria.show(state); // forceUpdate()
+	} else {
+	    console.log("No react-criterie available.");
+	}
+    };
+    this.showEvents=function(state) {
+	state.Utils.pushUrl(state);
+	if (state.React.Events !== undefined) {
+	    state.React.Events.show(state); // forceUpdate()
+	} else {
+	    console.log("No react-events available.");
+	}
+    };
     this.showMatrix=function(state,matrix) {
 	state.Utils.pushUrl(state);
 	if (state.React.Dataset !== undefined) {
@@ -119,29 +151,13 @@ function Show() {
 	    state.React.Chart.showMap(state,force);
 	}
     };
-    this.showDataset=function(state,matrix,force) {
+    this.showDataset=function(state,force) {
 	state.Utils.pushUrl(state);
-	//console.log("Showing table...");
-	if (matrix !== undefined) {
-	    //console.log("Defining matrix...");
-	    state.React.matrix=matrix;
-	};
-
-	//console.log("ShowTable:",state.Layout.state.layoutMode,state.Layout.modes.layout.Globe);
-
-	if (state.Layout.state.layoutMode === state.Layout.modes.layout.Chart) {
-	    if (state.React.Chart !== undefined) {
-		state.React.Chart.showMap(state,force);
-	    }
-	} else if (state.Layout.state.layoutMode === state.Layout.modes.layout.Globe) {
-	    if (state.React.Globe !== undefined) {
-		state.React.Globe.showMap(state,force);
-	    }
-	} else {
-	    if (state.React.Table !== undefined) {
-		state.React.Table.showTable(state);
-	    }
-	}
+	this.showConfig(state);
+	this.showTime(state);
+	this.showLocation(state);
+	this.showCriteria(state);
+	this.showEvents(state);
 	//console.log("Showing table done...");
     };
     this.showPolygons=function(state) {

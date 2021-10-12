@@ -4,7 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import ReactGlobe from '../globe/ReactGlobe';
 
-import Tooltip from './TooltipDataComponent'
+//import Tooltip from './TooltipDataComponent'
 import MapInfo from './MapInfoComponent'
 import markerRenderer from './markerRenderer';
 
@@ -45,7 +45,8 @@ function MapGlobe(props) {
 	    var el=marker.element;
 	    var vals=state.Matrix.getVals(el);
 	    var data={keys:el.keys,vals:vals,id:marker.id};
-	    return <Tooltip state={marker.state} data={data} update={update}/>;
+	    //return <Tooltip state={marker.state} data={data} update={update}/>;
+	    return null;
 	}
     }
     function updateLoop(props) {

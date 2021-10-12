@@ -3,7 +3,7 @@ import {withStyles} from "@material-ui/core";
 import PropTypes from  "prop-types";
 import Draggable from 'react-draggable'; // Both at the same time
 
-//console.log("Inside Location.")
+//console.log("Inside Events.")
 
 const styles = theme => ({
     block:{},
@@ -12,11 +12,11 @@ const styles = theme => ({
 });
 //        maxWidth: theme.spacing.getMaxWidth.maxWidth,
 
-class Location extends Component {
+class Events extends Component {
     constructor(props) {
 	super(props);
         const {state} = props;
-	state.React.Location=this;
+	state.React.Events=this;
 	this.show=this.show.bind(this);
     };
     show(state) {
@@ -24,30 +24,30 @@ class Location extends Component {
     };
     render() {
         const { classes, state, layout } = this.props;
-	var cls={location:classes.location,
+	var cls={events:classes.events,
 		 content:classes.content,
 		 button:classes.button,
 		 buttonDisabled:classes.buttonDisabled};
 	var visible;
-	if (state.Astro.show(state,"location")) {
+	if (state.Astro.show(state,"events")) {
 	    visible="visible";
 	} else {
 	    visible="hidden";
 	};
         return (
-		<Draggable key="location">
-		   <div className={classes.block} style={{visibility:visible}}>
-		      LOCATION
-	           </div>
+		<Draggable key="events">
+		    <div  className={classes.block} style={{visibility:visible}}>
+			EVENTS
+		    </div>
 		</Draggable>
         );
-    };
+    }
 }
 // disabled={false}
 
 
-Location.propTypes = {
+Events.propTypes = {
     classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(Location);
+export default withStyles(styles)(Events);

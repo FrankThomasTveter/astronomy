@@ -1,4 +1,5 @@
 import React, { Component} from 'react';
+import Dataset  from   './DatasetComponent';
 import {MuiThemeProvider, withStyles} from '@material-ui/core/styles';
 import createTheme from '../mui/createTheme'
 import {black_palette, teal_palette} from '../mui/metMuiThemes'
@@ -6,9 +7,8 @@ import PropTypes from "prop-types";
 import { Notifications } from 'react-push-notification';
 import Popup from 'react-popup';
 
-import Header  from "./HeaderComponent";
-import Dataset from "./DatasetComponent";
-import Footer  from "./FooterComponent";
+import Header   from    "./HeaderComponent";
+import Footer   from    "./FooterComponent";
 import BackGroundImage from "../images/waves.png";
 //import {BrowserRouter, Switch, Route} from 'react-router-dom';
 
@@ -113,14 +113,6 @@ const styles = theme => ({
 	bottom:0,
 	//border:  '1px solid green',	
     },
-    block : {
-	padding: '10px',
-	borderRadius: '5px',
-	borderColor: teal_palette.main,
-	display:"inline-block",
-	backgroundColor:black_palette.main,
-	color: "white",
-    },
     button: {
 	backgroundColor:black_palette.main,
 	color:'white',
@@ -220,17 +212,14 @@ class App extends Component {
         const { classes } = this.props;
 	const state       = this.state;
 	var hcls={header:classes.header};
-	var dcls={dataset:classes.dataset,
-		  content:classes.content,
-		  block:classes.block,
-		  button:classes.button,
-		  buttonDisabled:classes.buttonDisabled};
+	var dcls={dataset:classes.dataset,content:classes.content,button:classes.button,buttonInvisible:classes.buttonInvisible,buttonDisabled:classes.buttonDisabled};
 	var fcls={footer:classes.footer};
         return (<div className={classes.root}>
                   <MuiThemeProvider theme={createTheme(teal_palette, black_palette)}>
-                            <Header   state={state} classes={hcls}/>
-                            <Dataset  state={state} classes={dcls} layout={layout}/>
-                            <Footer   state={state} classes={fcls}/>
+                            <Header  state={state} classes={hcls}/>
+                            <Dataset state={state} classes={dcls}
+		                                   layout={layout}/>
+                            <Footer  state={state} classes={fcls}/>
                         </MuiThemeProvider>
                 </div>
         );

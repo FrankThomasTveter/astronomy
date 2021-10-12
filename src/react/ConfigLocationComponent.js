@@ -8,12 +8,7 @@ import Popup from 'react-popup';
 import './react-popup.css';
 
 const styles = theme => ({
-    file: {
-	display: 'inline-block',
-        marginRight: 'auto',
-	height:'100%',
-    },
-    tableFile: {
+    buttonWrapper: {
 	display: 'inline-block',
         marginRight: 'auto',
     },
@@ -32,10 +27,16 @@ class ConfigLocation extends Component {
 	    return null;
 	} else if (visible !== undefined) {
 	    var cls={button:classes.button};
- 	    this.onClick = event => {console.log("Launch location...");};
-	    return (<div className={classes.tableFile}>
+ 	    this.onClick = event => {state.Astro.toggle(state,"location");};
+	    var classname;
+	    if (state.Astro.show(state,"location")) {
+		classname=classes.button;
+	    } else {
+		classname=classes.buttonInvisible;
+	    };
+	    return (<div className={classes.buttonWrapper}>
 		    <Button
-                    className={classes.button}
+                    className={classname}
                     onClick={this.onClick}
 	            title={"Show Location Config"}
 		    >

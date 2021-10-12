@@ -3,7 +3,7 @@ import {withStyles} from "@material-ui/core";
 import PropTypes from  "prop-types";
 import Draggable from 'react-draggable'; // Both at the same time
 
-//console.log("Inside Location.")
+//console.log("Inside Criteria.")
 
 const styles = theme => ({
     block:{},
@@ -11,12 +11,11 @@ const styles = theme => ({
     buttonDisabled:{},
 });
 //        maxWidth: theme.spacing.getMaxWidth.maxWidth,
-
-class Location extends Component {
+class Criteria extends Component {
     constructor(props) {
 	super(props);
         const {state} = props;
-	state.React.Location=this;
+	state.React.Criteria=this;
 	this.show=this.show.bind(this);
     };
     show(state) {
@@ -24,21 +23,21 @@ class Location extends Component {
     };
     render() {
         const { classes, state, layout } = this.props;
-	var cls={location:classes.location,
+	var cls={criteria:classes.criteria,
 		 content:classes.content,
 		 button:classes.button,
 		 buttonDisabled:classes.buttonDisabled};
 	var visible;
-	if (state.Astro.show(state,"location")) {
+	if (state.Astro.show(state,"criteria")) {
 	    visible="visible";
 	} else {
 	    visible="hidden";
 	};
         return (
-		<Draggable key="location">
+		<Draggable key="criteria">
 		   <div className={classes.block} style={{visibility:visible}}>
-		      LOCATION
-	           </div>
+		      CRITERIA
+	           </div> 
 		</Draggable>
         );
     };
@@ -46,8 +45,8 @@ class Location extends Component {
 // disabled={false}
 
 
-Location.propTypes = {
+Criteria.propTypes = {
     classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(Location);
+export default withStyles(styles)(Criteria);

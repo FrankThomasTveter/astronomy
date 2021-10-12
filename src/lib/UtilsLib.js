@@ -620,7 +620,7 @@ function Utils() {
 	    throw new Error("ERROR: MapForce with no src.");
 	} else if (trg===undefined) {
 	    throw new Error("ERROR: MapForce with no trg.");
-	} else if (map===undefined) {
+	} else if (map===undefined) { // check whole structure
 	    let keys=Object.keys(src);
 	    let lenk=keys.length;
 	    if (this.bdeb) {console.log("   keys:",JSON.stringify(keys));};
@@ -630,8 +630,8 @@ function Utils() {
 		if (typeof src[key]==="object" && // next level
 		    src[key] !== null &&
 		    !Array.isArray(src[key])) {
-		    if (trg[key]===undefined) {trg[key]={};};
-		    if (this.bdeb) {console.log("Object cp:",key,JSON.stringify(trg),JSON.stringify(src[key]));}
+		    if (trg[key] === undefined) {trg[key]={};};
+		    if (this.bdeb) {console.log("Object key:",key," src:",src[key]," trg:",trg[key]);}
 		    this.copyMap(state,type,src[key],trg[key]);
 		} else if ( Array.isArray(src[key]) && (type===this.type.fill && trg[key]===undefined)) {
 		    if (this.bdeb) {console.log("Fill array cp:",key,JSON.stringify(src[key]));}

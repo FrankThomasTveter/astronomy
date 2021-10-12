@@ -8,6 +8,84 @@
 function Astro() {
     this.bdeb=false;
     this.rawData = [];
+    //
+    this.start_dt=undefined;
+    this.start_tm=undefined;
+    this.end_p=undefined;
+    this.end_m=undefined;
+    this.end_dt=undefined;
+    this.lat=0.0;
+    this.lng=0.0;
+    this.updateCheck=false;
+    this.cost=0;
+    this.previousCheck=false;
+    this.nectChecktrue=false;
+    //
+    this.visible={time:true,location:true,criteria:true,events:true};
+    // 
+    this.sunRiseCheck=false;
+    this.sunSetCheck=false;
+    this.sunEleMaxCheck=false;
+    this.sunEleMinCheck=false;
+    this.civilCheck=false;
+    this.nauticalCheck=false;
+    this.astronomicalCheck=false;
+    this.nightCheck=false;
+    this.polarDayStartCheck=false;
+    this.polarDayStopCheck=false;
+    this.polarNightStartCheck=false;
+    this.polarNightStopCheck=false;
+    this.sunEclipseCheck=false;
+    this.moonRiseCheck=false;
+    this.moonSetCheck=false;
+    this.moonEleMaxCheck=false;
+    this.moonEleMinCheck=false;
+    // this.lunarDayStartCheck=false;
+    // this.lunarDayStopCheck=false;
+    // this.lunarNightStartCheck=false;
+    // this.lunarNightStopCheck=false;
+    this.MoonNewCheck=false;
+    this.MoonFirstQuartCheck=false;
+    this.MoonFullCheck=false;
+    this.MoonLastQuartCheck=false;
+    this.MoonIllMinCheck=false;
+    this.MoonIllMaxCheck=false;
+    this.SouthLunasticeCheck=false;
+    this.AscLunarEquinoxCheck=false;
+    this.NorthLunasticeCheck=false;
+    this.DescLunarEquinoxCheck=false;
+    this.MoonPerigeeCheck=false;
+    this.MoonApogeeCheck=false;
+    this.LunarEclipseMinMaxCheck=false;
+    this.SouthSolsticeCheck=false;
+    this.AscSolarEquinoxCheck=false;
+    this.NorthSolsticeCheck=false;
+    this.DescSolarEquinoxCheck=false;
+    this.EarthPerihelionCheck=false;
+    this.EarthAphelionCheck=false;
+    this.MercInfConjCheck=false;
+    this.MercSupConjCheck=false;
+    this.MercWestElongCheck=false;
+    this.MercEastElongCheck=false;
+    this.VenusInfConjCheck=false;
+    this.VenusSupConjCheck=false;
+    this.VenusWestElongCheck=false;
+    this.VenusEastElongCheck=false;
+    this.MarsConjCheck=false;
+    this.MarsWestQuadCheck=false;
+    this.MarsOppCheck=false;
+    this.MarsEastQuadCheck=false;
+    this.JupiterConjCheck=false;
+    this.JupiterWestQuadCheck=false;
+    this.JupiterOppCheck=false;
+    this.JupiterEastQuadCheck=false;
+    this.SaturnConjCheck=false;
+    this.SaturnWestQuadCheck=false;
+    this.SaturnOppCheck=false;
+    this.SaturnEastQuadCheck=false;
+    this.MercTransitCheck=false;
+    this.VenusTransitCheck=false;
+    //
     this.targetSet=false;
     this.targetTime=0;
     this.targetId=undefined;
@@ -27,16 +105,25 @@ function Astro() {
     this.lastTime=new Date().getTime();
     this.lastCnt=0;
     this.dtime=1;
-    this.documentLog = document.getElementById("log");
-    this.documentPos = document.getElementById("pos");
+    this.documentLog = this.log;
+    this.documentPos = this.pos;
     this.initialise=true;
     this.positionIsSet=false;
     this.totalCost=0.00;
     this.window3D=undefined;
     this.map=undefined; //Will contain map object.
-    this.marker; ////Has the user plotted their location marker? 
+    this.marker=undefined; //Has the user plotted their location marker? 
 
-
+    this.show=function(state,type) {
+	if (this.visible[type] === undefined) { this.visible[type]=false;}
+	return this.visible[type];
+    }.bind(this);
+    this.toggle=function(state,type) {
+	if (this.visible[type] === undefined) { this.visible[type]=false;}
+	this.visible[type]=! this.visible[type];
+	state.Show.showDataset(state,true);
+	return this.visible[type];
+    }.bind(this);
     this.init=function(state){
 	//state.Utils.init("Database",this);
     };
@@ -44,76 +131,76 @@ function Astro() {
 	// read cookies
 	var masterCookie=this.getCookie("cookieCheck");
 	if ( masterCookie === "t") {
-	    document.getElementById("updateCheck").checked =(this.getCookie("updateCheck") == "t");
-	    document.getElementById("previousCheck").checked = (this.getCookie("previousCheck") == "t");
-	    document.getElementById("nextCheck").checked = (this.getCookie("nextCheck") == "t");
-	    document.getElementById("sunRiseCheck").checked = (this.getCookie("sunRiseCheck") == "t");
-	    document.getElementById("sunSetCheck").checked = (this.getCookie("sunSetCheck") == "t");
-	    document.getElementById("sunEleMaxCheck").checked = (this.getCookie("sunEleMaxCheck") == "t");
-	    document.getElementById("sunEleMinCheck").checked = (this.getCookie("sunEleMinCheck") == "t");
-	    document.getElementById("civilCheck").checked = (this.getCookie("civilCheck") == "t");
-	    document.getElementById("nauticalCheck").checked = (this.getCookie("nauticalCheck") == "t");
-	    document.getElementById("astronomicalCheck").checked = (this.getCookie("astronomicalCheck") == "t");
-	    document.getElementById("nightCheck").checked = (this.getCookie("nightCheck") == "t");
-	    document.getElementById("polarDayStartCheck").checked = (this.getCookie("polarDayStartCheck") == "t");
-	    document.getElementById("polarDayStopCheck").checked = (this.getCookie("polarDayStopCheck") == "t");
-	    document.getElementById("polarNightStartCheck").checked = (this.getCookie("polarNightStartCheck") == "t");
-	    document.getElementById("polarNightStopCheck").checked = (this.getCookie("polarNightStopCheck") == "t");
-	    document.getElementById("sunEclipseCheck").checked = (this.getCookie("sunEclipseCheck") == "t");
-	    document.getElementById("moonRiseCheck").checked = (this.getCookie("moonRiseCheck") == "t");
-	    document.getElementById("moonSetCheck").checked = (this.getCookie("moonSetCheck") == "t");
-	    document.getElementById("moonEleMaxCheck").checked = (this.getCookie("moonEleMaxCheck") == "t");
-	    document.getElementById("moonEleMinCheck").checked = (this.getCookie("moonEleMinCheck") == "t");
-	    // document.getElementById("lunarDayStartCheck").checked = (this.getCookie("lunarDayStartCheck") == "t");
-	    // document.getElementById("lunarDayStopCheck").checked = (this.getCookie("lunarDayStopCheck") == "t");
-	    // document.getElementById("lunarNightStartCheck").checked = (this.getCookie("lunarNightStartCheck") == "t");
-	    // document.getElementById("lunarNightStopCheck").checked = (this.getCookie("lunarNightStopCheck") == "t");
-	    document.getElementById("MoonNewCheck").checked = (this.getCookie("MoonNewCheck") == "t");
-	    document.getElementById("MoonFirstQuartCheck").checked = (this.getCookie("MoonFirstQuartCheck") == "t");
-	    document.getElementById("MoonFullCheck").checked = (this.getCookie("MoonFullCheck") == "t");
-	    document.getElementById("MoonLastQuartCheck").checked = (this.getCookie("MoonLastQuartCheck") == "t");
-	    document.getElementById("MoonIllMinCheck").checked = (this.getCookie("MoonIllMinCheck") == "t");
-	    document.getElementById("MoonIllMaxCheck").checked = (this.getCookie("MoonIllMaxCheck") == "t");
-	    document.getElementById("SouthLunasticeCheck").checked = (this.getCookie("SouthLunasticeCheck") == "t");
-	    document.getElementById("AscLunarEquinoxCheck").checked = (this.getCookie("AscLunarEquinoxCheck") == "t");
-	    document.getElementById("NorthLunasticeCheck").checked = (this.getCookie("NorthLunasticeCheck") == "t");
-	    document.getElementById("DescLunarEquinoxCheck").checked = (this.getCookie("DescLunarEquinoxCheck") == "t");
-	    document.getElementById("MoonPerigeeCheck").checked = (this.getCookie("MoonPerigeeCheck") == "t");
-	    document.getElementById("MoonApogeeCheck").checked = (this.getCookie("MoonApogeeCheck") == "t");
-	    document.getElementById("LunarEclipseMinMaxCheck").checked = (this.getCookie("LunarEclipseMinMaxCheck") == "t");
-	    document.getElementById("SouthSolsticeCheck").checked = (this.getCookie("SouthSolsticeCheck") == "t");
-	    document.getElementById("AscSolarEquinoxCheck").checked = (this.getCookie("AscSolarEquinoxCheck") == "t");
-	    document.getElementById("NorthSolsticeCheck").checked = (this.getCookie("NorthSolsticeCheck") == "t");
-	    document.getElementById("DescSolarEquinoxCheck").checked = (this.getCookie("DescSolarEquinoxCheck") == "t");
-	    document.getElementById("EarthPerihelionCheck").checked = (this.getCookie("EarthPerihelionCheck") == "t");
-	    document.getElementById("EarthAphelionCheck").checked = (this.getCookie("EarthAphelionCheck") == "t");
-	    document.getElementById("MercTransitCheck").checked = (this.getCookie("MercTransitCheck") == "t");
-	    document.getElementById("VenusTransitCheck").checked = (this.getCookie("VenusTransitCheck") == "t");
-	    document.getElementById("MercInfConjCheck").checked = (this.getCookie("MercInfConjCheck") == "t");
-	    document.getElementById("MercSupConjCheck").checked = (this.getCookie("MercSupConjCheck") == "t");
-	    document.getElementById("MercWestElongCheck").checked = (this.getCookie("MercWestElongCheck") == "t");
-	    document.getElementById("MercEastElongCheck").checked = (this.getCookie("MercEastElongCheck") == "t");
-	    document.getElementById("VenusInfConjCheck").checked = (this.getCookie("VenusInfConjCheck") == "t");
-	    document.getElementById("VenusSupConjCheck").checked = (this.getCookie("VenusSupConjCheck") == "t");
-	    document.getElementById("VenusWestElongCheck").checked = (this.getCookie("VenusWestElongCheck") == "t");
-	    document.getElementById("VenusEastElongCheck").checked = (this.getCookie("VenusEastElongCheck") == "t");
-	    document.getElementById("MarsConjCheck").checked = (this.getCookie("MarsConjCheck") == "t");
-	    document.getElementById("MarsWestQuadCheck").checked = (this.getCookie("MarsWestQuadCheck") == "t");
-	    document.getElementById("MarsOppCheck").checked = (this.getCookie("MarsOppCheck") == "t");
-	    document.getElementById("MarsEastQuadCheck").checked = (this.getCookie("MarsEastQuadCheck") == "t");
-	    document.getElementById("JupiterConjCheck").checked = (this.getCookie("JupiterConjCheck") == "t");
-	    document.getElementById("JupiterWestQuadCheck").checked = (this.getCookie("JupiterWestQuadCheck") == "t");
-	    document.getElementById("JupiterOppCheck").checked = (this.getCookie("JupiterOppCheck") == "t");
-	    document.getElementById("JupiterEastQuadCheck").checked = (this.getCookie("JupiterEastQuadCheck") == "t");
-	    document.getElementById("SaturnConjCheck").checked = (this.getCookie("SaturnConjCheck") == "t");
-	    document.getElementById("SaturnWestQuadCheck").checked = (this.getCookie("SaturnWestQuadCheck") == "t");
-	    document.getElementById("SaturnOppCheck").checked = (this.getCookie("SaturnOppCheck") == "t");
-	    document.getElementById("SaturnEastQuadCheck").checked = (this.getCookie("SaturnEastQuadCheck") == "t");
+	    this.updateCheck =(this.getCookie("updateCheck") === "t");
+	    this.previousCheck = (this.getCookie("previousCheck") === "t");
+	    this.nextCheck = (this.getCookie("nextCheck") === "t");
+	    this.sunRiseCheck = (this.getCookie("sunRiseCheck") === "t");
+	    this.sunSetCheck = (this.getCookie("sunSetCheck") === "t");
+	    this.sunEleMaxCheck = (this.getCookie("sunEleMaxCheck") === "t");
+	    this.sunEleMinCheck = (this.getCookie("sunEleMinCheck") === "t");
+	    this.civilCheck = (this.getCookie("civilCheck") === "t");
+	    this.nauticalCheck = (this.getCookie("nauticalCheck") === "t");
+	    this.astronomicalCheck = (this.getCookie("astronomicalCheck") === "t");
+	    this.nightCheck = (this.getCookie("nightCheck") === "t");
+	    this.polarDayStartCheck = (this.getCookie("polarDayStartCheck") === "t");
+	    this.polarDayStopCheck = (this.getCookie("polarDayStopCheck") === "t");
+	    this.polarNightStartCheck = (this.getCookie("polarNightStartCheck") === "t");
+	    this.polarNightStopCheck = (this.getCookie("polarNightStopCheck") === "t");
+	    this.sunEclipseCheck = (this.getCookie("sunEclipseCheck") === "t");
+	    this.moonRiseCheck = (this.getCookie("moonRiseCheck") === "t");
+	    this.moonSetCheck = (this.getCookie("moonSetCheck") === "t");
+	    this.moonEleMaxCheck = (this.getCookie("moonEleMaxCheck") === "t");
+	    this.moonEleMinCheck = (this.getCookie("moonEleMinCheck") === "t");
+	    // this.lunarDayStartCheck = (this.getCookie("lunarDayStartCheck") === "t");
+	    // this.lunarDayStopCheck = (this.getCookie("lunarDayStopCheck") === "t");
+	    // this.lunarNightStartCheck = (this.getCookie("lunarNightStartCheck") === "t");
+	    // this.lunarNightStopCheck = (this.getCookie("lunarNightStopCheck") === "t");
+	    this.MoonNewCheck = (this.getCookie("MoonNewCheck") === "t");
+	    this.MoonFirstQuartCheck = (this.getCookie("MoonFirstQuartCheck") === "t");
+	    this.MoonFullCheck = (this.getCookie("MoonFullCheck") === "t");
+	    this.MoonLastQuartCheck = (this.getCookie("MoonLastQuartCheck") === "t");
+	    this.MoonIllMinCheck = (this.getCookie("MoonIllMinCheck") === "t");
+	    this.MoonIllMaxCheck = (this.getCookie("MoonIllMaxCheck") === "t");
+	    this.SouthLunasticeCheck = (this.getCookie("SouthLunasticeCheck") === "t");
+	    this.AscLunarEquinoxCheck = (this.getCookie("AscLunarEquinoxCheck") === "t");
+	    this.NorthLunasticeCheck = (this.getCookie("NorthLunasticeCheck") === "t");
+	    this.DescLunarEquinoxCheck = (this.getCookie("DescLunarEquinoxCheck") === "t");
+	    this.MoonPerigeeCheck = (this.getCookie("MoonPerigeeCheck") === "t");
+	    this.MoonApogeeCheck = (this.getCookie("MoonApogeeCheck") === "t");
+	    this.LunarEclipseMinMaxCheck = (this.getCookie("LunarEclipseMinMaxCheck") === "t");
+	    this.SouthSolsticeCheck = (this.getCookie("SouthSolsticeCheck") === "t");
+	    this.AscSolarEquinoxCheck = (this.getCookie("AscSolarEquinoxCheck") === "t");
+	    this.NorthSolsticeCheck = (this.getCookie("NorthSolsticeCheck") === "t");
+	    this.DescSolarEquinoxCheck = (this.getCookie("DescSolarEquinoxCheck") === "t");
+	    this.EarthPerihelionCheck = (this.getCookie("EarthPerihelionCheck") === "t");
+	    this.EarthAphelionCheck = (this.getCookie("EarthAphelionCheck") === "t");
+	    this.MercTransitCheck = (this.getCookie("MercTransitCheck") === "t");
+	    this.VenusTransitCheck = (this.getCookie("VenusTransitCheck") === "t");
+	    this.MercInfConjCheck = (this.getCookie("MercInfConjCheck") === "t");
+	    this.MercSupConjCheck = (this.getCookie("MercSupConjCheck") === "t");
+	    this.MercWestElongCheck = (this.getCookie("MercWestElongCheck") === "t");
+	    this.MercEastElongCheck = (this.getCookie("MercEastElongCheck") === "t");
+	    this.VenusInfConjCheck = (this.getCookie("VenusInfConjCheck") === "t");
+	    this.VenusSupConjCheck = (this.getCookie("VenusSupConjCheck") === "t");
+	    this.VenusWestElongCheck = (this.getCookie("VenusWestElongCheck") === "t");
+	    this.VenusEastElongCheck = (this.getCookie("VenusEastElongCheck") === "t");
+	    this.MarsConjCheck = (this.getCookie("MarsConjCheck") === "t");
+	    this.MarsWestQuadCheck = (this.getCookie("MarsWestQuadCheck") === "t");
+	    this.MarsOppCheck = (this.getCookie("MarsOppCheck") === "t");
+	    this.MarsEastQuadCheck = (this.getCookie("MarsEastQuadCheck") === "t");
+	    this.JupiterConjCheck = (this.getCookie("JupiterConjCheck") === "t");
+	    this.JupiterWestQuadCheck = (this.getCookie("JupiterWestQuadCheck") === "t");
+	    this.JupiterOppCheck = (this.getCookie("JupiterOppCheck") === "t");
+	    this.JupiterEastQuadCheck = (this.getCookie("JupiterEastQuadCheck") === "t");
+	    this.SaturnConjCheck = (this.getCookie("SaturnConjCheck") === "t");
+	    this.SaturnWestQuadCheck = (this.getCookie("SaturnWestQuadCheck") === "t");
+	    this.SaturnOppCheck = (this.getCookie("SaturnOppCheck") === "t");
+	    this.SaturnEastQuadCheck = (this.getCookie("SaturnEastQuadCheck") === "t");
 	    var lat=this.getCookie("latitudeCheck");
 	    var lng=this.getCookie("longitudeCheck");
 	    if (lat !== "" && lng !== "") {
-		document.getElementById("lat").value=lat;
-		document.getElementById("lng").value=lng;
+		this.lat=lat;
+		this.lng=lng;
 		this.positionIsSet=true;
 	    }
 	    this.updateCost(0);
@@ -145,11 +232,11 @@ function Astro() {
 	var dtg=new Date(target - tzoffset).toISOString();
 	var d=dtg.substring(0,10);
 	var t=dtg.substring(11,19);
-	document.getElementById("start_dt").value=d;
-	document.getElementById("start_tm").value=t;
+	this.start_dt=d;
+	this.start_tm=t;
     };
     this.drawData=function (documentTable, id) {
-	if (this.rawData[id]==undefined) {
+	if (this.rawData[id] === undefined) {
 	    documentTable.innerHTML="<em>No data available.</em>";
 	} else {
 	    var d=new Date();
@@ -157,13 +244,13 @@ function Astro() {
 	    var cellCnt=4;
 	    var reportCnt=0;
 	    var documentReportCnt=documentTable.rows.length;
-	    this.rawData[id].clean(undefined);
+	    this.clean(this.rawData[id],undefined);
 	    var dataReportsCnt=this.rawData[id].length;
-	    if (dataReportsCnt != documentReportCnt) {
+	    if (dataReportsCnt !== documentReportCnt) {
 		//console.log("Must redraw."+dataReportsCnt+" "+documentReportCnt);
 		this.drawAll=true;
 	    };
-	    if (this.drawAll && documentReportCnt==0) {
+	    if (this.drawAll && documentReportCnt === 0) {
 		documentTable.innerHTML="";
 	    };
 	    for (var jj=0; jj< dataReportsCnt;jj++) {
@@ -187,8 +274,8 @@ function Astro() {
  		    documentCells[0].innerHTML="<button class=\"delete\" onclick=\"deleteRow("+
 			id+","+reportCnt+")\">X</button>";
 		    documentCells[1].innerHTML="<button class=\"hot\" onclick=\"setTarget("+
-			(t*1)+","+(repid)+")\">"+t.nice()+"</button>";
-		    //console.log("drawing button:"+t.nice());
+			(t*1)+","+(repid)+")\">"+this.nice(t)+"</button>";
+		    //console.log("drawing button:"+this.nice(t));
 		}
 		var dt=t-tnow;
 		if (this.targetSet) {dt=t-this.targetTime;}
@@ -215,7 +302,7 @@ function Astro() {
 		    }
 		}
 	    }
-	    if (this.drawAll && reportCnt==0) {
+	    if (this.drawAll && reportCnt === 0) {
 		documentTable.innerHTML="<em>No data available.</em>";
 	    }
 	    if (this.drawAll) {
@@ -233,7 +320,7 @@ function Astro() {
     }
     this.setTarget=function(tt,id) {
 	//console.log("Setting target to:"+tt+" "+this.targetSet);
-	if (this.targetSet && tt==this.targetTime) {
+	if (this.targetSet && tt === this.targetTime) {
 	    this.targetSet=false;
 	    this.targetId=undefined;
 	} else {
@@ -271,10 +358,10 @@ function Astro() {
 	} else {
 	    s="0";
 	}
-	if (dd != 0) s=s+" "+this.numberWithCommas(dd)+"d";
-	if (hh != 0) s=s+" "+hh+"h";
-	if (mm != 0) s=s+" "+mm+"m";
-	if (ss != 0) s=s+" "+ss+"s";
+	if (dd !== 0) s=s+" "+this.numberWithCommas(dd)+"d";
+	if (hh !== 0) s=s+" "+hh+"h";
+	if (mm !== 0) s=s+" "+mm+"m";
+	if (ss !== 0) s=s+" "+ss+"s";
 	return s;
     }
 
@@ -293,7 +380,7 @@ function Astro() {
     }
     this.addDataToArray=function(data,status,id,documentLog) {
 	//console.log("adding data to array.");
-	if (this.rawData[id] != undefined) {
+	if (this.rawData[id] !== undefined) {
 	    this.dataToArray(data,status,id+1,documentLog);
 	    this.dataMerge(id,id+1);
 	} else {
@@ -301,7 +388,7 @@ function Astro() {
 	}
     }
     this.dataMerge=function(id1,id2) {
-	this.rawData[id1]=this.rawData[id1].concat(this.rawData[id2]).unique().sort(function(a, b){return a[0]-b[0]});
+	this.rawData[id1]=this.unique(this.rawData[id1].concat(this.rawData[id2])).sort(function(a, b){return a[0]-b[0]});
     }
     this.clearArray=function() {
 	this.rawData = [];
@@ -309,11 +396,11 @@ function Astro() {
     }
     this.dataToArray=function(data,status,id,documentLog) {
 	this.lastCnt=1;
-	if (status == "success") {
+	if (status === "success") {
 	    var d=new Date();
 	    var tnow=d.getTime();
 	    //console.log("Adding data to array-id="+id);
-	    if (this.rawData[id]==undefined) {
+	    if (this.rawData[id] === undefined) {
 		this.rawData[id]=[];
 	    }
 	    var cnt=0;
@@ -340,7 +427,7 @@ function Astro() {
 		for (var jj = 0; jj < reports.length; jj++) {
 		    var report=reports[jj];
 		    var error=report.getAttribute("error");
-		    if (error == null) {
+		    if (error === null) {
 			var reportDtg=report.getAttribute("time");
 			var t=new Date(reportDtg);
 			var localDtg=t.getTime();
@@ -372,7 +459,7 @@ function Astro() {
     }
 
     this.request=function() {
-	this.clean             = function () {var obj=Object.keys(this);for (var ii=0; ii<obj.length;ii++) 
+	this.wipe             = function () {var obj=Object.keys(this);for (var ii=0; ii<obj.length;ii++) 
 					      {if (! obj[ii].match(/^event/g) && ! obj[ii].match(/^debug/g)) {delete this[obj[ii]];}}}
 	this.addDebug          = function(id,val) {this["debug"]=1;};
 	this.addSearch         = function(id,val) {this["event"+id+"Search"]=val;};
@@ -476,9 +563,9 @@ function Astro() {
     }
 
     this.getSortTime=function(localDtg,eventId,reportId) {
-	if (eventId == 640 ) { // civil twilight start
+	if (eventId === 640 ) { // civil twilight start
 	    return localDtg+1;
-	} else if (eventId == 650) {
+	} else if (eventId === 650) {
 	    return localDtg-1;
 	} else {
 	    return localDtg;
@@ -488,69 +575,69 @@ function Astro() {
     //Function called to initialize / create the map.
     //This is called when the page has loaded.
     this.initMap=function() {
-	//console.log("Initialising map.");
-	//The center location of our map.
-	var lat= +(document.getElementById("lat").value);
-	var lng= +(document.getElementById("lng").value);
-	var centerOfMap = new google.maps.LatLng(lat,lng);
+	// //console.log("Initialising map.");
+	// //The center location of our map.
+	// var lat= +(this.lat);
+	// var lng= +(this.lng);
+	// var centerOfMap = new google.maps.LatLng(lat,lng);
 	
-	//Map options.
-	var options = {
-	    mapTypeId: google.maps.MapTypeId.ROADMAP,
-	    mapTypeControl: false,
-	    disableDoubleClickZoom: true,
-	    zoomControlOptions: true,
-	    streetViewControl: false,
-	    center: centerOfMap, //Set center.
-	    zoom: 3 //The zoom value.
-	};
+	// //Map options.
+	// var options = {
+	//     mapTypeId: google.maps.MapTypeId.ROADMAP,
+	//     mapTypeControl: false,
+	//     disableDoubleClickZoom: true,
+	//     zoomControlOptions: true,
+	//     streetViewControl: false,
+	//     center: centerOfMap, //Set center.
+	//     zoom: 3 //The zoom value.
+	// };
 
-	//Create the map object.
-	this.map = new google.maps.Map(document.getElementById('map'), options);
-	this.map.setCenter(centerOfMap);
+	// //Create the map object.
+	// this.map = new google.maps.Map(document.getElementById('map'), options);
+	// this.map.setCenter(centerOfMap);
 
-	var styleOptions = {name: "Dummy Style"};
-	var MAP_STYLE = [{
-            featureType: "road",
-            elementType: "all",
-            stylers: [{ visibility: "on" }]
-	}];
-	var mapType = new google.maps.StyledMapType(MAP_STYLE, styleOptions);
-	this.map.mapTypes.set("Dummy Style", mapType);
-	this.map.setMapTypeId("Dummy Style");
+	// var styleOptions = {name: "Dummy Style"};
+	// var MAP_STYLE = [{
+        //     featureType: "road",
+        //     elementType: "all",
+        //     stylers: [{ visibility: "on" }]
+	// }];
+	// var mapType = new google.maps.StyledMapType(MAP_STYLE, styleOptions);
+	// this.map.mapTypes.set("Dummy Style", mapType);
+	// this.map.setMapTypeId("Dummy Style");
 
-	var latlng = new google.maps.LatLng(lat,lng);
-	this.marker = new google.maps.marker({
-	    position: latlng,
-	    draggable: true //make it draggable
-	});
-	this.marker.setMap(this.map);
-	google.maps.event.addListener(this.marker, 'dragend', function(event){this.markerLocation();});
+	// var latlng = new google.maps.LatLng(lat,lng);
+	// this.marker = new google.maps.marker({
+	//     position: latlng,
+	//     draggable: true //make it draggable
+	// });
+	// this.marker.setMap(this.map);
+	// google.maps.event.addListener(this.marker, 'dragend', function(event){this.markerLocation();});
 
-	//Listen for any clicks on the map.
-	google.maps.event.addListener(this.map, 'click', function(event) {                
-            //Get the location that the user clicked.
-            var clickedLocation = event.latLng;
-            //If the marker hasn't been added.
-            if(this.marker === undefined){
-		//Create the marker.
-		this.marker = new google.maps.Marker({
-                    position: clickedLocation,
-                    map: this.map,
-                    draggable: true //make it draggable
-		});
-		//Listen for drag events!
-		google.maps.event.addListener(this.marker, 'dragend', function(event){
-                    this.markerLocation();
-		});
-            } else{
-		//Marker has already been added, so just change its location.
-		this.marker.setPosition(clickedLocation);
-            }
-            //Get the marker's location.
-            this.markerLocation();
-	});
-	//console.log("Initialised map.");
+	// //Listen for any clicks on the map.
+	// google.maps.event.addListener(this.map, 'click', function(event) {                
+        //     //Get the location that the user clicked.
+        //     var clickedLocation = event.latLng;
+        //     //If the marker hasn't been added.
+        //     if(this.marker === undefined){
+	// 	//Create the marker.
+	// 	this.marker = new google.maps.Marker({
+        //             position: clickedLocation,
+        //             map: this.map,
+        //             draggable: true //make it draggable
+	// 	});
+	// 	//Listen for drag events!
+	// 	google.maps.event.addListener(this.marker, 'dragend', function(event){
+        //             this.markerLocation();
+	// 	});
+        //     } else{
+	// 	//Marker has already been added, so just change its location.
+	// 	this.marker.setPosition(clickedLocation);
+        //     }
+        //     //Get the marker's location.
+        //     this.markerLocation();
+	// });
+	// //console.log("Initialised map.");
 	this.mapReady=true;
     }
     
@@ -569,18 +656,18 @@ function Astro() {
     }    
     this.setMapPosition=function() {
 	if (this.mapReady) {
-	    var lat= +(document.getElementById("lat").value);
-	    var lng= +(document.getElementById("lng").value);
-	    if (lat !== undefined && lng !== undefined) {
-		var latlng = new google.maps.LatLng(lat,lng);
-		this.marker.setPosition(latlng);
-		this.map.setCenter(latlng);   
-	    }
+	    // var lat= +(this.lat);
+	    // var lng= +(this.lng);
+	    // if (lat !== undefined && lng !== undefined) {
+	    // 	var latlng = new google.maps.LatLng(lat,lng);
+	    // 	this.marker.setPosition(latlng);
+	    // 	this.map.setCenter(latlng);   
+	    // }
 	}
     }
 
-    //Load the map when the page has finished loading.
-    google.maps.event.addDomListener(window, 'load', this.initMap);
+    // //Load the map when the page has finished loading.
+    // google.maps.event.addDomListener(window, 'load', this.initMap);
     this.setCookie=function(cname, cvalue, exdays) {
 	var d = new Date();
 	d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -592,8 +679,8 @@ function Astro() {
 	var ca = document.cookie.split(';');
 	for(var i=0; i<ca.length; i++) {
             var c = ca[i];
-            while (c.charAt(0)==' ') c = c.substring(1);
-            if (c.indexOf(name) == 0) return c.substring(name.length,c.length);
+            while (c.charAt(0) === ' ') c = c.substring(1);
+            if (c.indexOf(name) === 0) return c.substring(name.length,c.length);
 	}
 	return "";
     } 
@@ -601,7 +688,7 @@ function Astro() {
 	if (this.initialise) {this.init();this.initialise=false;}
 	var d=new Date();
 	var tnow=d.getTime();
-	var updateData = document.getElementById("updateCheck").checked;
+	var updateData = this.updateCheck;
 	// load position + load data
 	if (this.updateData && (tnow-this.lastUpdate) > 10000*this.lastCnt && 
             (tnow-this.targetUpdate) > 10000 && this.lastCnt < 10) {
@@ -631,16 +718,16 @@ function Astro() {
 	    this.lastTime=tnow;
 	}
 	if (! this.targetSet) {
-	    var tnow=Date.now();
+	    tnow=Date.now();
 	    this.setStartDate(tnow);
 	    this.setEndDate(tnow);
 	}
-	var documentTable = document.getElementById("dataTable");
+	var documentTable = this.dataTable;
 	this.drawData(documentTable,1);
-	setTimeout("countdown()",500);
+	setTimeout(this.countdown,500);
     }
     this.updateCost=function(cost) {
-	if (cost == -1) {
+	if (cost === -1) {
 	    this.totalCost=0;  
 	} else {
 	    var oldCost=this.getCookie("costCheck")
@@ -649,8 +736,8 @@ function Astro() {
 	    }
 	    this.totalCost=Math.min(99.99,+this.totalCost + (+cost*0.00345));
 	}
-	$("#cost").fadeIn(1000);
-	document.getElementById("cost").innerHTML="$"+(+this.totalCost).toFixed(2);
+	// $("#cost").fadeIn(1000);
+	this.cost.innerHTML="$"+(+this.totalCost).toFixed(2);
 	this.setCookie("costCheck",this.totalCost,365);
     }
     this.minus=function() {
@@ -674,15 +761,15 @@ function Astro() {
 	var dtg=new Date(target - tzoffset).toISOString();
 	var d=dtg.substring(0,10);
 	var t=dtg.substring(11,19);
-	document.getElementById("start_dt").value=d;
-	document.getElementById("start_tm").value=t;
+	this.start_dt=d;
+	this.start_tm=t;
     }
     this.startfocus=function() {
 	this.targetSet=true;
     }
     this.startblur=function() {
 	this.targetSet=true;
-	var dtg=document.getElementById("start_dt").value+"T"+document.getElementById("start_tm").value+"Z"
+	var dtg=this.start_dt+"T"+this.start_tm+"Z"
 	var tzoffset = (new Date(dtg)).getTimezoneOffset() * 60000; //offset in milliseconds
 	this.targetTime=new Date(dtg).getTime()+tzoffset;
 	this.setEndDate(this.targetTime);
@@ -691,57 +778,59 @@ function Astro() {
 	var tzoffset = (new Date(target)).getTimezoneOffset() * 60000; //offset in milliseconds
 	var dtg=new Date(target - tzoffset + this.dtime*86400000).toISOString();
 	var d=dtg.substring(0,10);
-	document.getElementById("end_dt").value=d;
+	this.end_dt=d;
     }
     this.getData=function() {
 	var d=new Date();
 	var tnow=d.getTime();
 	this.targetUpdate=tnow-1000;
-	var pos = new geoloc(document.getElementById("lat").value, 
-			     document.getElementById("lng").value); 
+	//var pos = new geoloc(this.lat, 
+	//		     this.lng); 
+	var pos = undefined;
 	this.setPositionData(pos);
     }
     this.searchPosition=function() {
-	var string=document.getElementById("search").value;
-	var geocoder = new google.maps.Geocoder();
-	geocoder.geocode(
-	    {"address": string},
-	    function(results, status) {
-		if (status == google.maps.GeocoderStatus.OK) {
-		    var loc=results[0].geometry.location;
-		    var pos = new geoloc(loc.lat(),loc.lng()); 
-		    this.setPosition( pos );
-		}
-	    }
-	);
+	var string=this.search;
+	// var geocoder = new google.maps.Geocoder();
+	// geocoder.geocode(
+	//     {"address": string},
+	//     function(results, status) {
+	// 	if (status === google.maps.GeocoderStatus.OK) {
+	// 	    var loc=results[0].geometry.location;
+	// 	    var pos = new geoloc(loc.lat(),loc.lng()); 
+	// 	    this.setPosition( pos );
+	// 	}
+	//     }
+	// );
     }
     this.getPosition=function() {
-	if (navigator.geolocation) {
-	    //console.log("Getting position.");
-	    navigator.geolocation.getCurrentPosition(this.setPosition);
-	}
+	// if (navigator.geolocation) {
+	//     //console.log("Getting position.");
+	//     navigator.geolocation.getCurrentPosition(this.setPosition);
+	// }
     }
     this.setPosition=function(position) {
-	document.getElementById("lat").value=position.coords.latitude;
-	document.getElementById("lng").value=position.coords.longitude;
+	this.lat=position.coords.latitude;
+	this.lng=position.coords.longitude;
 	this.positionIsSet=true;
-	setMapPosition();
+	this.setMapPosition();
     }
     this.getPositionData=function() {
-	if (navigator.geolocation) {
-	    navigator.geolocation.getCurrentPosition(this.setPositionData);
-	}
+	// if (navigator.geolocation) {
+	//     navigator.geolocation.getCurrentPosition(this.setPositionData);
+	// }
     }
     this.checkEnd=function() {
-	if (!document.getElementById("previousCheck").checked && !document.getElementById("nextCheck").checked) {
-	    document.getElementById("end_p").style.display = "block";
-	    document.getElementById("end_m").style.display = "block";
-	    document.getElementById("end_dt").style.display = "block";
+	// disable end-time...
+	if (!this.previousCheck && !this.nextCheck) {
+	    // this.end_p.style.display = "block";
+	    // this.end_m.style.display = "block";
+	    // this.end_dt.style.display = "block";
 	    //$("#end_m").fadeIn();
 	} else {
-	    document.getElementById("end_p").style.display = "none";
-	    document.getElementById("end_m").style.display = "none";
-	    document.getElementById("end_dt").style.display = "none";
+	    // this.end_p.style.display = "none";
+	    // this.end_m.style.display = "none";
+	    // this.end_dt.style.display = "none";
 	    //$("#end_dt").fadeOut();
 	}
     }
@@ -749,12 +838,12 @@ function Astro() {
 	this.setPosition(position);
 	var d=new Date();
 	var tnow=d.getTime();
-	var newpos=isNewPos(position.coords.latitude,position.coords.longitude);
+	var newpos=this.isNewPos(position.coords.latitude,position.coords.longitude);
 	//console.log("Got position."+this.targetUpdate+"  "+tnow);
 	if (newpos || this.targetUpdate < tnow) {
-	    lastUpdate=tnow+10000; 
+	    this.lastUpdate=tnow+10000; 
 	    //console.log("Updating data.");
-	    var req=new request();
+	    var req=new this.request();
 	    var dt = 86400000.0;
 	    var requestTime=tnow;
 	    var replace=true;
@@ -762,8 +851,8 @@ function Astro() {
 	    if (newpos) {replace=true;};
 	    req.addDebug();
 	    req.addPosition("",position.coords.latitude,position.coords.longitude,0)
-	    if(document.getElementById("previousCheck").checked) {
-		if (document.getElementById("nextCheck").checked) {
+	    if(this.previousCheck) {
+		if (this.nextCheck) {
 		    if (replace) {
 			req.addStartTime("",new Date(requestTime).toISOString());
 			req.addSearch("",0);
@@ -780,7 +869,7 @@ function Astro() {
 			req.addSearch("",-1);
 		    }
 		}
-	    } else if (document.getElementById("nextCheck").checked) {
+	    } else if (this.nextCheck) {
 		if (replace) {
 		    req.addStartTime("",new Date(requestTime).toISOString());
 		    req.addSearch("",1);
@@ -799,91 +888,91 @@ function Astro() {
 		    req.addSearch("",2);
 		}
 	    }
-	    if (addEvents(req)) {
+	    if (this.addEvents(req)) {
 		//console.log(req);
-		documentLog.innerHTML = "<em>Server-request: sent</em>";
+		this.documentLog.innerHTML = "<em>Server-request: sent</em>";
 		console.log("Sending event-request :",req);
 		if (replace) {
-		    $.get("cgi-bin/event.pl",req,function(data, status){dataToArray(data,status,1,documentLog);});
+		    // $.get("cgi-bin/event.pl",req,function(data, status){dataToArray(data,status,1,this.documentLog);});
 		} else {
-		    $.get("cgi-bin/event.pl",req,function(data, status){addDataToArray(data,status,1,documentLog);});
+		    // $.get("cgi-bin/event.pl",req,function(data, status){addDataToArray(data,status,1,this.documentLog);});
 		}
 	    } else {
-		clearArray();
+		this.clearArray();
 	    }
 	}
     }
     this.addEvents=function(req) {
 	this.setCookie("cookieCheck","t",10);
-	if (document.getElementById("updateCheck").checked)         {this.setCookie("updateCheck","t",10);}    else {this.setCookie("updateCheck","f",0);};
-	if (document.getElementById("previousCheck").checked)       {this.setCookie("previousCheck","t",10);}  else {this.setCookie("previousCheck","f",0);};
-	if (document.getElementById("nextCheck").checked)           {this.setCookie("nextCheck","t",10);}      else {this.setCookie("nextCheck","f",0);};
+	if (this.updateCheck)         {this.setCookie("updateCheck","t",10);}    else {this.setCookie("updateCheck","f",0);};
+	if (this.previousCheck)       {this.setCookie("previousCheck","t",10);}  else {this.setCookie("previousCheck","f",0);};
+	if (this.nextCheck)           {this.setCookie("nextCheck","t",10);}      else {this.setCookie("nextCheck","f",0);};
 	var id=1;
-	if(document.getElementById("sunRiseCheck").checked)         {this.setCookie("sunRiseCheck","t",10);req.addSunRise(id++);} else {this.setCookie("sunRiseCheck","f",0)};
-	if(document.getElementById("sunSetCheck").checked)         {this.setCookie("sunSetCheck","t",10);req.addSunSet(id++);} else {this.setCookie("sunSetCheck","f",0)};
-	if(document.getElementById("sunEleMaxCheck").checked)          {this.setCookie("sunEleMaxCheck","t",10);req.addSunEleMax(id++);} else {this.setCookie("sunEleMaxCheck","f",0)};
-	if(document.getElementById("sunEleMinCheck").checked)          {this.setCookie("sunEleMinCheck","t",10);req.addSunEleMin(id++);} else {this.setCookie("sunEleMinCheck","f",0)};
-	if(document.getElementById("civilCheck").checked)           {this.setCookie("civilCheck","t",10);req.addTwilightCivilStart(id++);req.addTwilightCivilStop(id++);} else {this.setCookie("civilCheck","f",0)};
-	if(document.getElementById("nauticalCheck").checked)        {this.setCookie("nauticalCheck","t",10);req.addTwilightNauticalStart(id++);req.addTwilightNauticalStop(id++);} else {this.setCookie("nauticalCheck","f",0)};
-	if(document.getElementById("astronomicalCheck").checked)    {this.setCookie("astronomicalCheck","t",10);req.addTwilightAstronomicalStart(id++);req.addTwilightAstronomicalStop(id++);} else {this.setCookie("astronomicalCheck","f",0)};
-	if(document.getElementById("nightCheck").checked)           {this.setCookie("nightCheck","t",10);req.addNightStart(id++);req.addNightStop(id++);} else {this.setCookie("nightCheck","f",0)};
-	if(document.getElementById("polarDayStartCheck").checked)        {this.setCookie("polarDayStartCheck","t",10);req.addPolarSunDayStart(id++);} else {this.setCookie("polarDayStartCheck","f",0)};
-	if(document.getElementById("polarDayStopCheck").checked)        {this.setCookie("polarDayStopCheck","t",10);req.addPolarSunDayStop(id++);} else {this.setCookie("polarDayStopCheck","f",0)};
-	if(document.getElementById("polarNightStartCheck").checked)      {this.setCookie("polarNightStartCheck","t",10);req.addPolarSunNightStart(id++);} else {this.setCookie("polarNightStartCheck","f",0)};
-	if(document.getElementById("polarNightStopCheck").checked)      {this.setCookie("polarNightStopCheck","t",10);req.addPolarSunNightStop(id++);} else {this.setCookie("polarNightStopCheck","f",0)};
-	if(document.getElementById("sunEclipseCheck").checked)      {this.setCookie("sunEclipseCheck","t",10);req.addSunEclipseMinMax(id++,0.1,100);} else {this.setCookie("sunEclipseCheck","f",0)};
-	if(document.getElementById("moonRiseCheck").checked)        {this.setCookie("moonRiseCheck","t",10);req.addMoonRise(id++);} else {this.setCookie("moonRiseCheck","f",0)};
-	if(document.getElementById("moonSetCheck").checked)        {this.setCookie("moonSetCheck","t",10);req.addMoonSet(id++);} else {this.setCookie("moonSetCheck","f",0)};
-	if(document.getElementById("moonEleMaxCheck").checked)         {this.setCookie("moonEleMaxCheck","t",10);req.addMoonEleMax(id++);} else {this.setCookie("moonEleMaxCheck","f",0)};
-	if(document.getElementById("moonEleMinCheck").checked)         {this.setCookie("moonEleMinCheck","t",10);req.addMoonEleMin(id++);} else {this.setCookie("moonEleMinCheck","f",0)};
-	// if(document.getElementById("lunarDayStartCheck").checked)        {this.setCookie("lunarDayStartCheck","t",10);req.addPolarMoonDayStart(id++);} else {this.setCookie("lunarDayStartCheck","f",0)};
-	// if(document.getElementById("lunarDayStopCheck").checked)        {this.setCookie("lunarDayStopCheck","t",10);req.addPolarMoonDayStop(id++);} else {this.setCookie("lunarDayStopCheck","f",0)};
-	// if(document.getElementById("lunarNightStartCheck").checked)      {this.setCookie("lunarNightStartCheck","t",10);req.addPolarMoonNightStart(id++);} else {this.setCookie("lunarNightStartCheck","f",0)};
-	// if(document.getElementById("lunarNightStopCheck").checked)      {this.setCookie("lunarNightStopCheck","t",10);req.addPolarMoonNightStop(id++);} else {this.setCookie("lunarNightStopCheck","f",0)};
-	if(document.getElementById("MoonNewCheck").checked)         {this.setCookie("MoonNewCheck","t",10);req.addMoonNew(id++);} else {this.setCookie("MoonNewCheck","f",0)};
-	if(document.getElementById("MoonFirstQuartCheck").checked)  {this.setCookie("MoonFirstQuartCheck","t",10);req.addMoonFirstQuart(id++);} else {this.setCookie("MoonFirstQuartCheck","f",0)};
-	if(document.getElementById("MoonFullCheck").checked)        {this.setCookie("MoonFullCheck","t",10);req.addMoonFull(id++);} else {this.setCookie("MoonFullCheck","f",0)};
-	if(document.getElementById("MoonLastQuartCheck").checked)   {this.setCookie("MoonLastQuartCheck","t",10);req.addMoonLastQuart(id++);} else {this.setCookie("MoonLastQuartCheck","f",0)};
-	if(document.getElementById("MoonIllMinCheck").checked)      {this.setCookie("MoonIllMinCheck","t",10);req.addMoonIllMin(id++);} else {this.setCookie("MoonIllMinCheck","f",0)};
-	if(document.getElementById("MoonIllMaxCheck").checked)      {this.setCookie("MoonIllMaxCheck","t",10);req.addMoonIllMax(id++);} else {this.setCookie("MoonIllMaxCheck","f",0)};
-	if(document.getElementById("SouthLunasticeCheck").checked)  {this.setCookie("SouthLunasticeCheck","t",10);req.addSouthLunastice(id++);} else {this.setCookie("SouthLunasticeCheck","f",0)};
-	if(document.getElementById("AscLunarEquinoxCheck").checked) {this.setCookie("AscLunarEquinoxCheck","t",10);req.addAscLunarEquinox(id++);} else {this.setCookie("AscLunarEquinoxCheck","f",0)};
-	if(document.getElementById("NorthLunasticeCheck").checked)  {this.setCookie("NorthLunasticeCheck","t",10);req.addNorthLunastice(id++);} else {this.setCookie("NorthLunasticeCheck","f",0)};
-	if(document.getElementById("DescLunarEquinoxCheck").checked) {this.setCookie("DescLunarEquinoxCheck","t",10);req.addDescLunarEquinox(id++);} else {this.setCookie("DescLunarEquinoxCheck","f",0)};
-	if(document.getElementById("MoonPerigeeCheck").checked)     {this.setCookie("MoonPerigeeCheck","t",10);req.addMoonPerigee(id++);} else {this.setCookie("MoonPerigeeCheck","f",0)};
-	if(document.getElementById("MoonApogeeCheck").checked)      {this.setCookie("MoonApogeeCheck","t",10);req.addMoonApogee(id++);} else {this.setCookie("MoonApogeeCheck","f",0)};
-	if(document.getElementById("LunarEclipseMinMaxCheck").checked)      {this.setCookie("LunarEclipseMinMaxCheck","t",10);req.addLunarEclipseMinMax(id++,0.1,100);} else {this.setCookie("LunarEclipseMinMaxCheck","f",0)};
-	if(document.getElementById("SouthSolsticeCheck").checked)  {this.setCookie("SouthSolsticeCheck","t",10);req.addSouthSolstice(id++);} else {this.setCookie("SouthSolsticeCheck","f",0)};
-	if(document.getElementById("AscSolarEquinoxCheck").checked)   {this.setCookie("AscSolarEquinoxCheck","t",10);req.addAscSolarEquinox(id++);} else {this.setCookie("AscSolarEquinoxCheck","f",0)};
-	if(document.getElementById("NorthSolsticeCheck").checked)  {this.setCookie("NorthSolsticeCheck","t",10);req.addNorthSolstice(id++);} else {this.setCookie("NorthSolsticeCheck","f",0)};
-	if(document.getElementById("DescSolarEquinoxCheck").checked) {this.setCookie("DescSolarEquinoxCheck","t",10);req.addDescSolarEquinox(id++);} else {this.setCookie("DescSolarEquinoxCheck","f",0)};
-	if(document.getElementById("EarthPerihelionCheck").checked) {this.setCookie("EarthPerihelionCheck","t",10);req.addEarthPerihelion(id++);} else {this.setCookie("EarthPerihelionCheck","f",0)};
-	if(document.getElementById("EarthAphelionCheck").checked)   {this.setCookie("EarthAphelionCheck","t",10);req.addEarthAphelion(id++);} else {this.setCookie("EarthAphelionCheck","f",0)};
-	if(document.getElementById("MercInfConjCheck").checked)     {this.setCookie("MercInfConjCheck","t",10);req.addMercInfConj(id++);} else {this.setCookie("MercInfConjCheck","f",0)};
-	if(document.getElementById("MercSupConjCheck").checked)     {this.setCookie("MercSupConjCheck","t",10);req.addMercSupConj(id++);} else {this.setCookie("MercSupConjCheck","f",0)};
-	if(document.getElementById("MercWestElongCheck").checked)   {this.setCookie("MercWestElongCheck","t",10);req.addMercWestElong(id++);} else {this.setCookie("MercWestElongCheck","f",0)};
-	if(document.getElementById("MercEastElongCheck").checked)   {this.setCookie("MercEastElongCheck","t",10);req.addMercEastElong(id++);} else {this.setCookie("MercEastElongCheck","f",0)};
-	if(document.getElementById("VenusInfConjCheck").checked)    {this.setCookie("VenusInfConjCheck","t",10);req.addVenusInfConj(id++);} else {this.setCookie("VenusInfConjCheck","f",0)};
-	if(document.getElementById("VenusSupConjCheck").checked)    {this.setCookie("VenusSupConjCheck","t",10);req.addVenusSupConj(id++);} else {this.setCookie("VenusSupConjCheck","f",0)};
-	if(document.getElementById("VenusWestElongCheck").checked)  {this.setCookie("VenusWestElongCheck","t",10);req.addVenusWestElong(id++);} else {this.setCookie("VenusWestElongCheck","f",0)};
-	if(document.getElementById("VenusEastElongCheck").checked)  {this.setCookie("VenusEastElongCheck","t",10);req.addVenusEastElong(id++);} else {this.setCookie("VenusEastElongCheck","f",0)};
-	if(document.getElementById("MarsConjCheck").checked)        {this.setCookie("MarsConjCheck","t",10);req.addMarsConj(id++);} else {this.setCookie("MarsConjCheck","f",0)};
-	if(document.getElementById("MarsWestQuadCheck").checked)    {this.setCookie("MarsWestQuadCheck","t",10);req.addMarsWestQuad(id++);} else {this.setCookie("MarsWestQuadCheck","f",0)};
-	if(document.getElementById("MarsOppCheck").checked)         {this.setCookie("MarsOppCheck","t",10);req.addMarsOpp(id++);} else {this.setCookie("MarsOppCheck","f",0)};
-	if(document.getElementById("MarsEastQuadCheck").checked)    {this.setCookie("MarsEastQuadCheck","t",10);req.addMarsEastQuad(id++);} else {this.setCookie("MarsEastQuadCheck","f",0)};
-	if(document.getElementById("JupiterConjCheck").checked)     {this.setCookie("JupiterConjCheck","t",10);req.addJupiterConj(id++);} else {this.setCookie("JupiterConjCheck","f",0)};
-	if(document.getElementById("JupiterWestQuadCheck").checked) {this.setCookie("JupiterWestQuadCheck","t",10);req.addJupiterWestQuad(id++);} else {this.setCookie("JupiterWestQuadCheck","f",0)};
-	if(document.getElementById("JupiterOppCheck").checked)      {this.setCookie("JupiterOppCheck","t",10);req.addJupiterOpp(id++);} else {this.setCookie("JupiterOppCheck","f",0)};
-	if(document.getElementById("JupiterEastQuadCheck").checked) {this.setCookie("JupiterEastQuadCheck","t",10);req.addJupiterEastQuad(id++);} else {this.setCookie("JupiterEastQuadCheck","f",0)};
-	if(document.getElementById("SaturnConjCheck").checked)      {this.setCookie("SaturnConjCheck","t",10);req.addSaturnConj(id++);} else {this.setCookie("SaturnConjCheck","f",0)};
-	if(document.getElementById("SaturnWestQuadCheck").checked)  {this.setCookie("SaturnWestQuadCheck","t",10);req.addSaturnWestQuad(id++);} else {this.setCookie("SaturnWestQuadCheck","f",0)};
-	if(document.getElementById("SaturnOppCheck").checked)       {this.setCookie("SaturnOppCheck","t",10);req.addSaturnOpp(id++);} else {this.setCookie("SaturnOppCheck","f",0)};
-	if(document.getElementById("SaturnEastQuadCheck").checked)  {this.setCookie("SaturnEastQuadCheck","t",10);req.addSaturnEastQuad(id++);} else {this.setCookie("SaturnEastQuadCheck","f",0)};
-	if(document.getElementById("MercTransitCheck").checked)     {this.setCookie("MercTransitCheck","t",10);req.addMercTransit(id++);} else {this.setCookie("MercTransitCheck","f",0)};
-	if(document.getElementById("VenusTransitCheck").checked)    {this.setCookie("VenusTransitCheck","t",10);req.addVenusTransit(id++);} else {this.setCookie("VenusTransitCheck","f",0)};
-	this.setCookie("latitudeCheck",document.getElementById("lat").value,10)
-	this.setCookie("longitudeCheck",document.getElementById("lng").value,10)
-	req.clean();
+	if(this.sunRiseCheck)         {this.setCookie("sunRiseCheck","t",10);req.addSunRise(id++);} else {this.setCookie("sunRiseCheck","f",0)};
+	if(this.sunSetCheck)         {this.setCookie("sunSetCheck","t",10);req.addSunSet(id++);} else {this.setCookie("sunSetCheck","f",0)};
+	if(this.sunEleMaxCheck)          {this.setCookie("sunEleMaxCheck","t",10);req.addSunEleMax(id++);} else {this.setCookie("sunEleMaxCheck","f",0)};
+	if(this.sunEleMinCheck)          {this.setCookie("sunEleMinCheck","t",10);req.addSunEleMin(id++);} else {this.setCookie("sunEleMinCheck","f",0)};
+	if(this.civilCheck)           {this.setCookie("civilCheck","t",10);req.addTwilightCivilStart(id++);req.addTwilightCivilStop(id++);} else {this.setCookie("civilCheck","f",0)};
+	if(this.nauticalCheck)        {this.setCookie("nauticalCheck","t",10);req.addTwilightNauticalStart(id++);req.addTwilightNauticalStop(id++);} else {this.setCookie("nauticalCheck","f",0)};
+	if(this.astronomicalCheck)    {this.setCookie("astronomicalCheck","t",10);req.addTwilightAstronomicalStart(id++);req.addTwilightAstronomicalStop(id++);} else {this.setCookie("astronomicalCheck","f",0)};
+	if(this.nightCheck)           {this.setCookie("nightCheck","t",10);req.addNightStart(id++);req.addNightStop(id++);} else {this.setCookie("nightCheck","f",0)};
+	if(this.polarDayStartCheck)        {this.setCookie("polarDayStartCheck","t",10);req.addPolarSunDayStart(id++);} else {this.setCookie("polarDayStartCheck","f",0)};
+	if(this.polarDayStopCheck)        {this.setCookie("polarDayStopCheck","t",10);req.addPolarSunDayStop(id++);} else {this.setCookie("polarDayStopCheck","f",0)};
+	if(this.polarNightStartCheck)      {this.setCookie("polarNightStartCheck","t",10);req.addPolarSunNightStart(id++);} else {this.setCookie("polarNightStartCheck","f",0)};
+	if(this.polarNightStopCheck)      {this.setCookie("polarNightStopCheck","t",10);req.addPolarSunNightStop(id++);} else {this.setCookie("polarNightStopCheck","f",0)};
+	if(this.sunEclipseCheck)      {this.setCookie("sunEclipseCheck","t",10);req.addSunEclipseMinMax(id++,0.1,100);} else {this.setCookie("sunEclipseCheck","f",0)};
+	if(this.moonRiseCheck)        {this.setCookie("moonRiseCheck","t",10);req.addMoonRise(id++);} else {this.setCookie("moonRiseCheck","f",0)};
+	if(this.moonSetCheck)        {this.setCookie("moonSetCheck","t",10);req.addMoonSet(id++);} else {this.setCookie("moonSetCheck","f",0)};
+	if(this.moonEleMaxCheck)         {this.setCookie("moonEleMaxCheck","t",10);req.addMoonEleMax(id++);} else {this.setCookie("moonEleMaxCheck","f",0)};
+	if(this.moonEleMinCheck)         {this.setCookie("moonEleMinCheck","t",10);req.addMoonEleMin(id++);} else {this.setCookie("moonEleMinCheck","f",0)};
+	// if(this.lunarDayStartCheck)        {this.setCookie("lunarDayStartCheck","t",10);req.addPolarMoonDayStart(id++);} else {this.setCookie("lunarDayStartCheck","f",0)};
+	// if(this.lunarDayStopCheck)        {this.setCookie("lunarDayStopCheck","t",10);req.addPolarMoonDayStop(id++);} else {this.setCookie("lunarDayStopCheck","f",0)};
+	// if(this.lunarNightStartCheck)      {this.setCookie("lunarNightStartCheck","t",10);req.addPolarMoonNightStart(id++);} else {this.setCookie("lunarNightStartCheck","f",0)};
+	// if(this.lunarNightStopCheck)      {this.setCookie("lunarNightStopCheck","t",10);req.addPolarMoonNightStop(id++);} else {this.setCookie("lunarNightStopCheck","f",0)};
+	if(this.MoonNewCheck)         {this.setCookie("MoonNewCheck","t",10);req.addMoonNew(id++);} else {this.setCookie("MoonNewCheck","f",0)};
+	if(this.MoonFirstQuartCheck)  {this.setCookie("MoonFirstQuartCheck","t",10);req.addMoonFirstQuart(id++);} else {this.setCookie("MoonFirstQuartCheck","f",0)};
+	if(this.MoonFullCheck)        {this.setCookie("MoonFullCheck","t",10);req.addMoonFull(id++);} else {this.setCookie("MoonFullCheck","f",0)};
+	if(this.MoonLastQuartCheck)   {this.setCookie("MoonLastQuartCheck","t",10);req.addMoonLastQuart(id++);} else {this.setCookie("MoonLastQuartCheck","f",0)};
+	if(this.MoonIllMinCheck)      {this.setCookie("MoonIllMinCheck","t",10);req.addMoonIllMin(id++);} else {this.setCookie("MoonIllMinCheck","f",0)};
+	if(this.MoonIllMaxCheck)      {this.setCookie("MoonIllMaxCheck","t",10);req.addMoonIllMax(id++);} else {this.setCookie("MoonIllMaxCheck","f",0)};
+	if(this.SouthLunasticeCheck)  {this.setCookie("SouthLunasticeCheck","t",10);req.addSouthLunastice(id++);} else {this.setCookie("SouthLunasticeCheck","f",0)};
+	if(this.AscLunarEquinoxCheck) {this.setCookie("AscLunarEquinoxCheck","t",10);req.addAscLunarEquinox(id++);} else {this.setCookie("AscLunarEquinoxCheck","f",0)};
+	if(this.NorthLunasticeCheck)  {this.setCookie("NorthLunasticeCheck","t",10);req.addNorthLunastice(id++);} else {this.setCookie("NorthLunasticeCheck","f",0)};
+	if(this.DescLunarEquinoxCheck) {this.setCookie("DescLunarEquinoxCheck","t",10);req.addDescLunarEquinox(id++);} else {this.setCookie("DescLunarEquinoxCheck","f",0)};
+	if(this.MoonPerigeeCheck)     {this.setCookie("MoonPerigeeCheck","t",10);req.addMoonPerigee(id++);} else {this.setCookie("MoonPerigeeCheck","f",0)};
+	if(this.MoonApogeeCheck)      {this.setCookie("MoonApogeeCheck","t",10);req.addMoonApogee(id++);} else {this.setCookie("MoonApogeeCheck","f",0)};
+	if(this.LunarEclipseMinMaxCheck)      {this.setCookie("LunarEclipseMinMaxCheck","t",10);req.addLunarEclipseMinMax(id++,0.1,100);} else {this.setCookie("LunarEclipseMinMaxCheck","f",0)};
+	if(this.SouthSolsticeCheck)  {this.setCookie("SouthSolsticeCheck","t",10);req.addSouthSolstice(id++);} else {this.setCookie("SouthSolsticeCheck","f",0)};
+	if(this.AscSolarEquinoxCheck)   {this.setCookie("AscSolarEquinoxCheck","t",10);req.addAscSolarEquinox(id++);} else {this.setCookie("AscSolarEquinoxCheck","f",0)};
+	if(this.NorthSolsticeCheck)  {this.setCookie("NorthSolsticeCheck","t",10);req.addNorthSolstice(id++);} else {this.setCookie("NorthSolsticeCheck","f",0)};
+	if(this.DescSolarEquinoxCheck) {this.setCookie("DescSolarEquinoxCheck","t",10);req.addDescSolarEquinox(id++);} else {this.setCookie("DescSolarEquinoxCheck","f",0)};
+	if(this.EarthPerihelionCheck) {this.setCookie("EarthPerihelionCheck","t",10);req.addEarthPerihelion(id++);} else {this.setCookie("EarthPerihelionCheck","f",0)};
+	if(this.EarthAphelionCheck)   {this.setCookie("EarthAphelionCheck","t",10);req.addEarthAphelion(id++);} else {this.setCookie("EarthAphelionCheck","f",0)};
+	if(this.MercInfConjCheck)     {this.setCookie("MercInfConjCheck","t",10);req.addMercInfConj(id++);} else {this.setCookie("MercInfConjCheck","f",0)};
+	if(this.MercSupConjCheck)     {this.setCookie("MercSupConjCheck","t",10);req.addMercSupConj(id++);} else {this.setCookie("MercSupConjCheck","f",0)};
+	if(this.MercWestElongCheck)   {this.setCookie("MercWestElongCheck","t",10);req.addMercWestElong(id++);} else {this.setCookie("MercWestElongCheck","f",0)};
+	if(this.MercEastElongCheck)   {this.setCookie("MercEastElongCheck","t",10);req.addMercEastElong(id++);} else {this.setCookie("MercEastElongCheck","f",0)};
+	if(this.VenusInfConjCheck)    {this.setCookie("VenusInfConjCheck","t",10);req.addVenusInfConj(id++);} else {this.setCookie("VenusInfConjCheck","f",0)};
+	if(this.VenusSupConjCheck)    {this.setCookie("VenusSupConjCheck","t",10);req.addVenusSupConj(id++);} else {this.setCookie("VenusSupConjCheck","f",0)};
+	if(this.VenusWestElongCheck)  {this.setCookie("VenusWestElongCheck","t",10);req.addVenusWestElong(id++);} else {this.setCookie("VenusWestElongCheck","f",0)};
+	if(this.VenusEastElongCheck)  {this.setCookie("VenusEastElongCheck","t",10);req.addVenusEastElong(id++);} else {this.setCookie("VenusEastElongCheck","f",0)};
+	if(this.MarsConjCheck)        {this.setCookie("MarsConjCheck","t",10);req.addMarsConj(id++);} else {this.setCookie("MarsConjCheck","f",0)};
+	if(this.MarsWestQuadCheck)    {this.setCookie("MarsWestQuadCheck","t",10);req.addMarsWestQuad(id++);} else {this.setCookie("MarsWestQuadCheck","f",0)};
+	if(this.MarsOppCheck)         {this.setCookie("MarsOppCheck","t",10);req.addMarsOpp(id++);} else {this.setCookie("MarsOppCheck","f",0)};
+	if(this.MarsEastQuadCheck)    {this.setCookie("MarsEastQuadCheck","t",10);req.addMarsEastQuad(id++);} else {this.setCookie("MarsEastQuadCheck","f",0)};
+	if(this.JupiterConjCheck)     {this.setCookie("JupiterConjCheck","t",10);req.addJupiterConj(id++);} else {this.setCookie("JupiterConjCheck","f",0)};
+	if(this.JupiterWestQuadCheck) {this.setCookie("JupiterWestQuadCheck","t",10);req.addJupiterWestQuad(id++);} else {this.setCookie("JupiterWestQuadCheck","f",0)};
+	if(this.JupiterOppCheck)      {this.setCookie("JupiterOppCheck","t",10);req.addJupiterOpp(id++);} else {this.setCookie("JupiterOppCheck","f",0)};
+	if(this.JupiterEastQuadCheck) {this.setCookie("JupiterEastQuadCheck","t",10);req.addJupiterEastQuad(id++);} else {this.setCookie("JupiterEastQuadCheck","f",0)};
+	if(this.SaturnConjCheck)      {this.setCookie("SaturnConjCheck","t",10);req.addSaturnConj(id++);} else {this.setCookie("SaturnConjCheck","f",0)};
+	if(this.SaturnWestQuadCheck)  {this.setCookie("SaturnWestQuadCheck","t",10);req.addSaturnWestQuad(id++);} else {this.setCookie("SaturnWestQuadCheck","f",0)};
+	if(this.SaturnOppCheck)       {this.setCookie("SaturnOppCheck","t",10);req.addSaturnOpp(id++);} else {this.setCookie("SaturnOppCheck","f",0)};
+	if(this.SaturnEastQuadCheck)  {this.setCookie("SaturnEastQuadCheck","t",10);req.addSaturnEastQuad(id++);} else {this.setCookie("SaturnEastQuadCheck","f",0)};
+	if(this.MercTransitCheck)     {this.setCookie("MercTransitCheck","t",10);req.addMercTransit(id++);} else {this.setCookie("MercTransitCheck","f",0)};
+	if(this.VenusTransitCheck)    {this.setCookie("VenusTransitCheck","t",10);req.addVenusTransit(id++);} else {this.setCookie("VenusTransitCheck","f",0)};
+	this.setCookie("latitudeCheck",this.lat,10)
+	this.setCookie("longitudeCheck",this.lng,10)
+	req.wipe();
 	return id-1;
     }
     this.launch3D=function(dtg) {
@@ -895,16 +984,16 @@ function Astro() {
 	    }
 	}
 	var hrs;
-	var lat=document.getElementById("lat").value;
-	var lon=document.getElementById("lng").value;
+	var lat=this.lat;
+	var lon=this.lng;
 	var label = "Now";
-	var target = getTarget(targetId);
-	var fov = getFov(targetId);
+	var target = this.getTarget(this.targetId);
+	var fov = this.getFov(this.targetId);
 	var dir;
 	var con=0;
 	var play;
 	var url="sky.html?lat="+lat+"&lon="+lon+"&dtg="+dtg+"&label="+label+"&target="+target+"&fov="+fov+"&con="+con;
-	if (this.window3D!==undefined) {
+	if (this.window3D !== undefined) {
 	    try {
 		console.log("Updating:",url);
 		this.window3D.Request.launch(lat,lon,dtg,hrs,label,target,fov,dir,con,play);
@@ -965,37 +1054,36 @@ function Astro() {
 	}
 	return ret;
     }
-};
-Array.prototype.unique = function() {
-    var a = this.concat();
-    for(var i=0; i<a.length; ++i) {
-        for(var j=i+1; j<a.length; ++j) {
-	    //[localDtg,eventId,reportId,reportVal,reportHint]
-	    if(Math.abs(a[i][0]-a[j][0]) < 2000 && a[i][1] == a[j][1] &&a[i][2] == a[j][2])
-                a.splice(j--, 1);
-        }
-    }
-
-    return a;
-};
-Date.prototype.nice = function() {
-    var yyyy = this.getFullYear().toString();
-    var mm = (this.getMonth()+1).toString(); // getMonth() is zero-based
-    var dd  = this.getDate().toString();
-    var hh  = this.getHours().toString();
-    var mi  = this.getMinutes().toString();
-    var ss  = this.getSeconds().toString();
-    return yyyy+"-"+(mm[1]?mm:"0"+mm[0])+"-"+(dd[1]?dd:"0"+dd[0])+" "
-	+(hh[1]?hh:"0"+hh[0])+":"+(mi[1]?mi:"0"+mi[0])+":"+(ss[1]?ss:"0"+ss[0]); // padding
-};
-
-Array.prototype.clean = function(deleteValue) {
-    for (var i = 0; i < this.length; i++) {
-	if (this[i] == deleteValue) {         
-	    this.splice(i, 1);
-	    i--;
+    this.unique=function(array) {
+	var a = array.concat();
+	for(var i=0; i<a.length; ++i) {
+            for(var j=i+1; j<a.length; ++j) {
+		//[localDtg,eventId,reportId,reportVal,reportHint]
+		if(Math.abs(a[i][0]-a[j][0]) < 2000 && a[i][1] === a[j][1] &&a[i][2] === a[j][2])
+                    a.splice(j--, 1);
+            }
 	}
-    }
-    return this;
+	return a;
+    };
+    this.nice = function(date) {
+	var yyyy = date.getFullYear().toString();
+	var mm = (date.getMonth()+1).toString(); // getMonth() is zero-based
+	var dd  = date.getDate().toString();
+	var hh  = date.getHours().toString();
+	var mi  = date.getMinutes().toString();
+	var ss  = date.getSeconds().toString();
+	return yyyy+"-"+(mm[1]?mm:"0"+mm[0])+"-"+(dd[1]?dd:"0"+dd[0])+" "
+	    +(hh[1]?hh:"0"+hh[0])+":"+(mi[1]?mi:"0"+mi[0])+":"+(ss[1]?ss:"0"+ss[0]); // padding
+    };
+    this.clean = function(array,deleteValue) {
+	for (var i = 0; i < array.length; i++) {
+	    if (array[i] === deleteValue) {         
+		array.splice(i, 1);
+		i--;
+	    }
+	}
+	return array;
+    };
 };
 
+export default Astro;

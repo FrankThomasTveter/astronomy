@@ -28,7 +28,6 @@ function Header(props) {
             <AppBar position={"fixed"} className={classes.header}>
                <Toolbar>
                     <img alt={"homepage"} className={classes.logo} src={logoImg}></img>
-	            <Location state={state}/>
 	            <Config state={state}/>
                </Toolbar>
             </AppBar>

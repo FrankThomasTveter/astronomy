@@ -1,0 +1,30 @@
+Approximating the Sun elevation from Max/Min elevation.
+Assuming earth spin effects only, gives about 5 minute precision.
+
+Get elevation as function of time (function):
+=============================================
+Spherical trigonometry, cosine rule for sides:
+   Cos(z) = Cos(s) * Cos(l) + Sin(s) * Sin(l) * Cos(2Pi*t)
+        t = Solar_time (fraction_of_day, Noon:t=0, Midnight: t=0.5)
+        z = Pi/2-elevation
+We assume constant s and l (sun and observer positions). 
+This gives:
+   Sin(elevation) = A + B * Cos(2Pi*t)
+where A and B are constant.
+
+Elevation as a function of time:
+================================
+   Sin(elevation_max) = A + B
+   Sin(elevation_min) = A - B
+   A = (Sin(elevation_max) + Sin(elevation_min))/2
+   B = (Sin(elevation_max) - Sin(elevation_min))/2
+   elevation =  ArcSin(A + B*Cos(2Pi*t))
+
+Find time of nautical twilight start/end (-6 deg elevation):
+============================================================
+   Sin(-6*2Pi/360) = A + B * Cos(2Pi*t)
+   t0 = ArcCos( (Sin(-6*2Pi/360) - A) / B )/2Pi
+Nautical twilight start:
+   t = N + t0, N=0,1,2,3...
+Nautical twilight end: 
+   t = N - t0, N=0,1,2,3...

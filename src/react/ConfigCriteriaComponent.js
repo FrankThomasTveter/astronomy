@@ -8,12 +8,7 @@ import Popup from 'react-popup';
 import './react-popup.css';
 
 const styles = theme => ({
-    file: {
-	display: 'inline-block',
-        marginRight: 'auto',
-	height:'100%',
-    },
-    tableFile: {
+    buttonWrapper: {
 	display: 'inline-block',
         marginRight: 'auto',
     },
@@ -32,10 +27,16 @@ class ConfigCriteria extends Component {
 	    return null;
 	} else if (visible !== undefined) {
 	    var cls={button:classes.button};
- 	    this.onClick = event => {console.log("Launch criteria...");};
-	    return (<div className={classes.tableFile}>
+ 	    this.onClick = event => {state.Astro.toggle(state,"criteria");};
+	    var classname;
+	    if (state.Astro.show(state,"criteria")) {
+		classname=classes.button;
+	    } else {
+		classname=classes.buttonInvisible;
+	    };
+	    return (<div className={classes.buttonWrapper}>
 		    <Button
-                    className={classes.button}
+                    className={classname}
                     onClick={this.onClick}
 	            title={"Show Criteria Config"}
 		    >

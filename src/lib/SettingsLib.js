@@ -5,7 +5,7 @@ function Settings() {
     this.controls=["Time","Location","Criteria","Events",
 		   "FullScreen","About","Qr"];
     // list of visible controls...
-    this.visible=[];//["Timer","Location","Criteria","Events"];
+    this.visible=[];//["Time","Location","Criteria","Events"];
     this.init=function(state){
 	//state.Utils.init("Settings",this);
     };
@@ -30,13 +30,14 @@ function Settings() {
 	};
     };
     this.isVisible=function(state,control) {
-	return (this.controls.indexOf(control)!==-1 && this.visible.indexOf(control)!==-1);
-    }
+	//console.log("Visible:",JSON.stringify(this.visible));
+	//console.log("Control:",JSON.stringify(this.controls));
+	return (this.controls.indexOf(control)!==-1 && 
+		this.visible.indexOf(control)!==-1);
+    }.bind(this);
     this.isInvisible=function(state,control) {
-	var visible=this.controls.indexOf(control)!==-1 && this.visible.indexOf(control)===-1;
-	//console.log("Checking if ",control," is invisible (",visible,")",JSON.stringify(this.visible));
-	return (visible);
-    }
+	return ! this.isVisible(state,control);
+    }.bind(this);
     this.toggle=function(state,control) {
 	//console.log("Toggling:",control);
 	//throw new Error('Exception message');
