@@ -1,9 +1,6 @@
 //console.log("Loading DatabaseLib.js");
 import addNotification from 'react-push-notification';
 
-//import {alasql} from "alasql";
-//const alasql = window.alasql;
-const alasql = require('alasql');
 
 function Database() {
     this.bdeb=false;
@@ -79,7 +76,7 @@ function Database() {
 	    // keep old database...
 	    //console.log("Keeping old database...");
 	} else {
-	    this.db=new alasql.Database();
+	    // this.db=new alasql.Database();
 	    //console.log("Alasql:",JSON.stringify(this.db));
 	    this.dbcnt=0;
 	};

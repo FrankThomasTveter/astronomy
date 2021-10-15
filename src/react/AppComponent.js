@@ -119,7 +119,9 @@ const styles = theme => ({
 	borderColor: teal_palette.main,
 	display:"inline-block",
 	backgroundColor:black_palette.main,
+//	backgroundColor:"white",
 	color: "white",
+//	color: "black",
     },
     button: {
 	backgroundColor:black_palette.main,

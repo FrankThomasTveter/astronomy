@@ -3,6 +3,9 @@ import {withStyles} from "@material-ui/core";
 import PropTypes from  "prop-types";
 import Draggable from 'react-draggable'; // Both at the same time
 
+//import DateFnsUtils from '@date-io/date-fns'; // choose your lib
+//import { DateTimePicker, MuiPickersUtilsProvider } from '@material-ui/pickers'
+
 //console.log("Inside Time.")
 
 const styles = theme => ({
@@ -21,6 +24,7 @@ class Time extends Component {
 	this.handleChange = this.handleChange.bind(this);
 	this.show=this.show.bind(this);
     };
+    state={startDate: new Date()};
     show(state) {
 	this.forceUpdate();
     };
@@ -36,6 +40,11 @@ class Time extends Component {
     };
     handleEnd(data) {
 	console.log("Ending x:", data.x, " y:", data.y);
+    };
+    handleTime = (date,dateString) => {
+        this.setState({
+            startDate: date
+        });
     };
     render() {
         const { classes, state, layout } = this.props;
@@ -55,15 +64,27 @@ class Time extends Component {
 	    onStart={this.handleStart}
 	    onStop={this.handleEnd}>
 	      <div className={classes.block} style={{visibility:visible}}>
-		<label> Time: <input type="text" value={this.state.time} onChange={this.handleChange}/></label> 
-		<label> Time: <input type="text" value={this.state.time} onChange={this.handleChange}/></label> 
-	      </div>
+	    </div>
 	   </Draggable>
 	);
     }
 };
 // disabled={false}
+// 	            disableToolbar={true}
 
+	    	// <MuiPickersUtilsProvider utils={DateFnsUtils}>
+		// <DateTimePicker
+	        //     ampm={false}
+		//     label="Time"
+		//     clearable
+	        //     hideTabs={true}
+		//     inputVariant="outlined"
+	        //     format="yyyy/mm/dd hh:mm:ss"
+		//     value={this.state.startDate}
+		//     onChange={this.handleTime}
+		//     helperText="Clear Initial State"
+	    	// 	/>
+	     	// </MuiPickersUtilsProvider>
 
 Time.propTypes = {
     classes: PropTypes.object.isRequired,

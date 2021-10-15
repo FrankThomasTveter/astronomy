@@ -17,12 +17,15 @@ function createTheme(primary, secondary) {
                 root: {
                     background: secondary.main
                 }
-            }
+            },
         }
     });
-
-
 }
+
+
+
+
+
 
 export default (createTheme);
 
