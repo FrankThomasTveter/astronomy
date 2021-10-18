@@ -18,8 +18,10 @@ function Astro() {
     this.lng=0.0;
     this.updateCheck=false;
     this.cost=0;
+    this.startDate=new Date();
+    this.endDt=1;
     this.previousCheck=false;
-    this.nectChecktrue=false;
+    this.nextCheck=false;
     //
     this.visible={time:true,location:true,criteria:true,events:true};
     // 
@@ -227,13 +229,46 @@ function Astro() {
 	    }
 	}
     };
-    this.setStartDate=function(target) {
+    this.getStartDate=function(state) {
+	return state.Astro.startDate;
+    };
+    this.getEndDt=function (state) {
+	return state.Astro.endDt;
+    };
+    this.setStartDate=function(state,date) {
+	state.Astro.startDate=date;
+    };
+    this.setEndDt=function(state,dt) {
+	state.Astro.endDt=dt;
+    };
+    this.getPrev=function(state) {
+	return state.Astro.previousCheck;
+    };
+    this.getNext=function(state) {
+	return state.Astro.nextCheck;
+    };
+    this.setPrev=function(state,prev) {
+	state.Astro.previousCheck=prev;
+    };
+    this.setNext=function(state,next) {
+	state.Astro.nextCheck=next;
+    };
+    this.setStartDateOld=function(target) {
 	var tzoffset = (new Date(target)).getTimezoneOffset() * 60000; //offset in milliseconds
 	var dtg=new Date(target - tzoffset).toISOString();
 	var d=dtg.substring(0,10);
 	var t=dtg.substring(11,19);
 	this.start_dt=d;
 	this.start_tm=t;
+    };
+    this.increaseEndDt=function(state) {
+	state.Astro.endDt=Math.min(99,state.Astro.endDt+1);
+    };
+    this.decreaseEndDt=function(state) {
+	state.Astro.endDt=Math.max(1,state.Astro.endDt-1);
+    };
+    this.getEndDt=function(state) {
+	return state.Astro.endDt;
     };
     this.drawData=function (documentTable, id) {
 	if (this.rawData[id] === undefined) {
@@ -326,7 +361,7 @@ function Astro() {
 	} else {
 	    this.targetSet=true;
 	    this.targetTime=tt;
-	    this.setStartDate(this.targetTime);
+	    this.setStartDateOld(this.targetTime);
 	    this.setEndDate(this.targetTime);
 	    this.targetId=id;
 	}
@@ -335,7 +370,7 @@ function Astro() {
 	//console.log("Setting target to:"+tt+" "+this.targetSet);
 	this.targetSet=true;
 	this.targetTime=tt;
-	this.setStartDate(this.targetTime);
+	this.setStartDateOld(this.targetTime);
 	this.setEndDate(this.targetTime);
 	this.targetId=id;
     }
@@ -719,7 +754,7 @@ function Astro() {
 	}
 	if (! this.targetSet) {
 	    tnow=Date.now();
-	    this.setStartDate(tnow);
+	    this.setStartDateOld(tnow);
 	    this.setEndDate(tnow);
 	}
 	var documentTable = this.dataTable;
@@ -756,7 +791,7 @@ function Astro() {
 	    this.setEndDate(Date.now());
 	}
     }
-    this.setStartDate=function(target) {
+    this.setStartDateOld=function(target) {
 	var tzoffset = (new Date(target)).getTimezoneOffset() * 60000; //offset in milliseconds
 	var dtg=new Date(target - tzoffset).toISOString();
 	var d=dtg.substring(0,10);

@@ -114,11 +114,12 @@ const styles = theme => ({
 	//border:  '1px solid green',	
     },
     block : {
-	padding: '10px',
+	padding: '5px',
+	paddingTop: '0px',
 	borderRadius: '5px',
 	borderColor: teal_palette.main,
 	display:"inline-block",
-	backgroundColor:black_palette.main,
+	backgroundColor:teal_palette.main,
 //	backgroundColor:"white",
 	color: "white",
 //	color: "black",
@@ -132,9 +133,11 @@ const styles = theme => ({
     },
     buttonInvisible: {
 	backgroundColor:black_palette.main,
-	color:'gray'
+	color:'gray',
     },
-    buttonDisabled: {},
+    buttonDisabled: {
+        color: "white",
+},
 });
 
 //	border:  '1px solid green',

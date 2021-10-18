@@ -7,6 +7,8 @@ import Draggable from 'react-draggable'; // Both at the same time
 
 const styles = theme => ({
     block:{},
+    field:{},
+    legend:{},
     button:{},
     buttonDisabled:{},
 });
@@ -37,7 +39,10 @@ class Location extends Component {
         return (
 		<Draggable key="location">
 		   <div className={classes.block} style={{visibility:visible}}>
+		<fieldset className={classes.field}>
+		<legend className={classes.legend}><small>location</small></legend>
 		      LOCATION
+	        </fieldset>
 	           </div>
 		</Draggable>
         );

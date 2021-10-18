@@ -16,6 +16,16 @@ const styles = theme => ({
     },
     content:{},
     block:{},
+    field:{
+	color:"white",
+	margin: "5px",
+	borderRadius:"5px", 
+	border: "2px solid white",
+	padding:"0px 3px 3px",
+	paddingTop: "0px",
+    },
+    legend :{
+    },
     button:{},
     buttonInvisible:{},
     buttonDisabled:{},
@@ -32,6 +42,8 @@ class Dataset extends Component {
     render() {
         const { classes, state, layout } = this.props;
 	var cls={block:classes.block,
+		 field:classes.field,
+		 legend:classes.legend,
 		 button:classes.button,
 		 buttonDisabled:classes.buttonDisabled};
 	var gls={dataset:classes.dataset,

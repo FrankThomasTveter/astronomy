@@ -7,6 +7,8 @@ import Draggable from 'react-draggable'; // Both at the same time
 
 const styles = theme => ({
     block:{},
+    field:{},
+    legend:{},
     button:{},
     buttonDisabled:{},
 });
@@ -36,7 +38,10 @@ class Criteria extends Component {
         return (
 		<Draggable key="criteria">
 		   <div className={classes.block} style={{visibility:visible}}>
+		<fieldset className={classes.field}>
+		<legend className={classes.legend}><small>criteria</small></legend>
 		      CRITERIA
+	        </fieldset>
 	           </div> 
 		</Draggable>
         );
