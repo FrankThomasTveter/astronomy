@@ -12,6 +12,11 @@ import TimePicker from "rc-time-picker";
 import 'rc-time-picker/assets/index.css';
 import Button from '@material-ui/core/Button';
 
+import PauseIcon from '@material-ui/icons/Pause';
+import PlayIcon from '@material-ui/icons/PlayArrow';
+import FastForwardIcon from '@material-ui/icons/FastForward';
+import FastRewindIcon from '@material-ui/icons/FastRewind';
+
 //console.log("Inside Time.")
 
 const styles = theme => ({
@@ -23,37 +28,6 @@ const styles = theme => ({
 });
 //        maxWidth: theme.spacing.getMaxWidth.maxWidth,
 
-function ToTime(props){
-    const { state,classes,parent } = props;
-    var decreaseEndDt=function() {
-	state.Astro.decreaseEndDt(state);
-	parent.setState({endDt:state.Astro.getEndDt(state)});
-    };
-    var increaseEndDt=function() {
-	state.Astro.increaseEndDt(state);
-	parent.setState({endDt:state.Astro.getEndDt(state)});
-    };
-    var disabled=state.Astro.getPrev(state) || state.Astro.getNext(state);
-    var visible=! disabled;
-    var btncls=classes.button;
-    if (disabled) { 
-	btncls=classes.buttonDisabled 
-    };
-    return (<>
-	    <button
-	    className={btncls}
-            onClick={decreaseEndDt}
-	    title={"Increase end date"}
-	    disabled={disabled}> - </button>
-	    <button
-	    className={btncls}
-            onClick={increaseEndDt}
-	    title={"Increase end date"}
-	    disabled={disabled}> + </button>
-	    <input type="text" className={btncls}
-	    value={state.Astro.getEndDt(state)} maxLength="1" size="1" disabled/>
-	    </>);
-};
 class Time extends Component {
     constructor(props) {
 	super(props);
@@ -62,10 +36,9 @@ class Time extends Component {
         const {state} = props;
 	this.openDate = this.openDate.bind(this);
 	this.show=this.show.bind(this);
+	this.changeSpeed=this.changeSpeed.bind(this);
 	this.state={startDate: state.Astro.getStartDate(state), // new Date(),
-		    prev:! state.Astro.getPrev(state),
-		    next:! state.Astro.getNext(state),
-		    endDt: state.Astro.getEndDt(state)};   //undefined //moment().format(this.frm)
+		    speed:1};
 	state.React.Time=this;
     };
     show(state) {
@@ -82,8 +55,15 @@ class Time extends Component {
 	//console.log("Ending x:", data.x, " y:", data.y);
     };
     // Time functions
-    openDate(){
+    openDate(e){
 	this.setState({ open: true, currentView: "days" });
+    };
+    changeSpeed(e){
+	this.setState({ speed:e.target.value });
+    };
+    handleChildClick(e) {
+	e.stopPropagation();
+	console.log('child');
     };
     render() {
         const { classes, state, layout } = this.props;
@@ -98,18 +78,6 @@ class Time extends Component {
 		endDt: dt //)moment(date).format(this.frm)
 	    });
 	    state.Astro.setEndDt(state,this.state.endDt);
-	}.bind(this);
-	var togglePrev=function(){
-	     this.setState({
-	          prev: ! this.state.prev //)moment(date).format(this.frm)
-	      });
-	    state.Astro.setPrev(state,this.state.prev);
-	}.bind(this);
-	var toggleNext=function(){
-	     this.setState({
-	          next: ! this.state.next //)moment(date).format(this.frm)
-	      });
-	    state.Astro.setNext(state,this.state.next);
 	}.bind(this);
 	var cls={time:classes.time,
 		 content:classes.content,
@@ -131,20 +99,39 @@ class Time extends Component {
 			      style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>time</small></legend>
-		<div style={{color:"black"}}>
+		<div style={{color:"black"}} onMouseDown={this.handleChildClick} style={{color:"black",width:"100%",display:"flex", justifyContent:"space-between"}}>
 		<DateTime
 		    dateFormat="YYYY-MM-DD"
 		    timeFormat="HH:mm:ss"
 		    inputProps={{ disabled: false }}
 		    value={this.state.startDate}
 		    onChange={setStartDate}
-		    isValidDate={current => current.isAfter(moment().subtract(1, "days"))}
+	            onClick={this.handleChildClick}
+	            isValidDate={current => current.isAfter(moment().subtract(1, "days"))}
 		/>
 		</div>
-		<div style={{width:"100%",display:"flex", justifyContent:"space-around"}}>
-		<input name="prev" type="checkbox" defaultChecked={! this.state.prev} onTouchEnd={togglePrev} onClick={togglePrev}/><label>Prev</label>
-		<input name="next" type="checkbox" defaultChecked={! this.state.next} onTouchEnd={toggleNext} onClick={toggleNext}/><label>Next</label>
-		<ToTime parent={this} state={state} classes={classes} style={{marginLeft:"auto", marginRight:"0"}}/>
+		<div onMouseDown={this.handleChildClick}  style={{width:"100%",display:"flex", justifyContent:"space-between"}}>
+		<button
+	    className={classes.button}
+            onClick={function(e) {console.log("Clicked me");}.bind(this)}
+	    title={"Rewind"}
+	    disabled={false}> <FastRewindIcon/> </button>
+		<button
+	    className={classes.button}
+            onClick={function(e) {console.log("Clicked me");}.bind(this)}
+	    title={"Play"}
+	    disabled={false}> <PlayIcon/> </button>
+		<button
+	    className={classes.button}
+            onClick={function(e) {console.log("Clicked me");}.bind(this)}
+	    title={"Forward"}
+	    disabled={false}> <FastForwardIcon/> </button>
+		<select defaultValue={this.state.speed} onChange={this.changeSpeed}>
+		<option value="1">Sec/Sec</option>
+		<option value="60">Min/Sec</option>
+		<option value="3600">Hour/Sec</option>
+		<option value="86040">Day/Sec</option>
+		</select>
 		</div>
 		</fieldset>
 	    </div>

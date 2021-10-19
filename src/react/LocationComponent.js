@@ -24,6 +24,10 @@ class Location extends Component {
     show(state) {
 	this.forceUpdate();
     };
+    handleChildClick(e) {
+	e.stopPropagation();
+	console.log('child');
+    };
     render() {
         const { classes, state, layout } = this.props;
 	var cls={location:classes.location,
@@ -41,9 +45,11 @@ class Location extends Component {
 		   <div className={classes.block} style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>location</small></legend>
-		      LOCATION
+		<div onMouseDown={this.handleChildClick} >
+		LOCATION
+	        </div>
 	        </fieldset>
-	           </div>
+	        </div>
 		</Draggable>
         );
     };

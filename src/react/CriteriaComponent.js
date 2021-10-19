@@ -23,6 +23,10 @@ class Criteria extends Component {
     show(state) {
 	this.forceUpdate();
     };
+    handleChildClick(e) {
+	e.stopPropagation();
+	console.log('child');
+    };
     render() {
         const { classes, state, layout } = this.props;
 	var cls={criteria:classes.criteria,
@@ -40,7 +44,9 @@ class Criteria extends Component {
 		   <div className={classes.block} style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>criteria</small></legend>
-		      CRITERIA
+		<div onMouseDown={this.handleChildClick} >
+		CRITERIA
+	        </div>
 	        </fieldset>
 	           </div> 
 		</Draggable>
