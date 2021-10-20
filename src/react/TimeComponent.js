@@ -34,12 +34,12 @@ class Time extends Component {
 	this.Dateformat="YYYY-MM-DD";
 	this.Timeformat="HH:mm:ss";
         const {state} = props;
+	state.React.Time=this;
 	this.openDate = this.openDate.bind(this);
 	this.show=this.show.bind(this);
 	this.changeSpeed=this.changeSpeed.bind(this);
 	this.state={startDate: state.Astro.getStartDate(state), // new Date(),
 		    speed:1};
-	state.React.Time=this;
     };
     show(state) {
 	this.forceUpdate();
@@ -99,7 +99,7 @@ class Time extends Component {
 			      style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>time</small></legend>
-		<div style={{color:"black"}} onMouseDown={this.handleChildClick} style={{color:"black",width:"100%",display:"flex", justifyContent:"space-between"}}>
+		<div onMouseDown={this.handleChildClick} style={{color:"black",width:"100%",display:"flex", justifyContent:"space-between"}}>
 		<DateTime
 		    dateFormat="YYYY-MM-DD"
 		    timeFormat="HH:mm:ss"
@@ -110,7 +110,7 @@ class Time extends Component {
 	            isValidDate={current => current.isAfter(moment().subtract(1, "days"))}
 		/>
 		</div>
-		<div onMouseDown={this.handleChildClick}  style={{width:"100%",display:"flex", justifyContent:"space-between"}}>
+		<div onMouseDown={this.handleChildClick} style={{width:"100%",display:"flex", justifyContent:"space-between"}}>
 		<button
 	    className={classes.button}
             onClick={function(e) {console.log("Clicked me");}.bind(this)}

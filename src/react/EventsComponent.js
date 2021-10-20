@@ -4,6 +4,8 @@ import PropTypes from  "prop-types";
 import Draggable from 'react-draggable'; // Both at the same time
 
 import ReloadIcon from '@material-ui/icons/Replay';
+import UpIcon from '@material-ui/icons/ArrowUpward';
+import DownIcon from '@material-ui/icons/ArrowDownward';
 
 //console.log("Inside Events.")
 
@@ -37,12 +39,12 @@ function ToTime(props){
 	    className={btncls}
             onClick={decreaseEndDt}
 	    title={"Increase end date"}
-	    disabled={disabled}> - </button>
+	    disabled={disabled}><DownIcon/></button>
 	    <button
 	    className={btncls}
             onClick={increaseEndDt}
 	    title={"Increase end date"}
-	    disabled={disabled}> + </button>
+	    disabled={disabled}><UpIcon/> </button>
 	    <input type="text" className={btncls}
 	    value={state.Astro.getEndDt(state)} maxLength="1" size="1" disabled/>
 	    </>);
@@ -94,7 +96,7 @@ class Events extends Component {
 		    <div  className={classes.block} style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>events</small></legend>
-		<div onMouseDown={this.handleChildClick}  style={{color:'black',width:"100%",display:"flex", justifyContent:"space-between", alignItems:'center'}}>
+		<div onMouseDown={this.handleChildClick} style={{color:'black',width:"100%",display:"flex", justifyContent:"space-between", alignItems:'center'}}>
 		<input name="prev" type="checkbox" defaultChecked={! this.state.prev} onTouchEnd={togglePrev} onClick={togglePrev}/><label>Prev</label>
 		<input name="next" type="checkbox" defaultChecked={! this.state.next} onTouchEnd={toggleNext} onClick={toggleNext}/><label>Next</label>
 		<ToTime parent={this} state={state} classes={classes} style={{marginLeft:"auto", marginRight:"0"}}/>

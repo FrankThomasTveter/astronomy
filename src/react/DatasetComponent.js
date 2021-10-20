@@ -13,6 +13,10 @@ import Globe     from  "./GlobeComponent";
 const styles = theme => ({
     dataset:{
 	border:  '0px solid blue',
+	display: 'flex',
+	flexDirection: 'row',
+	justifyContent: 'space-around',
+	alignItems: 'flex-start',
     },
     content:{},
     block:{},

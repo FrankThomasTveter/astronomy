@@ -14,8 +14,8 @@ function Astro() {
     this.end_p=undefined;
     this.end_m=undefined;
     this.end_dt=undefined;
-    this.lat=0.0;
-    this.lng=0.0;
+    this.lat=60.0;
+    this.lng=10.0;
     this.updateCheck=false;
     this.cost=0;
     this.startDate=new Date();
@@ -232,26 +232,38 @@ function Astro() {
     this.getStartDate=function(state) {
 	return state.Astro.startDate;
     };
-    this.getEndDt=function (state) {
-	return state.Astro.endDt;
-    };
     this.setStartDate=function(state,date) {
 	state.Astro.startDate=date;
     };
     this.setEndDt=function(state,dt) {
+    this.getEndDt=function (state) {
+	return state.Astro.endDt;
+    };
 	state.Astro.endDt=dt;
     };
     this.getPrev=function(state) {
 	return state.Astro.previousCheck;
     };
-    this.getNext=function(state) {
-	return state.Astro.nextCheck;
-    };
     this.setPrev=function(state,prev) {
 	state.Astro.previousCheck=prev;
     };
+    this.getNext=function(state) {
+	return state.Astro.nextCheck;
+    };
     this.setNext=function(state,next) {
 	state.Astro.nextCheck=next;
+    };
+    this.getLat=function(state) {
+	return state.Astro.lat;
+    };
+    this.setLat=function(state,lat) {
+	state.Astro.lat=lat;
+    };
+    this.getLon=function(state) {
+	return state.Astro.lng;
+    };
+    this.setLon=function(state,lon) {
+	state.Astro.lng=lon;
     };
     this.setStartDateOld=function(target) {
 	var tzoffset = (new Date(target)).getTimezoneOffset() * 60000; //offset in milliseconds
