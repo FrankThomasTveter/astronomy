@@ -44,7 +44,7 @@ class Dataset extends Component {
 	this.state={progress:false,mode:0};
     };
     render() {
-        const { classes, state, layout } = this.props;
+        const { classes, state, layout, target, setTarget } = this.props;
 	var cls={block:classes.block,
 		 field:classes.field,
 		 legend:classes.legend,
@@ -56,11 +56,14 @@ class Dataset extends Component {
 		 buttonDisabled:classes.buttonDisabled};
         return (
 		<div className={classes.dataset}>
-		   <Time state={state} classes={cls} layout={layout}/>
+		   <Time state={state} classes={cls} layout={layout}
+	                 target={target} setTarget={setTarget}/>
 		   <Location state={state} classes={cls} layout={layout}/>
 		   <Criteria state={state} classes={cls} layout={layout}/>
-		   <Events state={state} classes={cls} layout={layout}/>
-		   <div style={{position:"absolute", top:0, left:0, width:"100%",height:"100%", zIndex:-999999}}>
+		   <Events state={state} classes={cls} layout={layout}
+	                 target={target} setTarget={setTarget}/>
+		<div style={{position:"absolute", top:0, left:0,
+			     width:"100%",height:"100%", zIndex:-999999}}>
 		      <Globe   state={state}   classes={gls}/>
 		   </div>
 		</div>

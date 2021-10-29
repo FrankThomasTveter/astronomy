@@ -12,6 +12,7 @@ const styles = theme => ({
     legend:{},
     button:{},
     buttonDisabled:{},
+    map:{},
 });
 //        maxWidth: theme.spacing.getMaxWidth.maxWidth,
 
@@ -22,13 +23,36 @@ class Location extends Component {
 	state.React.Location=this;
 	this.state={lat:state.Astro.getLat(state),lon:state.Astro.getLon(state)};
 	this.show=this.show.bind(this);
+	this.setLat=this.setLat.bind(this);
+	this.setLon=this.setLon.bind(this);
+	this.onClick=this.onClick.bind(this);
     };
     show(state) {
 	this.forceUpdate();
     };
     handleChildClick(e) {
 	e.stopPropagation();
-	console.log('child');
+	//console.log('Stopped propagation from child');
+    };
+    setLat(e) {
+        const { classes, state, layout } = this.props;
+	//console.log("Changed lat:",e.target.value);
+	this.setState({lat:e.target.value});
+	state.Astro.setLat(state,this.state.lat);
+    };
+    setLon(e) {
+        const { classes, state, layout } = this.props;
+	//console.log("Changed lon:",e.target.value);
+	this.setState({lon:e.target.value});
+	state.Astro.setLon(state,this.state.lon);
+    };
+    onClick(event) {
+        const { classes, state, layout } = this.props;
+	const { lat, lng } = event.latlng;
+	this.setState({lat:lat, lon:lng});
+	state.Astro.setLat(state,this.state.lat);
+	state.Astro.setLon(state,this.state.lon);
+	//console.log("Click:",this.state);
     };
     render() {
         const { classes, state, layout } = this.props;
@@ -42,17 +66,8 @@ class Location extends Component {
 	} else {
 	    visible="hidden";
 	};
-	var setLat=function(e) {
-	    console.log("Changed lat:",e.target.value);
-	    this.setState({lat:e.target.value});
-	    state.Astro.setLat(state,this.state.lat);
-	};
-	var setLon=function(e) {
-	    console.log("Changed lon:",e.target.value);
-	    this.setState({lon:e.target.value});
-	    state.Astro.setLon(state,this.state.lon);
-	};
 	//onMouseDown={this.handleChildClick}
+	var cls={map:classes.map};
         return (
 		<Draggable key="location">
 		   <div className={classes.block} style={{visibility:visible}}>
@@ -61,12 +76,14 @@ class Location extends Component {
 		<div onMouseDown={this.handleChildClick} style={{display:'flex', flexDirection:'column'}}>
 		 <div style={{display:'flex', justifyContent:'flex-start'}}>
 		  <label>Latitude</label>
-		  <input type="text" defaultValue={this.state.lat} onChange={this.setLat} maxLength="5" size="5"/>
+		  <input type="text" value={this.state.lat} onChange={this.setLat} maxLength="5" size="5"/>
 		  <label>Longitude</label>
-		  <input type="text" defaultValue={this.state.lon} onChange={this.setLon} maxLength="5" size="5"/>
+		  <input type="text" value={this.state.lon} onChange={this.setLon} maxLength="5" size="5"/>
 	         </div>
 		 <div style={{width:"100%"}}>
-		  <Chart state={state} classes={{map:{}}}/>
+		<Chart state={state} classes={cls}
+	           position={[this.state.lat,this.state.lon]}
+	           onClick={this.onClick}/>
 	         </div>
 	        </div>
 	        </fieldset>

@@ -1,4 +1,4 @@
-import React, {Component} from "react"; //useState, useEffect, useRef
+import React, {Component, useState} from "react"; //useState, useEffect, useRef
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -8,7 +8,9 @@ import { withStyles } from '@material-ui/core/styles';
 //import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import worldGeoJSON from '../geojson/custom_world';
-import { MapContainer, GeoJSON, Marker, Popup } from 'react-leaflet';//Polygon, TileLayer ,Popup
+import { MapContainer, GeoJSON, Marker, Popup, useMapEvents } from 'react-leaflet';//Polygon, TileLayer ,Popup
+import markerIconPng from "leaflet/dist/images/marker-icon.png"
+import {Icon} from 'leaflet'
 
 // const icon = new L.Icon({
 //   options: {
@@ -32,25 +34,48 @@ const styles = theme => ({
     },
 });
 
+function AddMarkerToClick(props) {
+    const {position, onClick, icon}=props;
+    const map = useMapEvents({
+	click(event) {
+	    //console.log("Event:",event.latlng,onClick);
+	    onClick(event);
+	},
+    });
+    return (
+	position !== undefined ? (
+		<Marker
+	    position={position}
+	    interactive={true}
+	    icon={icon}
+		>
+	      <Popup>
+	      <span> This is your location</span>
+	      </Popup>
+		</Marker>
+	) : null
+    );
+};
+
 class GeoJsonMap extends Component {
     constructor(props) {
 	super(props);
 	const {state} = props;
-	this.state={marker:[state.Astro.getLon(state),state.Astro.getLon(state)]};
+	this.icon=new Icon({iconUrl: markerIconPng,
+			    iconSize: [25, 41],
+			    iconAnchor: [12, 41]});
 	this.update=this.update.bind(this);
 	state.React.Chart=this;
     };    
     update() {
 	this.forceUpdate();
     };
-    onClickMarker(event) {
-	this.setState({marker:event.latlng})
-    };
-  render() {
-      const { classes, state } = this.props;
-      var markFunction= (mark) => {      };
-      return (<MapContainer className={classes.map}
-                    center={this.state.marker}
+    render() {
+	const { classes, state, position, onClick } = this.props;
+	var markFunction= (mark) => {      };
+	//console.log("Onclick:",onClick);
+	return (<MapContainer className={classes.map}
+                    center={position}
                     zoom={2}
                     maxZoom={10}
                     attributionControl={true}
@@ -60,26 +85,31 @@ class GeoJsonMap extends Component {
                     dragging={true}
                     animate={true}
                     easeLinearity={0.35}
-	            ref='map'
    	            >
                     <GeoJSON
                        data={worldGeoJSON}
-                       style={() => ({
+                       style={{
 			   weight: 1,
 		 	   color: 'darkGray',//'#4a83ec',
 			   opacity: 1,
 			   fillColor: 'lightGray',//"#1a1d62",
 			   fillOpacity: 1, //zIndex: 1,
-		       })}/>
-	      <Marker key={'marker'} position={this.state.marker}>
-	      <Popup>
-	      <span> This is your location</span>
-	      </Popup>
-	      </Marker>
+		       }}/>
+	      <AddMarkerToClick icon={this.icon} position={position} onClick={onClick}/>
 	      </MapContainer>
 	     );
   }
 }
+
+
+                       // style={() => ({
+		       // 	   weight: 1,
+		       // 	   color: 'darkGray',//'#4a83ec',
+		       // 	   opacity: 1,
+		       // 	   fillColor: 'lightGray',//"#1a1d62",
+		       // 	   fillOpacity: 1, //zIndex: 1,
+		       // })}/>
+
 
 GeoJsonMap.propTypes = {
     classes: PropTypes.object.isRequired,

@@ -153,7 +153,7 @@ const styles = theme => ({
 class App extends Component {
     constructor(props) {
 	super(props);
-	this.state={
+	this.libs={
 	    Default:   new Default()   ,
 	    Astro:     new Astro()   ,
 	    Colors:    new Colors()    ,
@@ -177,7 +177,8 @@ class App extends Component {
 	    React: { App : this },
 	    cnt:0
 	};
-
+	this.state={targetDate: this.libs.Astro.getTargetDate(this.libs)};
+	this.setTargetDate=this.setTargetDate.bind(this);
 	//this.path=this.getpath();
     };
     getpath() {
@@ -196,7 +197,7 @@ class App extends Component {
 	return [path,("alarm/"+path)];
     };
     componentDidMount() {
-	var state=this.state;
+	var state=this.libs;
 	state.Default.init(state);
 	state.Astro.init(state);
         state.Settings.init(state);
@@ -206,14 +207,22 @@ class App extends Component {
 				   state.Default.storeHomeState,
 				   state.Astro.updateLoop]
 				 );
+	this.intervalID = setInterval(
+	    () => this.tick(),
+	    1000
+	);
     };
     componentWillUnmount() {
+	clearInterval(this.intervalID);
+    };
+    tick() {
+	this.setTargetDate(this.libs,this.libs.Astro.updateTime(this.libs))
     };
 //    tick() {
 //	// check if database has changed, reload if necessary...
-//	if (this.state.React.Status !== undefined) {
-//	    this.state.cnt=this.state.cnt+1;
-//	    this.state.React.Status.forceUpdate();
+//	if (this.libs.React.Status !== undefined) {
+//	    this.libs.cnt=this.state.cnt+1;
+//	    this.libs.React.Status.forceUpdate();
 //	}
 //    };
     broadcast(msg,variant) {
@@ -221,9 +230,14 @@ class App extends Component {
 	//console.log("BROADCAST *** ",msg,variant);
         this.props.enqueueSnackbar(msg, { variant });
     };
+    setTargetDate(state,date){
+	this.setState({
+	    targetDate: this.libs.Astro.setTargetDate(this.libs,date)
+	});
+    };
     render() {
         const { classes } = this.props;
-	const state       = this.state;
+	const state       = this.libs;
 	var hcls={header:classes.header};
 	var dcls={dataset:classes.dataset,
 		  content:classes.content,
@@ -234,7 +248,8 @@ class App extends Component {
         return (<div className={classes.root}>
                   <MuiThemeProvider theme={createTheme(teal_palette, black_palette)}>
                             <Header   state={state} classes={hcls}/>
-                            <Dataset  state={state} classes={dcls} layout={layout}/>
+                <Dataset  state={state} classes={dcls} layout={layout}
+		          target={this.state.targetDate} setTarget={this.setTargetDate}/>
                             <Footer   state={state} classes={fcls}/>
                         </MuiThemeProvider>
                 </div>

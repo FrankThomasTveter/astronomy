@@ -5,23 +5,39 @@
 // $(".anytime").AnyTime_picker( {
 //     format: "%H:%i:%s",
 //     formatUtcOffset: "%: (%@)"} );
+import moment from 'moment';
 function Astro() {
     this.bdeb=false;
     this.rawData = [];
     //
-    this.start_dt=undefined;
-    this.start_tm=undefined;
-    this.end_p=undefined;
-    this.end_m=undefined;
-    this.end_dt=undefined;
-    this.lat=60.0;
-    this.lng=10.0;
-    this.updateCheck=false;
+    // old html-stuff....
+    //this.start_dt=undefined;
+    //this.start_tm=undefined;
+    //this.end_p=undefined;
+    //this.end_m=undefined;
+    //this.end_dt=undefined;
+    //
+    this.lat=60.0;             // latitude
+    this.lng=10.0;             // longitude
+    this.lastLat=999;
+    this.lastLon=999;
+    this.updateCheck=false;    // auto load data
+    this.previousCheck=false;  // should we search for previous?
+    this.nextCheck=false;      // should we search for next?
+    this.endDt=1;              // time difference between start and end
+    this.playing=true;
+    this.speed=1.0;
     this.cost=0;
-    this.startDate=new Date();
-    this.endDt=1;
-    this.previousCheck=false;
-    this.nextCheck=false;
+    //
+    this.targetDate=new moment(); // current start date
+    this.targetSet=false;      // is a target time set?
+    this.targetTime=0;         // target time
+    this.targetId=undefined;   // target time event id
+    this.targetUpdate=this.targetDate.valueOf(); // last target time update
+    this.targetOffset=0;
+    //
+    this.drawAll=true;           // must redraw event list?
+    this.lastUpdate=new moment().valueOf()-10000000; // time of last update
     //
     this.visible={time:true,location:true,criteria:true,events:true};
     // 
@@ -88,23 +104,13 @@ function Astro() {
     this.MercTransitCheck=false;
     this.VenusTransitCheck=false;
     //
-    this.targetSet=false;
-    this.targetTime=0;
-    this.targetId=undefined;
-    this.lastLat=999;
-    this.lastLon=999;
-    this.targetUpdate=new Date().getTime()-10000000;
-    this.drawAll=true;
-    this.mapReady=false;
-
-    this.lastUpdate=new Date().getTime()-10000000;
     this.beep0s = new Audio("media/beep0s.mp3");
     this.beep1s = new Audio("media/beep1s.mp3");
     this.beep2s = new Audio("media/beep2s.mp3");
     this.beep3s = new Audio("media/beep3s.mp3");
     this.beep10s = new Audio("media/beep10s.mp3");
     this.beep1m = new Audio("media/beep1m.mp3");
-    this.lastTime=new Date().getTime();
+    this.lastTime=new moment().valueOf();
     this.lastCnt=0;
     this.dtime=1;
     this.documentLog = this.log;
@@ -115,7 +121,6 @@ function Astro() {
     this.window3D=undefined;
     this.map=undefined; //Will contain map object.
     this.marker=undefined; //Has the user plotted their location marker? 
-
     this.show=function(state,type) {
 	if (this.visible[type] === undefined) { this.visible[type]=false;}
 	return this.visible[type];
@@ -128,6 +133,39 @@ function Astro() {
     }.bind(this);
     this.init=function(state){
 	//state.Utils.init("Database",this);
+    };
+    this.isPlaying=function(state) {
+	return state.Astro.playing;
+    };
+    this.togglePlay=function(state) {
+	state.Astro.playing=! state.Astro.playing;
+    };
+    this.setSpeed=function(state,speed) {
+	state.Astro.speed=speed;
+	//console.log("Speed:",state.Astro.speed);
+    };
+    this.getSpeed=function(state) {
+	return state.Astro.speed;
+    };
+    this.rewind=function(state) {
+	return state.Astro.increment(state,-state.Astro.speed*1000);
+    };
+    this.forward=function(state) {
+	return state.Astro.increment(state,+state.Astro.speed*1000);
+    };
+    this.increment=function(state,dt) {
+	//console.log("Date:",state.Astro.targetDate);
+	state.Astro.targetDate=new moment(state.Astro.targetDate.valueOf()+dt);
+	return state.Astro.targetDate;
+    };
+    this.updateTime=function(state) {
+	var now=new moment().valueOf();
+	if (state.Astro.isPlaying(state)) {
+	    var doff=now-state.Astro.targetUpdate + state.Astro.targetOffset;
+	    state.Astro.increment(state,doff*state.Astro.speed);
+	};
+	state.Astro.targetUpdate=now;
+	return state.Astro.targetDate;
     };
     this.init_old=function() {
 	// read cookies
@@ -210,36 +248,39 @@ function Astro() {
 	this.checkEnd();
     }
     this.updateLoop=function(state) {
-	if (this.bdeb) {console.log("Updating database...");}
+	if (this.bdeb) {console.log("Updating Astro...");}
 	this.setTime(state);
 	setTimeout(function() {
 	    state.Astro.updateLoop(state)
-	},state.Astro.delay); //state.Database.delay
+	},state.Astro.delay);
     }.bind(this);
     this.setTime=function(state) {
-	var d = new Date();
-	var epoch=d.getTime();
+	var d = new moment();
+	var epoch=d.valueOf();
 	//console.log("Times:",epoch,this.epoch0);
 	if (this.epoch0 !== undefined) {
 	    var age = epoch - this.epoch0;
 	    this.mod=this.getTimeDiff(state,age);
-	    if (state.React !== undefined && state.React.Status !== undefined) {
-		state.React.Status.setAge(state,this.mod);
+	    if (state.React !== undefined && state.React.Events !== undefined) {
+		// update event timer...
+		state.React.Events.setAge(state,this.mod);
 		//console.log("Age:",epoch,this.epoch0,age);
 	    }
 	}
     };
-    this.getStartDate=function(state) {
-	return state.Astro.startDate;
+    this.getTargetDate=function(state) {
+	return state.Astro.targetDate;
     };
-    this.setStartDate=function(state,date) {
-	state.Astro.startDate=date;
+    this.setTargetDate=function(state,date) {
+	//console.log("setTargetDate:",date);
+	state.Astro.targetDate=date;
+	return state.Astro.targetDate;
     };
     this.setEndDt=function(state,dt) {
+	state.Astro.endDt=dt;
+    };
     this.getEndDt=function (state) {
 	return state.Astro.endDt;
-    };
-	state.Astro.endDt=dt;
     };
     this.getPrev=function(state) {
 	return state.Astro.previousCheck;
@@ -265,9 +306,9 @@ function Astro() {
     this.setLon=function(state,lon) {
 	state.Astro.lng=lon;
     };
-    this.setStartDateOld=function(target) {
-	var tzoffset = (new Date(target)).getTimezoneOffset() * 60000; //offset in milliseconds
-	var dtg=new Date(target - tzoffset).toISOString();
+    this.setTargetDateOld=function(target) {
+	var tzoffset = (new moment(target)).getTimezoneOffset() * 60000; //offset in milliseconds
+	var dtg=new moment(target - tzoffset).toISOString();
 	var d=dtg.substring(0,10);
 	var t=dtg.substring(11,19);
 	this.start_dt=d;
@@ -286,8 +327,8 @@ function Astro() {
 	if (this.rawData[id] === undefined) {
 	    documentTable.innerHTML="<em>No data available.</em>";
 	} else {
-	    var d=new Date();
-	    var tnow=d.getTime();
+	    var d=new moment();
+	    var tnow=d.valueOf();
 	    var cellCnt=4;
 	    var reportCnt=0;
 	    var documentReportCnt=documentTable.rows.length;
@@ -314,7 +355,7 @@ function Astro() {
 		var dataReport=this.rawData[id][jj];
 		var documentReport=documentTable.rows[reportCnt];
 		var documentCells=documentReport.cells;
-		var t=new Date(dataReport[0]);
+		var t=new moment(dataReport[0]);
 		var repid=dataReport[3];
 		if (this.drawAll) {
                     //console.log("Drawing buttons.");
@@ -373,7 +414,7 @@ function Astro() {
 	} else {
 	    this.targetSet=true;
 	    this.targetTime=tt;
-	    this.setStartDateOld(this.targetTime);
+	    this.setTargetDateOld(this.targetTime);
 	    this.setEndDate(this.targetTime);
 	    this.targetId=id;
 	}
@@ -382,7 +423,7 @@ function Astro() {
 	//console.log("Setting target to:"+tt+" "+this.targetSet);
 	this.targetSet=true;
 	this.targetTime=tt;
-	this.setStartDateOld(this.targetTime);
+	this.setTargetDateOld(this.targetTime);
 	this.setEndDate(this.targetTime);
 	this.targetId=id;
     }
@@ -444,15 +485,15 @@ function Astro() {
     this.dataToArray=function(data,status,id,documentLog) {
 	this.lastCnt=1;
 	if (status === "success") {
-	    var d=new Date();
-	    var tnow=d.getTime();
+	    var d=new moment();
+	    var tnow=d.valueOf();
 	    //console.log("Adding data to array-id="+id);
 	    if (this.rawData[id] === undefined) {
 		this.rawData[id]=[];
 	    }
 	    var cnt=0;
 	    var log="";
-	    this.targetUpdate=new Date("3000-01-01T00:00:00.000Z").getTime();
+	    this.targetUpdate=new moment("3000-01-01T00:00:00.000Z").valueOf();
 	    var events=data.getElementsByTagName("Event");
 	    var len=this.rawData[id].length;
 	    for (var ii = 0; ii < events.length; ii++) {
@@ -476,8 +517,8 @@ function Astro() {
 		    var error=report.getAttribute("error");
 		    if (error === null) {
 			var reportDtg=report.getAttribute("time");
-			var t=new Date(reportDtg);
-			var localDtg=t.getTime();
+			var t=new moment(reportDtg);
+			var localDtg=t.valueOf();
 			//console.log("Got date: "+reportDtg+" => "+localDtg);
 			if (localDtg > tnow) {
 			    if (this.targetUpdate < tnow || localDtg < this.targetUpdate ) {
@@ -716,8 +757,8 @@ function Astro() {
     // //Load the map when the page has finished loading.
     // google.maps.event.addDomListener(window, 'load', this.initMap);
     this.setCookie=function(cname, cvalue, exdays) {
-	var d = new Date();
-	d.setTime(d.getTime() + (exdays*24*60*60*1000));
+	var d = new moment();
+	d.setTime(d.valueOf() + (exdays*24*60*60*1000));
 	var expires = "expires="+d.toUTCString();
 	document.cookie = cname + "=" + cvalue + "; " + expires;
     }
@@ -733,8 +774,8 @@ function Astro() {
     } 
     this.countdown=function() {
 	if (this.initialise) {this.init();this.initialise=false;}
-	var d=new Date();
-	var tnow=d.getTime();
+	var d=new moment();
+	var tnow=d.valueOf();
 	var updateData = this.updateCheck;
 	// load position + load data
 	if (this.updateData && (tnow-this.lastUpdate) > 10000*this.lastCnt && 
@@ -766,7 +807,7 @@ function Astro() {
 	}
 	if (! this.targetSet) {
 	    tnow=Date.now();
-	    this.setStartDateOld(tnow);
+	    this.setTargetDateOld(tnow);
 	    this.setEndDate(tnow);
 	}
 	var documentTable = this.dataTable;
@@ -803,9 +844,9 @@ function Astro() {
 	    this.setEndDate(Date.now());
 	}
     }
-    this.setStartDateOld=function(target) {
-	var tzoffset = (new Date(target)).getTimezoneOffset() * 60000; //offset in milliseconds
-	var dtg=new Date(target - tzoffset).toISOString();
+    this.setTargetDateOld=function(target) {
+	var tzoffset = (new moment(target)).getTimezoneOffset() * 60000; //offset in milliseconds
+	var dtg=new moment(target - tzoffset).toISOString();
 	var d=dtg.substring(0,10);
 	var t=dtg.substring(11,19);
 	this.start_dt=d;
@@ -817,19 +858,19 @@ function Astro() {
     this.startblur=function() {
 	this.targetSet=true;
 	var dtg=this.start_dt+"T"+this.start_tm+"Z"
-	var tzoffset = (new Date(dtg)).getTimezoneOffset() * 60000; //offset in milliseconds
-	this.targetTime=new Date(dtg).getTime()+tzoffset;
+	var tzoffset = (new moment(dtg)).getTimezoneOffset() * 60000; //offset in milliseconds
+	this.targetTime=new moment(dtg).valueOf()+tzoffset;
 	this.setEndDate(this.targetTime);
     }
     this.setEndDate=function(target) {
-	var tzoffset = (new Date(target)).getTimezoneOffset() * 60000; //offset in milliseconds
-	var dtg=new Date(target - tzoffset + this.dtime*86400000).toISOString();
+	var tzoffset = (new moment(target)).getTimezoneOffset() * 60000; //offset in milliseconds
+	var dtg=new moment(target - tzoffset + this.dtime*86400000).toISOString();
 	var d=dtg.substring(0,10);
 	this.end_dt=d;
     }
     this.getData=function() {
-	var d=new Date();
-	var tnow=d.getTime();
+	var d=new moment();
+	var tnow=d.valueOf();
 	this.targetUpdate=tnow-1000;
 	//var pos = new geoloc(this.lat, 
 	//		     this.lng); 
@@ -883,8 +924,8 @@ function Astro() {
     }
     this.setPositionData=function(position) {
 	this.setPosition(position);
-	var d=new Date();
-	var tnow=d.getTime();
+	var d=new moment();
+	var tnow=d.valueOf();
 	var newpos=this.isNewPos(position.coords.latitude,position.coords.longitude);
 	//console.log("Got position."+this.targetUpdate+"  "+tnow);
 	if (newpos || this.targetUpdate < tnow) {
@@ -901,37 +942,37 @@ function Astro() {
 	    if(this.previousCheck) {
 		if (this.nextCheck) {
 		    if (replace) {
-			req.addStartTime("",new Date(requestTime).toISOString());
+			req.addStartTime("",new moment(requestTime).toISOString());
 			req.addSearch("",0);
 		    } else { // add
-			req.addStartTime("",new Date(requestTime).toISOString());
+			req.addStartTime("",new moment(requestTime).toISOString());
 			req.addSearch("",-2);
 		    }
 		} else {
 		    if (replace) {
-			req.addStartTime("",new Date(requestTime).toISOString());
+			req.addStartTime("",new moment(requestTime).toISOString());
 			req.addSearch("",-1);
 		    } else { // add
-			req.addStartTime("",new Date(requestTime-1000).toISOString());
+			req.addStartTime("",new moment(requestTime-1000).toISOString());
 			req.addSearch("",-1);
 		    }
 		}
 	    } else if (this.nextCheck) {
 		if (replace) {
-		    req.addStartTime("",new Date(requestTime).toISOString());
+		    req.addStartTime("",new moment(requestTime).toISOString());
 		    req.addSearch("",1);
 		} else { // add
-		    req.addStartTime("",new Date(requestTime+1000).toISOString());
+		    req.addStartTime("",new moment(requestTime+1000).toISOString());
 		    req.addSearch("",1);
 		}
 	    } else { // time interval...
 		if (replace) {
-		    req.addStartTime("",new Date(requestTime).toISOString());
-		    req.addStopTime("",new Date(requestTime+this.dtime*86400000).toISOString());
+		    req.addStartTime("",new moment(requestTime).toISOString());
+		    req.addStopTime("",new moment(requestTime+this.dtime*86400000).toISOString());
 		    req.addSearch("",2);
 		} else {
-		    req.addStartTime("",new Date(requestTime+1000).toISOString());
-		    req.addStopTime("",new Date(requestTime+1000+this.dtime*86400000).toISOString());
+		    req.addStartTime("",new moment(requestTime+1000).toISOString());
+		    req.addStopTime("",new moment(requestTime+1000+this.dtime*86400000).toISOString());
 		    req.addSearch("",2);
 		}
 	    }
@@ -1025,9 +1066,9 @@ function Astro() {
     this.launch3D=function(dtg) {
 	if (dtg === undefined) {
 	    if (this.targetSet) {
-		dtg=new Date(this.targetTime).toISOString();
+		dtg=new moment(this.targetTime).toISOString();
 	    } else {
-		dtg = new Date().toISOString();
+		dtg = new moment().toISOString();
 	    }
 	}
 	var hrs;

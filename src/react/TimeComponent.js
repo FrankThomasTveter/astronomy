@@ -4,9 +4,7 @@ import PropTypes from  "prop-types";
 import Draggable from 'react-draggable'; // Both at the same time
 
 import moment from 'moment';
-import DatePicker from 'react-datepicker';
 import DateTime from 'react-datetime';
-import 'react-datepicker/dist/react-datepicker.css';
 import 'react-datetime/css/react-datetime.css';
 import TimePicker from "rc-time-picker";
 import 'rc-time-picker/assets/index.css';
@@ -28,6 +26,15 @@ const styles = theme => ({
 });
 //        maxWidth: theme.spacing.getMaxWidth.maxWidth,
 
+function PlayOrPauseIcon(props) {
+    const {state}=props;
+    if (state.Astro.isPlaying(state)) {
+	return <PlayIcon/>;
+    } else {
+	return <PauseIcon/>;
+    };
+};
+
 class Time extends Component {
     constructor(props) {
 	super(props);
@@ -38,8 +45,7 @@ class Time extends Component {
 	this.openDate = this.openDate.bind(this);
 	this.show=this.show.bind(this);
 	this.changeSpeed=this.changeSpeed.bind(this);
-	this.state={startDate: state.Astro.getStartDate(state), // new Date(),
-		    speed:1};
+	this.state={speed:state.Astro.getSpeed(state)};
     };
     show(state) {
 	this.forceUpdate();
@@ -59,19 +65,32 @@ class Time extends Component {
 	this.setState({ open: true, currentView: "days" });
     };
     changeSpeed(e){
-	this.setState({ speed:e.target.value });
+        const {state} = this.props;
+	var speed=e.target.value;
+	this.setState({ speed:speed });
+	state.Astro.setSpeed(state,speed);
     };
     handleChildClick(e) {
 	e.stopPropagation();
-	console.log('child');
+	//console.log('Stopped propagation from child');
     };
     render() {
-        const { classes, state, layout } = this.props;
-	var setStartDate=function(date){
-            this.setState({
-		startDate: date //)moment(date).format(this.frm)
-            });
-	    state.Astro.setStartDate(state,this.state.startDate);
+        const { classes, state, layout, target, setTarget } = this.props;
+	var setTargetDate=function(date){
+            const { setTarget } = this.props;
+	    setTarget(state,date);
+	}.bind(this);
+	var forward=function(state) {
+            const { setTarget } = this.props;
+	    setTarget(state,state.Astro.forward(state))
+	}.bind(this);
+	var rewind=function(state) {
+            const { setTarget } = this.props;
+	    setTarget(state,state.Astro.rewind(state))
+	}.bind(this);
+	var togglePlay=function(state) {
+	    state.Astro.togglePlay(state);
+	    this.show(state);
 	}.bind(this);
 	var setEndDt=function(dt){
 	    this.setState({
@@ -89,81 +108,63 @@ class Time extends Component {
 	} else {
 	    visible="hidden";
 	};
+	//console.log("Target:",target);
         return (
-	   <Draggable key="time"
-	    onnDrag={(e, data) => this.trackPos(data)}
-	    onStart={this.handleStart}
-	    onStop={this.handleEnd}>
-		<div onClick={this.openDate}
-			      className={classes.block} 
-			      style={{visibility:visible}}>
-		<fieldset className={classes.field}>
-		<legend className={classes.legend}><small>time</small></legend>
-		<div onMouseDown={this.handleChildClick} style={{color:"black",width:"100%",display:"flex", justifyContent:"space-between"}}>
-		<DateTime
-		    dateFormat="YYYY-MM-DD"
-		    timeFormat="HH:mm:ss"
-		    inputProps={{ disabled: false }}
-		    value={this.state.startDate}
-		    onChange={setStartDate}
-	            onClick={this.handleChildClick}
-	            isValidDate={current => current.isAfter(moment().subtract(1, "days"))}
-		/>
-		</div>
-		<div onMouseDown={this.handleChildClick} style={{width:"100%",display:"flex", justifyContent:"space-between"}}>
-		<button
-	    className={classes.button}
-            onClick={function(e) {console.log("Clicked me");}.bind(this)}
-	    title={"Rewind"}
-	    disabled={false}> <FastRewindIcon/> </button>
-		<button
-	    className={classes.button}
-            onClick={function(e) {console.log("Clicked me");}.bind(this)}
-	    title={"Play"}
-	    disabled={false}> <PlayIcon/> </button>
-		<button
-	    className={classes.button}
-            onClick={function(e) {console.log("Clicked me");}.bind(this)}
-	    title={"Forward"}
-	    disabled={false}> <FastForwardIcon/> </button>
-		<select defaultValue={this.state.speed} onChange={this.changeSpeed}>
-		<option value="1">Sec/Sec</option>
-		<option value="60">Min/Sec</option>
-		<option value="3600">Hour/Sec</option>
-		<option value="86040">Day/Sec</option>
-		</select>
-		</div>
-		</fieldset>
-	    </div>
-	   </Draggable>
+	  <Draggable key="time"
+	     onnDrag={(e, data) => this.trackPos(data)}
+	     onStart={this.handleStart}
+	     onStop={this.handleEnd}>
+	   <div onClick={this.openDate}
+	      className={classes.block} 
+	      style={{visibility:visible}}>
+	    <fieldset className={classes.field}>
+	      <legend className={classes.legend}><small>time</small></legend>
+	      <div onMouseDown={this.handleChildClick}
+	       style={{color:"black",
+		    width:"100%",
+		    display:"flex",
+		    justifyContent:"space-between"}}>
+   	       <DateTime
+	        dateFormat="YYYY-MM-DD"
+	        timeFormat="HH:mm:ss"
+	        inputProps={{ disabled: false }}
+	        value={target}
+	        onChange={setTargetDate}
+	        onClick={this.handleChildClick}
+	       />
+	      </div>
+	      <div onMouseDown={this.handleChildClick}
+	         style={{width:"100%",
+		    display:"flex",
+		    justifyContent:"space-between"}}>
+	       <button
+	         className={classes.button}
+                 onClick={function(e) {rewind(state);}.bind(this)}
+	         title={"Rewind"}
+	         disabled={false}> <FastRewindIcon/> </button>
+	       <button
+	          className={classes.button}
+                  onClick={function(e) {togglePlay(state);}.bind(this)}
+	          title={"Play"}
+	          disabled={false}> <PlayOrPauseIcon state={state}/> </button>
+	       <button
+	          className={classes.button}
+                  onClick={function(e) {forward(state)}.bind(this)}
+		  title={"Forward"}
+	          disabled={false}> <FastForwardIcon/> </button>
+	       <select defaultValue={this.state.speed} onChange={this.changeSpeed}>
+	         <option value="1">Sec/Sec</option>
+	         <option value="60">Min/Sec</option>
+	         <option value="3600">Hour/Sec</option>
+	         <option value="86400">Day/Sec</option>
+	       </select>
+	      </div>
+	    </fieldset>
+	   </div>
+	  </Draggable>
 	);
     }
 };
-	    // 	<Picker
-            // value={moment(this.state.startDate,this.frm)}
-	    // 	/>
-
-	    // allowEmpty={false}
-            // onChange={this.handleTime}
-            // showSecond={true}
-	    // use12Hours={false}
-	    // format={this.frm}
-// disabled={false}
-// 	            disableToolbar={true}
-
-	    	// <MuiPickersUtilsProvider utils={DateFnsUtils}>
-		// <DateTimePicker
-	        //     ampm={false}
-		//     label="Time"
-		//     clearable
-	        //     hideTabs={true}
-		//     inputVariant="outlined"
-	        //     format="yyyy/mm/dd hh:mm:ss"
-		//     value={this.state.startDate}
-		//     onChange={this.handleTime}
-		//     helperText="Clear Initial State"
-	    	// 	/>
-	     	// </MuiPickersUtilsProvider>
 
 Time.propTypes = {
     classes: PropTypes.object.isRequired,
