@@ -92,20 +92,20 @@ class Events extends Component {
 	    visible="hidden";
 	};
         return (
-		<Draggable key="events">
+		<Draggable key="events" bounds="parent">
 		    <div  className={classes.block} style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>events</small></legend>
 		<div onMouseDown={this.handleChildClick} style={{color:'black',width:"100%",display:"flex", justifyContent:"space-between", alignItems:'center'}}>
+		<button
+	          className={classes.button}
+                  onClick={function() {console.log("Clicked me");}}
+	          title={"Reload events"}
+	          disabled={false}> <ReloadIcon/> </button>
 		<input name="prev" type="checkbox" defaultChecked={! this.state.prev} onTouchEnd={togglePrev} onClick={togglePrev}/><label>Prev</label>
 		<input name="next" type="checkbox" defaultChecked={! this.state.next} onTouchEnd={toggleNext} onClick={toggleNext}/><label>Next</label>
 		<ToTime parent={this} state={state} classes={classes} style={{marginLeft:"auto", marginRight:"0"}}/>
 		<input name="auto" type="checkbox" defaultChecked={! this.state.next} onTouchEnd={toggleNext} onClick={toggleNext}/><label>Auto</label>
-		<button
-	    className={classes.button}
-            onClick={function() {console.log("Clicked me");}}
-	    title={"Reload events"}
-	    disabled={false}> <ReloadIcon/> </button>
 		</div>
 	    </fieldset>
 		    </div>

@@ -25,22 +25,123 @@ function Astro() {
     this.previousCheck=false;  // should we search for previous?
     this.nextCheck=false;      // should we search for next?
     this.endDt=1;              // time difference between start and end
-    this.playing=true;
     this.speed=1.0;
     this.cost=0;
+    this.delay=500;
     //
-    this.targetDate=new moment(); // current start date
     this.targetSet=false;      // is a target time set?
-    this.targetTime=0;         // target time
     this.targetId=undefined;   // target time event id
-    this.targetUpdate=this.targetDate.valueOf(); // last target time update
-    this.targetOffset=0;
-    //
+    this.targetTime=new moment().valueOf();   // target time is now
+    this.targetUpdate=this.targetTime;        // last target time update
+    this.playing=true;
+    // offset=target-now
+    // target=target0+dt
+    // dt0 =  now-target0+offset
+    // dt=dt0*speed
+    // offset1=target-now=target0+dt-now=target0+dt0*speed-now
+    //        = target0 + (now-target0+offset)*speed - now
+    // target2 = offset1+now ^ offset2=0;
     this.drawAll=true;           // must redraw event list?
     this.lastUpdate=new moment().valueOf()-10000000; // time of last update
     //
     this.visible={time:true,location:true,criteria:true,events:true};
-    // 
+    //
+    this.nodes=[
+	{value:"Sun",label:"Sun",children: [
+	    { value:"SunDiurnal", label:"Diurnal effects",children:[
+		{value: "sunRiseCheck",label:"Rise"},
+		{value: "sunSetCheck",label:"Set"},
+		{value: "sunEleMaxCheck",label:"Max elevation"},
+		{value: "sunEleMinCheck",label:"Min elevation"},
+		{value: "civilCheck",label:"Civil Twilight"},
+		{value: "nauticalCheck",label:"Nautical Twilight"},
+		{value: "astronomicalCheck",label:"Astronomical Twilight"},
+		{value: "nightCheck",label:"Night"}
+	    ]},
+	    { value:"SunOrbit", label:"Orbital effects",children:[
+		{value: "sunEclipseCheck",label:"Solar eclipse"},
+		{value: "SouthSolsticeCheck",label:"Southern solstice"},
+		{value: "AscSolarEquinoxCheck",label:"Ascending equinox"},
+		{value: "NorthSolsticeCheck",label:"Northern solstice"},
+		{value: "DescSolarEquinoxCheck",label:"Descending equinox"},
+		{value: "EarthPerihelionCheck",label:"Periheilion"},
+		{value: "EarthAphelionCheck",label:"Aphelion"}
+	    ]},
+	    { value:"SunPolar", label:"Polar effects",children:[
+		{value: "polarDayStartCheck",label:"Polar day start"},
+		{value: "polarDayStopCheck",label:"Polar day stop"},
+		{value: "polarNightStartCheck",label:"Polar night start"},
+		{value: "polarNightStopCheck",label:"Polar night stop"}
+	    ]}
+	]},
+	{value:"Moon",label:"Moon",children: [
+	    { value:"MoonDiurnal", label:"Diurnal effects",children:[
+		{value: "moonRiseCheck",label:"Rise"},
+		{value: "moonSetCheck",label:"Set"},
+		{value: "moonEleMaxCheck",label:"Max elevation"},
+		{value: "moonEleMinCheck",label:"Min elevation"},
+	    ]},
+	    { value:"MoonPhase", label:"Phase effects",children:[
+		{value: "MoonNewCheck",label:"New moon"},
+		{value: "MoonFirstQuartCheck",label:"First quarter"},
+		{value: "MoonFullCheck",label:"Full moon"},
+		{value: "MoonLastQuartCheck",label:"Last quarter"},
+		{value: "MoonIllMinCheck",label:"Min illumination"},
+		{value: "MoonIllMaxCheck",label:"Max illumination"},
+	    ]},
+	    { value:"MoonOrbit", label:"Orbital effects",children:[
+		{value: "SouthLunasticeCheck",label:"Southern lunastice"},
+		{value: "AscLunarEquinoxCheck",label:"Ascending moon"},
+		{value: "NorthLunasticeCheck",label:"Northern lunastice"},
+		{value: "DescLunarEquinoxCheck",label:"Descending moon"},
+		{value: "MoonPerigeeCheck",label:"Perigee"},
+		{value: "MoonApogeeCheck",label:"Apogee"},
+		{value: "LunarEclipseMinMaxCheck",label:"Eclipse"}
+	    ]},
+	    { value:"MoonPolar", label:"Polar effects",children:[
+
+		{value: "lunarDayStartCheck",label:"Lunar day start"},
+		{value: "lunarDayStopCheck",label:"Lunar day stop"},
+		{value: "lunarNightStartCheck",label:"Lunar night start"},
+		{value: "lunarNightStopCheck",label:"Lunar night stop"}
+	    ]}
+	]},
+	{value:"Planets",label:"Planets",children: [
+	    { value:"Mercury", label:"Mercury",children:[
+		{value: "MercInfConjCheck",label:"Inferior conjunction"},
+		{value: "MercSupConjCheck",label:"Superior conjunction"},
+		{value: "MercWestElongCheck",label:"Western elongation"},
+		{value: "MercEastElongCheck",label:"Eastern elongation"},
+		{value: "MercTransitCheck",label:"Transig"},
+	    ]},
+	    { value:"Venus", label:"Venus",children:[
+		{value: "VenusInfConjCheck",label:"Inferior conjunction"},
+		{value: "VenusSupConjCheck",label:"Superior conjunction"},
+		{value: "VenusWestElongCheck",label:"Western elongation"},
+		{value: "VenusEastElongCheck",label:"Eastern elongation"},
+		{value: "VenusTransitCheck", label:"Transit"}
+	    ]},
+	    { value:"Mars", label:"Mars",children:[
+		{value: "MarsConjCheck",label:"Conjunction"},
+		{value: "MarsWestQuadCheck",label:"Western quadrature"},
+		{value: "MarsOppCheck",label:"Opposition"},
+		{value: "MarsEastQuadCheck",label:"Eastern quadrature"},
+	    ]},
+	    { value:"Jupiter", label:"Jupiter",children:[
+		{value: "JupiterConjCheck",label:"Conjunction"},
+		{value: "JupiterWestQuadCheck",label:"Western quadrature"},
+		{value: "JupiterOppCheck",label:"Opposition"},
+		{value: "JupiterEastQuadCheck",label:"Eastern quadrature"},
+	    ]},
+	    { value:"Saturn", label:"Saturn",children:[
+		{value: "SaturnConjCheck",label:"Conjunction"},
+		{value: "SaturnWestQuadCheck",label:"Western quadrature"},
+		{value: "SaturnOppCheck",label:"Opposition"},
+		{value: "SaturnEastQuadCheck",label:"Eastern quadrature"},
+	    ]}
+	]}
+    ];
+    this.criteria={};
     this.sunRiseCheck=false;
     this.sunSetCheck=false;
     this.sunEleMaxCheck=false;
@@ -138,9 +239,17 @@ function Astro() {
 	return state.Astro.playing;
     };
     this.togglePlay=function(state) {
-	state.Astro.playing=! state.Astro.playing;
+	var now=new moment().valueOf();
+	if (state.Astro.isPlaying(state)) { // stop clock
+	    this.updateTime(state);
+	    state.Astro.playing=false;
+	} else { // start clock
+	    state.Astro.targetUpdate=now;
+	    state.Astro.playing=true;
+	};
     };
     this.setSpeed=function(state,speed) {
+	this.updateTime(state);
 	state.Astro.speed=speed;
 	//console.log("Speed:",state.Astro.speed);
     };
@@ -148,134 +257,69 @@ function Astro() {
 	return state.Astro.speed;
     };
     this.rewind=function(state) {
-	return state.Astro.increment(state,-state.Astro.speed*1000);
+	state.Astro.increment(state,-state.Astro.speed*1000);
     };
     this.forward=function(state) {
-	return state.Astro.increment(state,+state.Astro.speed*1000);
+	state.Astro.increment(state,+state.Astro.speed*1000);
     };
     this.increment=function(state,dt) {
-	//console.log("Date:",state.Astro.targetDate);
-	state.Astro.targetDate=new moment(state.Astro.targetDate.valueOf()+dt);
-	return state.Astro.targetDate;
+	state.Astro.targetTime=state.Astro.targetTime+dt;
     };
-    this.updateTime=function(state) {
-	var now=new moment().valueOf();
-	if (state.Astro.isPlaying(state)) {
-	    var doff=now-state.Astro.targetUpdate + state.Astro.targetOffset;
-	    state.Astro.increment(state,doff*state.Astro.speed);
-	};
-	state.Astro.targetUpdate=now;
-	return state.Astro.targetDate;
-    };
-    this.init_old=function() {
-	// read cookies
-	var masterCookie=this.getCookie("cookieCheck");
-	if ( masterCookie === "t") {
-	    this.updateCheck =(this.getCookie("updateCheck") === "t");
-	    this.previousCheck = (this.getCookie("previousCheck") === "t");
-	    this.nextCheck = (this.getCookie("nextCheck") === "t");
-	    this.sunRiseCheck = (this.getCookie("sunRiseCheck") === "t");
-	    this.sunSetCheck = (this.getCookie("sunSetCheck") === "t");
-	    this.sunEleMaxCheck = (this.getCookie("sunEleMaxCheck") === "t");
-	    this.sunEleMinCheck = (this.getCookie("sunEleMinCheck") === "t");
-	    this.civilCheck = (this.getCookie("civilCheck") === "t");
-	    this.nauticalCheck = (this.getCookie("nauticalCheck") === "t");
-	    this.astronomicalCheck = (this.getCookie("astronomicalCheck") === "t");
-	    this.nightCheck = (this.getCookie("nightCheck") === "t");
-	    this.polarDayStartCheck = (this.getCookie("polarDayStartCheck") === "t");
-	    this.polarDayStopCheck = (this.getCookie("polarDayStopCheck") === "t");
-	    this.polarNightStartCheck = (this.getCookie("polarNightStartCheck") === "t");
-	    this.polarNightStopCheck = (this.getCookie("polarNightStopCheck") === "t");
-	    this.sunEclipseCheck = (this.getCookie("sunEclipseCheck") === "t");
-	    this.moonRiseCheck = (this.getCookie("moonRiseCheck") === "t");
-	    this.moonSetCheck = (this.getCookie("moonSetCheck") === "t");
-	    this.moonEleMaxCheck = (this.getCookie("moonEleMaxCheck") === "t");
-	    this.moonEleMinCheck = (this.getCookie("moonEleMinCheck") === "t");
-	    // this.lunarDayStartCheck = (this.getCookie("lunarDayStartCheck") === "t");
-	    // this.lunarDayStopCheck = (this.getCookie("lunarDayStopCheck") === "t");
-	    // this.lunarNightStartCheck = (this.getCookie("lunarNightStartCheck") === "t");
-	    // this.lunarNightStopCheck = (this.getCookie("lunarNightStopCheck") === "t");
-	    this.MoonNewCheck = (this.getCookie("MoonNewCheck") === "t");
-	    this.MoonFirstQuartCheck = (this.getCookie("MoonFirstQuartCheck") === "t");
-	    this.MoonFullCheck = (this.getCookie("MoonFullCheck") === "t");
-	    this.MoonLastQuartCheck = (this.getCookie("MoonLastQuartCheck") === "t");
-	    this.MoonIllMinCheck = (this.getCookie("MoonIllMinCheck") === "t");
-	    this.MoonIllMaxCheck = (this.getCookie("MoonIllMaxCheck") === "t");
-	    this.SouthLunasticeCheck = (this.getCookie("SouthLunasticeCheck") === "t");
-	    this.AscLunarEquinoxCheck = (this.getCookie("AscLunarEquinoxCheck") === "t");
-	    this.NorthLunasticeCheck = (this.getCookie("NorthLunasticeCheck") === "t");
-	    this.DescLunarEquinoxCheck = (this.getCookie("DescLunarEquinoxCheck") === "t");
-	    this.MoonPerigeeCheck = (this.getCookie("MoonPerigeeCheck") === "t");
-	    this.MoonApogeeCheck = (this.getCookie("MoonApogeeCheck") === "t");
-	    this.LunarEclipseMinMaxCheck = (this.getCookie("LunarEclipseMinMaxCheck") === "t");
-	    this.SouthSolsticeCheck = (this.getCookie("SouthSolsticeCheck") === "t");
-	    this.AscSolarEquinoxCheck = (this.getCookie("AscSolarEquinoxCheck") === "t");
-	    this.NorthSolsticeCheck = (this.getCookie("NorthSolsticeCheck") === "t");
-	    this.DescSolarEquinoxCheck = (this.getCookie("DescSolarEquinoxCheck") === "t");
-	    this.EarthPerihelionCheck = (this.getCookie("EarthPerihelionCheck") === "t");
-	    this.EarthAphelionCheck = (this.getCookie("EarthAphelionCheck") === "t");
-	    this.MercTransitCheck = (this.getCookie("MercTransitCheck") === "t");
-	    this.VenusTransitCheck = (this.getCookie("VenusTransitCheck") === "t");
-	    this.MercInfConjCheck = (this.getCookie("MercInfConjCheck") === "t");
-	    this.MercSupConjCheck = (this.getCookie("MercSupConjCheck") === "t");
-	    this.MercWestElongCheck = (this.getCookie("MercWestElongCheck") === "t");
-	    this.MercEastElongCheck = (this.getCookie("MercEastElongCheck") === "t");
-	    this.VenusInfConjCheck = (this.getCookie("VenusInfConjCheck") === "t");
-	    this.VenusSupConjCheck = (this.getCookie("VenusSupConjCheck") === "t");
-	    this.VenusWestElongCheck = (this.getCookie("VenusWestElongCheck") === "t");
-	    this.VenusEastElongCheck = (this.getCookie("VenusEastElongCheck") === "t");
-	    this.MarsConjCheck = (this.getCookie("MarsConjCheck") === "t");
-	    this.MarsWestQuadCheck = (this.getCookie("MarsWestQuadCheck") === "t");
-	    this.MarsOppCheck = (this.getCookie("MarsOppCheck") === "t");
-	    this.MarsEastQuadCheck = (this.getCookie("MarsEastQuadCheck") === "t");
-	    this.JupiterConjCheck = (this.getCookie("JupiterConjCheck") === "t");
-	    this.JupiterWestQuadCheck = (this.getCookie("JupiterWestQuadCheck") === "t");
-	    this.JupiterOppCheck = (this.getCookie("JupiterOppCheck") === "t");
-	    this.JupiterEastQuadCheck = (this.getCookie("JupiterEastQuadCheck") === "t");
-	    this.SaturnConjCheck = (this.getCookie("SaturnConjCheck") === "t");
-	    this.SaturnWestQuadCheck = (this.getCookie("SaturnWestQuadCheck") === "t");
-	    this.SaturnOppCheck = (this.getCookie("SaturnOppCheck") === "t");
-	    this.SaturnEastQuadCheck = (this.getCookie("SaturnEastQuadCheck") === "t");
-	    var lat=this.getCookie("latitudeCheck");
-	    var lng=this.getCookie("longitudeCheck");
-	    if (lat !== "" && lng !== "") {
-		this.lat=lat;
-		this.lng=lng;
-		this.positionIsSet=true;
-	    }
-	    this.updateCost(0);
-	}
-	this.checkEnd();
-    }
     this.updateLoop=function(state) {
 	if (this.bdeb) {console.log("Updating Astro...");}
-	this.setTime(state);
+	if (state.Astro.isPlaying(state)) {
+	    this.updateTime(state);
+	    state.Show.showTime(state);
+	    state.Show.showEvents(state);
+	};
 	setTimeout(function() {
 	    state.Astro.updateLoop(state)
 	},state.Astro.delay);
     }.bind(this);
-    this.setTime=function(state) {
-	var d = new moment();
-	var epoch=d.valueOf();
-	//console.log("Times:",epoch,this.epoch0);
-	if (this.epoch0 !== undefined) {
-	    var age = epoch - this.epoch0;
-	    this.mod=this.getTimeDiff(state,age);
-	    if (state.React !== undefined && state.React.Events !== undefined) {
-		// update event timer...
-		state.React.Events.setAge(state,this.mod);
-		//console.log("Age:",epoch,this.epoch0,age);
-	    }
-	}
+    this.updateTime=function(state) {
+	var now=new moment().valueOf();
+	if (state.Astro.isPlaying(state)) {
+	    var doff=now-state.Astro.targetUpdate;
+	    state.Astro.increment(state,doff*state.Astro.speed);
+	    state.Astro.targetUpdate=now;
+	};
+	return state.Astro.targetDate;
     };
     this.getTargetDate=function(state) {
-	return state.Astro.targetDate;
+	return new moment(state.Astro.targetTime);
     };
     this.setTargetDate=function(state,date) {
-	//console.log("setTargetDate:",date);
-	state.Astro.targetDate=date;
-	return state.Astro.targetDate;
+	if (date!==undefined) {
+	    state.Astro.targetTime=date.valueOf();
+	    state.Astro.targetUpdate=new moment().valueOf();
+	};
     };
+
+    this.getCriteria=function(state) {
+	return state.Astro.nodes;
+    };
+    this.getExpanded=function(state) {
+	return state.Astro.criteria;
+    };
+    this.setChecked=function(state,checked) {
+	console.log("Criteria:",JSON.stringify(checked));
+    };
+    //
+    // this.updateTime=function(state) {
+    // 	var d = new moment();
+    // 	var epoch=d.valueOf();
+    // 	//console.log("Times:",epoch,this.epoch0);
+    // 	if (this.epoch0 !== undefined) {
+    // 	    var age = epoch - this.epoch0;
+    // 	    this.mod=this.getTimeDiff(state,age);
+    // 	    if (state.React !== undefined && state.React.Events !== undefined) {
+    // 		// update event timer...
+    // 		state.React.Events.setAge(state,this.mod);
+    // 		//console.log("Age:",epoch,this.epoch0,age);
+    // 	    }
+    // 	};
+    // 	state.Show.
+    // };
     this.setEndDt=function(state,dt) {
 	state.Astro.endDt=dt;
     };
@@ -1141,6 +1185,86 @@ function Astro() {
 	    ret=0.5;
 	}
 	return ret;
+    }
+    this.init_old=function() {
+	// read cookies
+	var masterCookie=this.getCookie("cookieCheck");
+	if ( masterCookie === "t") {
+	    this.updateCheck =(this.getCookie("updateCheck") === "t");
+	    this.previousCheck = (this.getCookie("previousCheck") === "t");
+	    this.nextCheck = (this.getCookie("nextCheck") === "t");
+	    this.sunRiseCheck = (this.getCookie("sunRiseCheck") === "t");
+	    this.sunSetCheck = (this.getCookie("sunSetCheck") === "t");
+	    this.sunEleMaxCheck = (this.getCookie("sunEleMaxCheck") === "t");
+	    this.sunEleMinCheck = (this.getCookie("sunEleMinCheck") === "t");
+	    this.civilCheck = (this.getCookie("civilCheck") === "t");
+	    this.nauticalCheck = (this.getCookie("nauticalCheck") === "t");
+	    this.astronomicalCheck = (this.getCookie("astronomicalCheck") === "t");
+	    this.nightCheck = (this.getCookie("nightCheck") === "t");
+	    this.polarDayStartCheck = (this.getCookie("polarDayStartCheck") === "t");
+	    this.polarDayStopCheck = (this.getCookie("polarDayStopCheck") === "t");
+	    this.polarNightStartCheck = (this.getCookie("polarNightStartCheck") === "t");
+	    this.polarNightStopCheck = (this.getCookie("polarNightStopCheck") === "t");
+	    this.sunEclipseCheck = (this.getCookie("sunEclipseCheck") === "t");
+	    this.moonRiseCheck = (this.getCookie("moonRiseCheck") === "t");
+	    this.moonSetCheck = (this.getCookie("moonSetCheck") === "t");
+	    this.moonEleMaxCheck = (this.getCookie("moonEleMaxCheck") === "t");
+	    this.moonEleMinCheck = (this.getCookie("moonEleMinCheck") === "t");
+	    // this.lunarDayStartCheck = (this.getCookie("lunarDayStartCheck") === "t");
+	    // this.lunarDayStopCheck = (this.getCookie("lunarDayStopCheck") === "t");
+	    // this.lunarNightStartCheck = (this.getCookie("lunarNightStartCheck") === "t");
+	    // this.lunarNightStopCheck = (this.getCookie("lunarNightStopCheck") === "t");
+	    this.MoonNewCheck = (this.getCookie("MoonNewCheck") === "t");
+	    this.MoonFirstQuartCheck = (this.getCookie("MoonFirstQuartCheck") === "t");
+	    this.MoonFullCheck = (this.getCookie("MoonFullCheck") === "t");
+	    this.MoonLastQuartCheck = (this.getCookie("MoonLastQuartCheck") === "t");
+	    this.MoonIllMinCheck = (this.getCookie("MoonIllMinCheck") === "t");
+	    this.MoonIllMaxCheck = (this.getCookie("MoonIllMaxCheck") === "t");
+	    this.SouthLunasticeCheck = (this.getCookie("SouthLunasticeCheck") === "t");
+	    this.AscLunarEquinoxCheck = (this.getCookie("AscLunarEquinoxCheck") === "t");
+	    this.NorthLunasticeCheck = (this.getCookie("NorthLunasticeCheck") === "t");
+	    this.DescLunarEquinoxCheck = (this.getCookie("DescLunarEquinoxCheck") === "t");
+	    this.MoonPerigeeCheck = (this.getCookie("MoonPerigeeCheck") === "t");
+	    this.MoonApogeeCheck = (this.getCookie("MoonApogeeCheck") === "t");
+	    this.LunarEclipseMinMaxCheck = (this.getCookie("LunarEclipseMinMaxCheck") === "t");
+	    this.SouthSolsticeCheck = (this.getCookie("SouthSolsticeCheck") === "t");
+	    this.AscSolarEquinoxCheck = (this.getCookie("AscSolarEquinoxCheck") === "t");
+	    this.NorthSolsticeCheck = (this.getCookie("NorthSolsticeCheck") === "t");
+	    this.DescSolarEquinoxCheck = (this.getCookie("DescSolarEquinoxCheck") === "t");
+	    this.EarthPerihelionCheck = (this.getCookie("EarthPerihelionCheck") === "t");
+	    this.EarthAphelionCheck = (this.getCookie("EarthAphelionCheck") === "t");
+	    this.MercTransitCheck = (this.getCookie("MercTransitCheck") === "t");
+	    this.VenusTransitCheck = (this.getCookie("VenusTransitCheck") === "t");
+	    this.MercInfConjCheck = (this.getCookie("MercInfConjCheck") === "t");
+	    this.MercSupConjCheck = (this.getCookie("MercSupConjCheck") === "t");
+	    this.MercWestElongCheck = (this.getCookie("MercWestElongCheck") === "t");
+	    this.MercEastElongCheck = (this.getCookie("MercEastElongCheck") === "t");
+	    this.VenusInfConjCheck = (this.getCookie("VenusInfConjCheck") === "t");
+	    this.VenusSupConjCheck = (this.getCookie("VenusSupConjCheck") === "t");
+	    this.VenusWestElongCheck = (this.getCookie("VenusWestElongCheck") === "t");
+	    this.VenusEastElongCheck = (this.getCookie("VenusEastElongCheck") === "t");
+	    this.MarsConjCheck = (this.getCookie("MarsConjCheck") === "t");
+	    this.MarsWestQuadCheck = (this.getCookie("MarsWestQuadCheck") === "t");
+	    this.MarsOppCheck = (this.getCookie("MarsOppCheck") === "t");
+	    this.MarsEastQuadCheck = (this.getCookie("MarsEastQuadCheck") === "t");
+	    this.JupiterConjCheck = (this.getCookie("JupiterConjCheck") === "t");
+	    this.JupiterWestQuadCheck = (this.getCookie("JupiterWestQuadCheck") === "t");
+	    this.JupiterOppCheck = (this.getCookie("JupiterOppCheck") === "t");
+	    this.JupiterEastQuadCheck = (this.getCookie("JupiterEastQuadCheck") === "t");
+	    this.SaturnConjCheck = (this.getCookie("SaturnConjCheck") === "t");
+	    this.SaturnWestQuadCheck = (this.getCookie("SaturnWestQuadCheck") === "t");
+	    this.SaturnOppCheck = (this.getCookie("SaturnOppCheck") === "t");
+	    this.SaturnEastQuadCheck = (this.getCookie("SaturnEastQuadCheck") === "t");
+	    var lat=this.getCookie("latitudeCheck");
+	    var lng=this.getCookie("longitudeCheck");
+	    if (lat !== "" && lng !== "") {
+		this.lat=lat;
+		this.lng=lng;
+		this.positionIsSet=true;
+	    }
+	    this.updateCost(0);
+	}
+	this.checkEnd();
     }
     this.unique=function(array) {
 	var a = array.concat();

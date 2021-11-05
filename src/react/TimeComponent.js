@@ -14,6 +14,7 @@ import PauseIcon from '@material-ui/icons/Pause';
 import PlayIcon from '@material-ui/icons/PlayArrow';
 import FastForwardIcon from '@material-ui/icons/FastForward';
 import FastRewindIcon from '@material-ui/icons/FastRewind';
+import TimeIcon from '@material-ui/icons/AccessTime';
 
 //console.log("Inside Time.")
 
@@ -45,10 +46,20 @@ class Time extends Component {
 	this.openDate = this.openDate.bind(this);
 	this.show=this.show.bind(this);
 	this.changeSpeed=this.changeSpeed.bind(this);
-	this.state={speed:state.Astro.getSpeed(state)};
+	this.state={speed:state.Astro.getSpeed(state),
+		    targetDate: state.Astro.getTargetDate(state)};
+	this.setTargetDate=this.setTargetDate.bind(this);
     };
     show(state) {
-	this.forceUpdate();
+	this.setTargetDate(state); // undefined date will be reloaded...
+	//this.forceUpdate();
+    };
+    setTargetDate(state,date){
+	//console.log("Date:",date);
+	state.Astro.setTargetDate(state,date);
+	this.setState({
+	    targetDate: state.Astro.getTargetDate(state)
+	});
     };
     // Draggable functions
     trackPos(data) {
@@ -75,18 +86,19 @@ class Time extends Component {
 	//console.log('Stopped propagation from child');
     };
     render() {
-        const { classes, state, layout, target, setTarget } = this.props;
+        const { classes, state, layout, zIndex } = this.props;
 	var setTargetDate=function(date){
-            const { setTarget } = this.props;
-	    setTarget(state,date);
+	    this.setTargetDate(state,date);
 	}.bind(this);
 	var forward=function(state) {
             const { setTarget } = this.props;
-	    setTarget(state,state.Astro.forward(state))
+	    state.Astro.forward(state);
+	    this.setTargetDate(state);
 	}.bind(this);
 	var rewind=function(state) {
             const { setTarget } = this.props;
-	    setTarget(state,state.Astro.rewind(state))
+	    state.Astro.rewind(state);
+	    this.setTargetDate(state);
 	}.bind(this);
 	var togglePlay=function(state) {
 	    state.Astro.togglePlay(state);
@@ -108,12 +120,12 @@ class Time extends Component {
 	} else {
 	    visible="hidden";
 	};
-	//console.log("Target:",target);
         return (
 	  <Draggable key="time"
 	     onnDrag={(e, data) => this.trackPos(data)}
 	     onStart={this.handleStart}
-	     onStop={this.handleEnd}>
+	     onStop={this.handleEnd}
+             bounds="parent">
 	   <div onClick={this.openDate}
 	      className={classes.block} 
 	      style={{visibility:visible}}>
@@ -124,14 +136,21 @@ class Time extends Component {
 		    width:"100%",
 		    display:"flex",
 		    justifyContent:"space-between"}}>
-   	       <DateTime
+	      <DateTime
 	        dateFormat="YYYY-MM-DD"
 	        timeFormat="HH:mm:ss"
 	        inputProps={{ disabled: false }}
-	        value={target}
+	        value={this.state.targetDate}
 	        onChange={setTargetDate}
 	        onClick={this.handleChildClick}
 	       />
+	       <button
+	         className={classes.button}
+                 onClick={function(e) {
+		     var now=new moment();
+		     setTargetDate(now)}.bind(this)}
+	         title={"Now"}
+	         disabled={false}> <TimeIcon/> </button>
 	      </div>
 	      <div onMouseDown={this.handleChildClick}
 	         style={{width:"100%",

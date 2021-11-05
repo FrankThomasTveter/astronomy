@@ -2,10 +2,27 @@ import React, {Component} from "react";
 import {withStyles} from "@material-ui/core";
 import PropTypes from  "prop-types";
 import Draggable from 'react-draggable'; // Both at the same time
+import {black_palette} from '../mui/metMuiThemes' //, teal_palette
+import CheckboxTree from 'react-checkbox-tree';
+
+import CheckIcon from '@material-ui/icons/CheckBox';
+import UnCheckIcon from '@material-ui/icons/CheckBoxOutlineBlank';
+//import HalfCheckIcon from '@material-ui/icons/IndeterminateCheckBox';
+import HalfCheckIcon from '@material-ui/icons/CheckCircleOutline';
+import ExpandCloseIcon from '@material-ui/icons/ExpandLess';
+import ExpandOpenIcon from '@material-ui/icons/ExpandMore';
+import ExpandAllIcon from '@material-ui/icons/ExpandMore';
+import CollapseAllIcon from '@material-ui/icons/Remove';
+import ParentCloseIcon from '@material-ui/icons/Folder';
+import ParentOpenIcon from '@material-ui/icons/FolderOpen';
+import LeafIcon from '@material-ui/icons/Extension';
+
+import 'react-checkbox-tree/lib/react-checkbox-tree.css';
 
 //console.log("Inside Criteria.")
 
 const styles = theme => ({
+    dataset:{},
     block:{},
     field:{},
     legend:{},
@@ -18,8 +35,14 @@ class Criteria extends Component {
 	super(props);
         const {state} = props;
 	state.React.Criteria=this;
+	this.state={checked:[],expanded:[]};
 	this.show=this.show.bind(this);
     };
+    componentDidMount() {
+        const { state } = this.props;
+        var checked=state.Astro.getCriteria(state);
+        this.setState({ checked });
+    }
     show(state) {
 	this.forceUpdate();
     };
@@ -28,24 +51,54 @@ class Criteria extends Component {
 	console.log('child');
     };
     render() {
-        const { classes, state, layout } = this.props;
+        const { classes, state, layout, height } = this.props;
 	var cls={criteria:classes.criteria,
 		 content:classes.content,
 		 button:classes.button,
 		 buttonDisabled:classes.buttonDisabled};
 	var visible;
+	var items=state.Astro.getCriteria(state);
+	this.checkfunction= (checked)=>{
+            this.setState({ checked });
+            state.Astro.setChecked(state,checked);
+	};
+	this.expandfunction=(expanded)=>{
+            this.setState({ expanded });
+            //force();
+	};
 	if (state.Astro.show(state,"criteria")) {
 	    visible="visible";
 	} else {
 	    visible="hidden";
 	};
+	console.log("Classes:",height);
+	var sheight=(height-50) + "px";
         return (
-		<Draggable key="criteria">
-		   <div className={classes.block} style={{visibility:visible}}>
+		<Draggable key="criteria" bounds="parent">
+		<div className={classes.block} style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>criteria</small></legend>
-		<div onMouseDown={this.handleChildClick} >
-		CRITERIA
+		<div onMouseDown={this.handleChildClick} style={{maxHeight:sheight,minWidth:"300px",overflowY:'auto'}}
+>
+            <CheckboxTree
+            nodes={items}
+            icons={{
+                check: <span><CheckIcon className={classes.icons}/></span>,
+                uncheck: <span><UnCheckIcon className={classes.icons}/></span>,
+                halfCheck: <span><HalfCheckIcon className={classes.icons}/></span>,
+                expandClose: <span><ExpandCloseIcon className={classes.icons}/></span>,
+                expandOpen: <span><ExpandOpenIcon className={classes.icons}/></span>,
+                expandAll: <span><ExpandAllIcon className={classes.icons}/></span>,
+                collapseAll: <span><CollapseAllIcon className={classes.icons}/></span>,
+                parentClose: <span><ParentCloseIcon className={classes.icons}/></span>,
+                parentOpen: <span><ParentOpenIcon className={classes.icons}/></span>,
+                leaf: <span><LeafIcon className={classes.icons}/></span>,
+            }}
+            checked={this.state.checked}
+            expanded={this.state.expanded}
+            onCheck={this.checkfunction}
+            onExpand={this.expandfunction}
+         />
 	        </div>
 	        </fieldset>
 	           </div> 

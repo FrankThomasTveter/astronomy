@@ -1,4 +1,4 @@
-import React, {Component, useState} from "react"; //useState, useEffect, useRef
+import React, {Component} from "react"; //useState, useEffect, useRef
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -28,7 +28,7 @@ import {Icon} from 'leaflet'
 
 const styles = theme => ({
     map: {
-	overflow: 'hidden',
+	//overflow: 'hidden',
 	height: '100px',
 	width: '100%',
     },
@@ -95,7 +95,7 @@ class GeoJsonMap extends Component {
 			   fillColor: 'lightGray',//"#1a1d62",
 			   fillOpacity: 1, //zIndex: 1,
 		       }}/>
-	      <AddMarkerToClick icon={this.icon} position={position} onClick={onClick}/>
+		<AddMarkerToClick icon={this.icon} position={position} onClick={onClick}/>
 	      </MapContainer>
 	     );
   }

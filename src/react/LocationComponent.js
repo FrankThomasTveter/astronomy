@@ -37,13 +37,17 @@ class Location extends Component {
     setLat(e) {
         const { classes, state, layout } = this.props;
 	//console.log("Changed lat:",e.target.value);
-	this.setState({lat:e.target.value});
+	var lat=parseFloat(e.target.value);
+	if (isNaN(lat)) {lat=60.0;};
+	this.setState({lat:lat});
 	state.Astro.setLat(state,this.state.lat);
     };
     setLon(e) {
         const { classes, state, layout } = this.props;
 	//console.log("Changed lon:",e.target.value);
-	this.setState({lon:e.target.value});
+	var lon=parseFloat(e.target.value);
+	if (isNaN(lon)) {lon=0.0;};
+	this.setState({lon:lon});
 	state.Astro.setLon(state,this.state.lon);
     };
     onClick(event) {
@@ -69,7 +73,7 @@ class Location extends Component {
 	//onMouseDown={this.handleChildClick}
 	var cls={map:classes.map};
         return (
-		<Draggable key="location">
+		<Draggable key="location" bounds="parent">
 		   <div className={classes.block} style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>location</small></legend>
@@ -80,7 +84,7 @@ class Location extends Component {
 		  <label>Longitude</label>
 		  <input type="text" value={this.state.lon} onChange={this.setLon} maxLength="5" size="5"/>
 	         </div>
-		 <div style={{width:"100%"}}>
+		<div style={{width:"100%",height:"100px"}}>
 		<Chart state={state} classes={cls}
 	           position={[this.state.lat,this.state.lon]}
 	           onClick={this.onClick}/>

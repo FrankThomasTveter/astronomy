@@ -93,8 +93,10 @@ const styles = theme => ({
 	top: '70px',
 	bottom: '30px',
 	height: layout.dataset.height,//'calc(100% - '+headerheight+' - '+footheight+' - 5px)',
+	maxHeight: layout.dataset.height,//'calc(100% - '+headerheight+' - '+footheight+' - 5px)',
 	width: layout.dataset.width, //'92%',
-        overflowY: 'auto',
+        overflowY: 'hidden',
+        overflowX: 'hidden',
 	maxHeight: '100%',
 	maxWidth: '100%',
 	//border:  '1px solid red',	
@@ -177,8 +179,6 @@ class App extends Component {
 	    React: { App : this },
 	    cnt:0
 	};
-	this.state={targetDate: this.libs.Astro.getTargetDate(this.libs)};
-	this.setTargetDate=this.setTargetDate.bind(this);
 	//this.path=this.getpath();
     };
     getpath() {
@@ -207,33 +207,15 @@ class App extends Component {
 				   state.Default.storeHomeState,
 				   state.Astro.updateLoop]
 				 );
-	this.intervalID = setInterval(
-	    () => this.tick(),
-	    1000
-	);
     };
     componentWillUnmount() {
 	clearInterval(this.intervalID);
     };
-    tick() {
-	this.setTargetDate(this.libs,this.libs.Astro.updateTime(this.libs))
-    };
-//    tick() {
-//	// check if database has changed, reload if necessary...
-//	if (this.libs.React.Status !== undefined) {
-//	    this.libs.cnt=this.state.cnt+1;
-//	    this.libs.React.Status.forceUpdate();
-//	}
-//    };
+    // running tick causes problems with the chart...(it disappears).
     broadcast(msg,variant) {
         if (variant === undefined) {variant='info';};
 	//console.log("BROADCAST *** ",msg,variant);
         this.props.enqueueSnackbar(msg, { variant });
-    };
-    setTargetDate(state,date){
-	this.setState({
-	    targetDate: this.libs.Astro.setTargetDate(this.libs,date)
-	});
     };
     render() {
         const { classes } = this.props;
@@ -248,8 +230,7 @@ class App extends Component {
         return (<div className={classes.root}>
                   <MuiThemeProvider theme={createTheme(teal_palette, black_palette)}>
                             <Header   state={state} classes={hcls}/>
-                <Dataset  state={state} classes={dcls} layout={layout}
-		          target={this.state.targetDate} setTarget={this.setTargetDate}/>
+                <Dataset  state={state} classes={dcls} layout={layout}/>
                             <Footer   state={state} classes={fcls}/>
                         </MuiThemeProvider>
                 </div>

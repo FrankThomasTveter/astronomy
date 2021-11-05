@@ -41,10 +41,21 @@ class Dataset extends Component {
         super(props);
         const {state} = props;
         state.React.Dataset=this;
-	this.state={progress:false,mode:0};
+	this.state={progress:false,mode:0,height:0};
+    };
+    componentDidMount() {
+	const height = this.divElement.clientHeight;
+	console.log("Height:",height);
+	this.setState({ height:height });
     };
     render() {
-        const { classes, state, layout, target, setTarget } = this.props;
+        const { classes, state, layout } = this.props;
+	var rls={dataset:classes.dataset,
+		 block:classes.block,
+		 field:classes.field,
+		 legend:classes.legend,
+		 button:classes.button,
+		 buttonDisabled:classes.buttonDisabled};
 	var cls={block:classes.block,
 		 field:classes.field,
 		 legend:classes.legend,
@@ -55,15 +66,15 @@ class Dataset extends Component {
 		 button:classes.button,
 		 buttonDisabled:classes.buttonDisabled};
         return (
-		<div className={classes.dataset}>
-		   <Time state={state} classes={cls} layout={layout}
-	                 target={target} setTarget={setTarget}/>
+		<div className={classes.dataset}
+	              ref={ (el) => { this.divElement = el } }>
+		   <Criteria state={state} classes={rls} layout={layout}
+	             height={this.state.height}/>
+		   <Events state={state} classes={cls} layout={layout}/>
 		   <Location state={state} classes={cls} layout={layout}/>
-		   <Criteria state={state} classes={cls} layout={layout}/>
-		   <Events state={state} classes={cls} layout={layout}
-	                 target={target} setTarget={setTarget}/>
+		   <Time state={state} classes={cls} layout={layout}/>
 		<div style={{position:"absolute", top:0, left:0,
-			     width:"100%",height:"100%", zIndex:-999999}}>
+			     width:"100%",height:"100%", zIndex:-99}}>
 		      <Globe   state={state}   classes={gls}/>
 		   </div>
 		</div>
