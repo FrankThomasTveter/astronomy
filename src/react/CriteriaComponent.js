@@ -40,8 +40,10 @@ class Criteria extends Component {
     };
     componentDidMount() {
         const { state } = this.props;
-        var checked=state.Astro.getCriteria(state);
+        var checked=state.Astro.getChecked(state);
         this.setState({ checked });
+        var expanded=state.Astro.getExpanded(state);
+        this.setState({ expanded });
     }
     show(state) {
 	this.forceUpdate();
@@ -57,13 +59,14 @@ class Criteria extends Component {
 		 button:classes.button,
 		 buttonDisabled:classes.buttonDisabled};
 	var visible;
-	var items=state.Astro.getCriteria(state);
+	var items=state.Astro.getNodes(state);
 	this.checkfunction= (checked)=>{
             this.setState({ checked });
             state.Astro.setChecked(state,checked);
 	};
 	this.expandfunction=(expanded)=>{
             this.setState({ expanded });
+            state.Astro.setExpanded(state,expanded);
             //force();
 	};
 	if (state.Astro.show(state,"criteria")) {
@@ -74,12 +77,11 @@ class Criteria extends Component {
 	console.log("Classes:",height);
 	var sheight=(height-50) + "px";
         return (
-		<Draggable key="criteria" bounds="parent">
+		<Draggable key="criteria" bounds="parent" cancel=".cancel">
 		<div className={classes.block} style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>criteria</small></legend>
-		<div onMouseDown={this.handleChildClick} style={{maxHeight:sheight,minWidth:"300px",overflowY:'auto'}}
->
+		<div onMouseDown={this.handleChildClick} style={{maxHeight:sheight,minWidth:"300px",overflowY:'auto'}} className="cancel">
             <CheckboxTree
             nodes={items}
             icons={{

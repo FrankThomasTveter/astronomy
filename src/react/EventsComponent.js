@@ -55,9 +55,9 @@ class Events extends Component {
         const {state} = props;
 	state.React.Events=this;
 	this.show=this.show.bind(this);
-
 	this.state={prev:! state.Astro.getPrev(state),
 		    next:! state.Astro.getNext(state),
+		    auto:! state.Astro.getUpdate(state),
 		    endDt: state.Astro.getEndDt(state)};   //undefined //moment().format(this.frm)
     };
     show(state) {
@@ -81,6 +81,12 @@ class Events extends Component {
 	      });
 	    state.Astro.setNext(state,this.state.next);
 	}.bind(this);
+	var toggleAuto=function(){
+	     this.setState({
+	          auto: ! this.state.auto //)moment(date).format(this.frm)
+	      });
+	    state.Astro.setUpdate(state,this.state.auto);
+	}.bind(this);
 	var cls={events:classes.events,
 		 content:classes.content,
 		 button:classes.button,
@@ -92,11 +98,11 @@ class Events extends Component {
 	    visible="hidden";
 	};
         return (
-		<Draggable key="events" bounds="parent">
+		<Draggable key="events" bounds="parent" cancel=".cancel">
 		    <div  className={classes.block} style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>events</small></legend>
-		<div onMouseDown={this.handleChildClick} style={{color:'black',width:"100%",display:"flex", justifyContent:"space-between", alignItems:'center'}}>
+		<div onMouseDown={this.handleChildClick} style={{color:'black',width:"100%",display:"flex", justifyContent:"space-between", alignItems:'center'}} className="cancel">
 		<button
 	          className={classes.button}
                   onClick={function() {console.log("Clicked me");}}
@@ -105,7 +111,7 @@ class Events extends Component {
 		<input name="prev" type="checkbox" defaultChecked={! this.state.prev} onTouchEnd={togglePrev} onClick={togglePrev}/><label>Prev</label>
 		<input name="next" type="checkbox" defaultChecked={! this.state.next} onTouchEnd={toggleNext} onClick={toggleNext}/><label>Next</label>
 		<ToTime parent={this} state={state} classes={classes} style={{marginLeft:"auto", marginRight:"0"}}/>
-		<input name="auto" type="checkbox" defaultChecked={! this.state.next} onTouchEnd={toggleNext} onClick={toggleNext}/><label>Auto</label>
+		<input name="auto" type="checkbox" defaultChecked={! this.state.auto} onTouchEnd={toggleAuto} onClick={toggleAuto}/><label>Auto</label>
 		</div>
 	    </fieldset>
 		    </div>

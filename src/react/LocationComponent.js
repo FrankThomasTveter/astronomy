@@ -73,11 +73,11 @@ class Location extends Component {
 	//onMouseDown={this.handleChildClick}
 	var cls={map:classes.map};
         return (
-		<Draggable key="location" bounds="parent">
+		<Draggable key="location" bounds="parent" cancel=".cancel">
 		   <div className={classes.block} style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>location</small></legend>
-		<div onMouseDown={this.handleChildClick} style={{display:'flex', flexDirection:'column'}}>
+		<div onMouseDown={this.handleChildClick} style={{display:'flex', flexDirection:'column'}} className="cancel">
 		 <div style={{display:'flex', justifyContent:'flex-start'}}>
 		  <label>Latitude</label>
 		  <input type="text" value={this.state.lat} onChange={this.setLat} maxLength="5" size="5"/>

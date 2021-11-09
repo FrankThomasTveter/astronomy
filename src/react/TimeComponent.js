@@ -121,7 +121,7 @@ class Time extends Component {
 	    visible="hidden";
 	};
         return (
-	  <Draggable key="time"
+	  <Draggable key="time" cancel=".cancel"
 	     onnDrag={(e, data) => this.trackPos(data)}
 	     onStart={this.handleStart}
 	     onStop={this.handleEnd}
@@ -135,7 +135,8 @@ class Time extends Component {
 	       style={{color:"black",
 		    width:"100%",
 		    display:"flex",
-		    justifyContent:"space-between"}}>
+		    justifyContent:"space-between"}} 
+	            className="cancel">
 	      <DateTime
 	        dateFormat="YYYY-MM-DD"
 	        timeFormat="HH:mm:ss"
@@ -155,7 +156,8 @@ class Time extends Component {
 	      <div onMouseDown={this.handleChildClick}
 	         style={{width:"100%",
 		    display:"flex",
-		    justifyContent:"space-between"}}>
+		    justifyContent:"space-between"}}
+	            className="cancel">
 	       <button
 	         className={classes.button}
                  onClick={function(e) {rewind(state);}.bind(this)}

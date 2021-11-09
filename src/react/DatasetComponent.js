@@ -15,7 +15,8 @@ const styles = theme => ({
 	border:  '0px solid blue',
 	display: 'flex',
 	flexDirection: 'row',
-	justifyContent: 'space-around',
+	flexWrap: 'wrap',
+	justifyContent: 'space-between',
 	alignItems: 'flex-start',
     },
     content:{},
@@ -67,14 +68,13 @@ class Dataset extends Component {
 		 buttonDisabled:classes.buttonDisabled};
         return (
 		<div className={classes.dataset}
-	              ref={ (el) => { this.divElement = el } }>
-		   <Criteria state={state} classes={rls} layout={layout}
-	             height={this.state.height}/>
-		   <Events state={state} classes={cls} layout={layout}/>
-		   <Location state={state} classes={cls} layout={layout}/>
+	           ref={ (el) => { this.divElement = el } }>
 		   <Time state={state} classes={cls} layout={layout}/>
-		<div style={{position:"absolute", top:0, left:0,
-			     width:"100%",height:"100%", zIndex:-99}}>
+		   <Events state={state} classes={cls} layout={layout}/>
+		   <Criteria state={state} classes={rls} layout={layout} height={this.state.height}/>
+		   <Location state={state} classes={cls} layout={layout}/>
+		   <div style={{position:"absolute", top:0, left:0,
+	   	      width:"100%",height:"100%", zIndex:-99}}>
 		      <Globe   state={state}   classes={gls}/>
 		   </div>
 		</div>
@@ -82,8 +82,6 @@ class Dataset extends Component {
     }
 
 }
-
-
 
 // disabled={false}
 
