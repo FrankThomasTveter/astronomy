@@ -1,9 +1,9 @@
-import React, {Component} from 'react';
+import {Component} from 'react';
 
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 
-import {teal_palette} from '../mui/metMuiThemes';
+//import {teal_palette} from '../mui/metMuiThemes';
 
 const styles = theme => ({
     tooltip:{
@@ -19,7 +19,6 @@ class TooltipWrapper extends Component {
 	this.forceUpdate();
     };
     render() {
-	const { classes } = this.props;
 	return (null);
     }
 }

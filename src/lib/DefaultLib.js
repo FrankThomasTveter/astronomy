@@ -211,7 +211,7 @@ function Default() {
 	if (state.Default.config.home !== undefined) {
 	    //state.Utils.copyMap(state, state.Utils.type.force, state.Default.config.home, state, this.statePath);
 	};
-    }.bind(this);
+    };
     // copy state as soon as first dataset is loaded...
     this.storeStartState=function(state) { // executed before URL is loaded...
 	if (this.debug) {console.log("Storing start state.");};

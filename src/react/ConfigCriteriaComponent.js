@@ -4,8 +4,8 @@ import { withStyles } from '@material-ui/core/styles';
 import Button from '@material-ui/core/Button';
 import CriteriaIcon from '@material-ui/icons/CheckBox';
 
-import Popup from 'react-popup';
-import './react-popup.css';
+//import Popup from 'react-popup';
+//import './react-popup.css';
 
 const styles = theme => ({
     buttonWrapper: {
@@ -22,11 +22,11 @@ const styles = theme => ({
 // 
 class ConfigCriteria extends Component {
     render() {
-        const { classes, state, visible, onClose } = this.props;
+        const { classes, state, visible } = this.props; // , onClose
 	if ( visible !== undefined && ! visible && state.Settings.isInvisible(state,"Criteria")) {
 	    return null;
 	} else if (visible !== undefined) {
-	    var cls={button:classes.button};
+	    //var cls={button:classes.button};
  	    this.onClick = event => {state.Astro.toggle(state,"criteria");};
 	    var classname;
 	    if (state.Astro.show(state,"criteria")) {

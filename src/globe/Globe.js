@@ -249,8 +249,8 @@ export default class Globe {
     destroy() {
 	//console.log("Destroying Globe...");
 	cancelAnimationFrame(this.animationFrameId);
-	this.tooltip.destroy();
-	this.tooltip=null;
+	//this.tooltip.destroy();
+	//this.tooltip=null;
 	// dispose globe, clouds and background...
 	const globeBackground = this.getObjectByName(ObjectName.GlobeBackground);
 	const globeClouds = this.getObjectByName(ObjectName.GlobeClouds);

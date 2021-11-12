@@ -2,6 +2,7 @@ import React, {Component} from "react";
 import {withStyles} from "@material-ui/core";
 import PropTypes from  "prop-types";
 import Draggable from 'react-draggable'; // Both at the same time
+import Button from '@material-ui/core/Button';
 
 import ReloadIcon from '@material-ui/icons/Replay';
 import UpIcon from '@material-ui/icons/ArrowUpward';
@@ -29,23 +30,23 @@ function ToTime(props){
 	parent.setState({endDt:state.Astro.getEndDt(state)});
     };
     var disabled=state.Astro.getPrev(state) || state.Astro.getNext(state);
-    var visible=! disabled;
+    //var visible=! disabled;
     var btncls=classes.button;
     if (disabled) { 
 	btncls=classes.buttonDisabled 
     };
     return (<>
-	    <button
+	    <Button
 	    className={btncls}
             onClick={decreaseEndDt}
 	    title={"Increase end date"}
-	    disabled={disabled}><DownIcon/></button>
-	    <button
+	    disabled={disabled}><DownIcon/></Button>
+	    <Button
 	    className={btncls}
             onClick={increaseEndDt}
 	    title={"Increase end date"}
-	    disabled={disabled}><UpIcon/> </button>
-	    <input type="text" className={btncls}
+	    disabled={disabled}><UpIcon/> </Button>
+	    <input type="text" className={btncls} style={{height:"100%"}}
 	    value={state.Astro.getEndDt(state)} maxLength="1" size="1" disabled/>
 	    </>);
 };
@@ -68,7 +69,7 @@ class Events extends Component {
 	console.log('child');
     };
     render() {
-        const { classes, state, layout } = this.props;
+        const { classes, state } = this.props; //layout
 	var togglePrev=function(){
 	     this.setState({
 	          prev: ! this.state.prev //)moment(date).format(this.frm)
@@ -87,10 +88,10 @@ class Events extends Component {
 	      });
 	    state.Astro.setUpdate(state,this.state.auto);
 	}.bind(this);
-	var cls={events:classes.events,
-		 content:classes.content,
-		 button:classes.button,
-		 buttonDisabled:classes.buttonDisabled};
+	//var cls={events:classes.events,
+	//	 content:classes.content,
+	//	 button:classes.button,
+	//	 buttonDisabled:classes.buttonDisabled};
 	var visible;
 	if (state.Astro.show(state,"events")) {
 	    visible="visible";
@@ -103,11 +104,11 @@ class Events extends Component {
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>events</small></legend>
 		<div onMouseDown={this.handleChildClick} style={{color:'black',width:"100%",display:"flex", justifyContent:"space-between", alignItems:'center'}} className="cancel">
-		<button
+		<Button
 	          className={classes.button}
                   onClick={function() {console.log("Clicked me");}}
 	          title={"Reload events"}
-	          disabled={false}> <ReloadIcon/> </button>
+	          disabled={false}> <ReloadIcon/> </Button>
 		<input name="prev" type="checkbox" defaultChecked={! this.state.prev} onTouchEnd={togglePrev} onClick={togglePrev}/><label>Prev</label>
 		<input name="next" type="checkbox" defaultChecked={! this.state.next} onTouchEnd={toggleNext} onClick={toggleNext}/><label>Next</label>
 		<ToTime parent={this} state={state} classes={classes} style={{marginLeft:"auto", marginRight:"0"}}/>

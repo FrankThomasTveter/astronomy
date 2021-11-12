@@ -29,7 +29,7 @@ const styles = theme => ({
 
 
 function MapGlobe(props) {
-    const {classes,onClickMarker,update,config} = props;
+    const {classes,onClickMarker,config} = props;//update,
     // Use State to keep the values
     const [markers, setMarkers] = useState([]);
     let animations=[];
@@ -42,9 +42,9 @@ function MapGlobe(props) {
 	if (state.Layout.state.tooltip===0) {
 	    return null;
 	} else {
-	    var el=marker.element;
-	    var vals=state.Matrix.getVals(el);
-	    var data={keys:el.keys,vals:vals,id:marker.id};
+	    //var el=marker.element;
+	    //var vals=state.Matrix.getVals(el);
+	    //var data={keys:el.keys,vals:vals,id:marker.id};
 	    //return <Tooltip state={marker.state} data={data} update={update}/>;
 	    return null;
 	}
@@ -255,7 +255,7 @@ class EarthMap extends Component {
 	const { classes,state  } = this.props;//, state
 	//console.log("Rendering map...");
 	//this.setMarkers(state);
-	var height='calc(100% - 70px - 70px - 5px)';
+	//var height='calc(100% - 70px - 70px - 5px)';
 	var cls={map:classes.map};
 	return (<div className={classes.root}
 	        style={{width: '100%',

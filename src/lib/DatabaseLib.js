@@ -379,7 +379,7 @@ function Database() {
 	    }
 	}
     };
-    this.loadSummary=function(state, response, callbacks ) {
+    this.loadSummary=function(state, response, callbacks) {
 	if (this.bdeb) {console.log("Loading summary.");};
 	state.Database.summary=[];
 	state.Database.sumcnt={};

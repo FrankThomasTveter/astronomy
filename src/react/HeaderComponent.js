@@ -4,7 +4,7 @@ import AppBar    from '@material-ui/core/AppBar';
 import Toolbar   from '@material-ui/core/Toolbar';
 import logoImg   from '../images/Met_RGB_Horisontal_NO.png';
 import { withStyles } from '@material-ui/core/styles';
-import Location  from    "./LocationComponent";
+//import Location  from    "./LocationComponent";
 import Config    from    "./ConfigComponent";
 
 

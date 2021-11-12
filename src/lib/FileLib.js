@@ -72,14 +72,15 @@ function File() {
 	    resolve(response);
 	});
     };
-    this.get = function(url) {
+    this.get = function(url,req) {
 	// Return a new promise.
+	var params=(req===undefined)?"":this.formatParams(req);
 	return new Promise(function(resolve, reject) {
 	    // Do the usual XHR stuff
 	    var regHttp = new XMLHttpRequest();
 	    regHttp.responseType="";
 	    regHttp.overrideMimeType("text/text");
-	    var path=process.env.PUBLIC_URL+"/"+url;
+	    var path=process.env.PUBLIC_URL+"/"+url+params;
 	    regHttp.open('GET', path, true);
 	    regHttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
 	    regHttp.setRequestHeader('cache-control', 'max-age=0');
@@ -112,6 +113,14 @@ function File() {
     };
     this.getJSON=function(url) {
 	return this.get(url).then(JSON.parse);
+    };
+    this.formatParams=function ( params ){
+	return "?" + Object
+            .keys(params)
+            .map(function(key){
+		return key+"="+encodeURIComponent(params[key])
+            })
+            .join("&")
     }
 };
 

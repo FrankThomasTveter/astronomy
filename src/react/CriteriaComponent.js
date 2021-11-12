@@ -2,7 +2,7 @@ import React, {Component} from "react";
 import {withStyles} from "@material-ui/core";
 import PropTypes from  "prop-types";
 import Draggable from 'react-draggable'; // Both at the same time
-import {black_palette} from '../mui/metMuiThemes' //, teal_palette
+//import {black_palette} from '../mui/metMuiThemes' //, teal_palette
 import CheckboxTree from 'react-checkbox-tree';
 
 import CheckIcon from '@material-ui/icons/CheckBox';
@@ -53,11 +53,11 @@ class Criteria extends Component {
 	console.log('child');
     };
     render() {
-        const { classes, state, layout, height } = this.props;
-	var cls={criteria:classes.criteria,
-		 content:classes.content,
-		 button:classes.button,
-		 buttonDisabled:classes.buttonDisabled};
+        const { classes, state, height } = this.props; // layout, 
+	//var cls={criteria:classes.criteria,
+	//	 content:classes.content,
+	//	 button:classes.button,
+	//	 buttonDisabled:classes.buttonDisabled};
 	var visible;
 	var items=state.Astro.getNodes(state);
 	this.checkfunction= (checked)=>{

@@ -34,9 +34,9 @@ const styles = theme => ({
 
 
 function Footer(props) {
-    const { classes, state } = props;
-    var cls={button:classes.button,
-	     buttonDisabled:classes.buttonDisabled};
+    const { classes } = props; // , state
+    //var cls={button:classes.button,
+    //     buttonDisabled:classes.buttonDisabled};
     return (
 	    <div className={classes.footer}>
 	    <div className={classes.banner} style={{height:classes.footer.bannerheight}}>

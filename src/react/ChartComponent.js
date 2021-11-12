@@ -8,7 +8,7 @@ import { withStyles } from '@material-ui/core/styles';
 //import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import worldGeoJSON from '../geojson/custom_world';
-import { MapContainer, GeoJSON, Marker, Popup, useMapEvents } from 'react-leaflet';//Polygon, TileLayer ,Popup
+import { MapContainer, GeoJSON, Marker, Popup } from 'react-leaflet';//Polygon, TileLayer ,Popup, useMapEvents
 import markerIconPng from "leaflet/dist/images/marker-icon.png"
 import {Icon} from 'leaflet'
 
@@ -35,13 +35,13 @@ const styles = theme => ({
 });
 
 function AddMarkerToClick(props) {
-    const {position, onClick, icon}=props;
-    const map = useMapEvents({
-	click(event) {
-	    //console.log("Event:",event.latlng,onClick);
-	    onClick(event);
-	},
-    });
+    const {position, icon}=props; // onClick, 
+    //const map = useMapEvents({
+	//click(event) {
+	  //  //console.log("Event:",event.latlng,onClick);
+	    //onClick(event);
+	//},
+    //});
     return (
 	position !== undefined ? (
 		<Marker
@@ -71,8 +71,8 @@ class GeoJsonMap extends Component {
 	this.forceUpdate();
     };
     render() {
-	const { classes, state, position, onClick } = this.props;
-	var markFunction= (mark) => {      };
+	const { classes, position, onClick } = this.props; // state, 
+	//var markFunction= (mark) => {      };
 	//console.log("Onclick:",onClick);
 	return (<MapContainer className={classes.map}
                     center={position}

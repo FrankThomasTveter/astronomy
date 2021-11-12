@@ -97,7 +97,6 @@ const styles = theme => ({
 	width: layout.dataset.width, //'92%',
         overflowY: 'hidden',
         overflowX: 'hidden',
-	maxHeight: '100%',
 	maxWidth: '100%',
 	//border:  '1px solid red',	
 

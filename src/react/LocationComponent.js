@@ -35,7 +35,7 @@ class Location extends Component {
 	//console.log('Stopped propagation from child');
     };
     setLat(e) {
-        const { classes, state, layout } = this.props;
+        const { state } = this.props; // , classes, layout
 	//console.log("Changed lat:",e.target.value);
 	var lat=parseFloat(e.target.value);
 	if (isNaN(lat)) {lat=60.0;};
@@ -43,7 +43,7 @@ class Location extends Component {
 	state.Astro.setLat(state,this.state.lat);
     };
     setLon(e) {
-        const { classes, state, layout } = this.props;
+        const { state } = this.props; // classes, layout 
 	//console.log("Changed lon:",e.target.value);
 	var lon=parseFloat(e.target.value);
 	if (isNaN(lon)) {lon=0.0;};
@@ -51,7 +51,7 @@ class Location extends Component {
 	state.Astro.setLon(state,this.state.lon);
     };
     onClick(event) {
-        const { classes, state, layout } = this.props;
+        const { state } = this.props; // , classes, layout
 	const { lat, lng } = event.latlng;
 	this.setState({lat:lat, lon:lng});
 	state.Astro.setLat(state,this.state.lat);
@@ -59,11 +59,11 @@ class Location extends Component {
 	//console.log("Click:",this.state);
     };
     render() {
-        const { classes, state, layout } = this.props;
-	var cls={location:classes.location,
-		 content:classes.content,
-		 button:classes.button,
-		 buttonDisabled:classes.buttonDisabled};
+        const { classes, state } = this.props; // , layout
+	//var cls={location:classes.location,
+	//	 content:classes.content,
+	//	 button:classes.button,
+	//	 buttonDisabled:classes.buttonDisabled};
 	var visible;
 	if (state.Astro.show(state,"location")) {
 	    visible="visible";
