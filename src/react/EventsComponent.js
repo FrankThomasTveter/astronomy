@@ -66,7 +66,7 @@ class Events extends Component {
     };
     handleChildClick(e) {
 	e.stopPropagation();
-	console.log('child');
+	//console.log('child');
     };
     render() {
         const { classes, state } = this.props; //layout
@@ -106,7 +106,7 @@ class Events extends Component {
 		<div onMouseDown={this.handleChildClick} style={{color:'black',width:"100%",display:"flex", justifyContent:"space-between", alignItems:'center'}} className="cancel">
 		<Button
 	          className={classes.button}
-                  onClick={function() {console.log("Clicked me");}}
+            onClick={function() {state.Astro.loadEvents(state,"",[state.Show.showAll]);}}
 	          title={"Reload events"}
 	          disabled={false}> <ReloadIcon/> </Button>
 		<input name="prev" type="checkbox" defaultChecked={! this.state.prev} onTouchEnd={togglePrev} onClick={togglePrev}/><label>Prev</label>

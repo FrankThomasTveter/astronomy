@@ -1,5 +1,3 @@
-Content-Type: text/xml;
-
 <?xml version="1.0" encoding="utf-8"?>
 <astrodata xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://astro.met.no" xsi:schemaLocation="http://astro.met.no/astro event.xsd"><meta licenseurl="1"/>
  <Event Seq="1" Start="2021-11-12T12:00:00Z" Search="1" reports="1" Id="600" Val1="60" Val2="0" Val3="0">

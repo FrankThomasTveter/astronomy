@@ -22,46 +22,13 @@ function Show() {
 	}.bind(this),0.1);
     };
     this.showAll=function(state,reload,force) { // show data on screen
-	//var documentLog = document.getElementById("log");
-	//console.log("Showing data.");
-	if (reload  === undefined || reload) {
-	    this.showPath(state);
-	    state.Html.setFootnote(state,"Extracting data.");
-	    state.Html.setProgress(state, true);
-	    setTimeout(function() {
-		state.Database.dbextract(state,function (state,matrix){
-		    state.Html.setFootnote(state,"Displaying data.");
-		    setTimeout(function (){  // callback
-			//console.log("Updating matrix.");
-			state.Path.exportAllKeys(state);
-			//console.log("Showing path");
-			this.showPath(state);
-			//console.log("Showing Config");
-			this.showConfig(state);
-
-			//console.log("Showing Table/Map");
-
-			this.showDataset(state,matrix,force);
-			//console.log("Pushing URL");
-			state.Utils.pushUrl(state);
-			state.Html.setFootnote(state);
-			state.Html.setProgress(state, false);
-			//console.log("Delayed showAll is done...");
-		    }.bind(this),0.1);
-		}.bind(this));
-	    }.bind(this),0.1);
-	} else {
-	    console.log("Not updating matrix.");
-	    state.Path.exportAllKeys(state);
-	    this.showPath(state);
-	    this.showConfig(state);
-	    this.showDataset(state,undefined,force);
-	    this.showTooltip(state);
-	    state.Html.setFootnote(state);
-	    state.Html.setProgress(state, false);
-	}
-	this.showMode(state);
-    };
+	this.showTime(state);
+	this.showLocation(state);
+	this.showCriteria(state);
+	this.showEvents(state);
+	this.showScene(state);
+    }.bind(this);
+    this.showScene=function(state) {console.log("Showing scene...");};
     this.showPath=function(state) {
 	state.Utils.pushUrl(state);
 	if (state.React.Path !== undefined) {

@@ -11,11 +11,11 @@ function File() {
 	    }
 	}
     }
-    this.load=function(state, file, callbacks ) {
-	//console.log("Loading:",JSON.stringify(file),JSON.stringify(callbacks));
+    this.load=function(state, url, callbacks ) {
+	//console.log("Loading:",JSON.stringify(url),JSON.stringify(callbacks));
 	if (state.File.ready) { // make sure we do not re-load if we are already loading
 	    state.File.ready=false;
-	    state.Html.setFootnote(state, "Server-request: "+file);
+	    state.Html.setFootnote(state, "Server-request: "+url);
 	    state.Html.setProgress(state, true);
 	    var regHttp = new XMLHttpRequest();
 	    regHttp.addEventListener("progress",(e)=>state.Html.progressInfo(state,e));
@@ -29,31 +29,31 @@ function File() {
 		    if (regHttp.status  === 200) {
 			//console.log(regHttp.responseText);
 			var response = regHttp.responseText;
-			//console.log("Ready:",file,regHttp.readyState,regHttp.status,JSON.stringify(response))
+			//console.log("Ready:",url,regHttp.readyState,regHttp.status,JSON.stringify(response))
 			state.File.next(state,response,callbacks);
 		    } else {
-			state.Html.setFootnote(state,"Unable to load "+file);
+			state.Html.setFootnote(state,"Unable to load "+url);
 			state.Html.setProgress(state, false);
-			//state.Html.setConsole(file+" error");
+			//state.Html.setConsole(url+" error");
 		    }
 		} else if  (regHttp.readyState  === 0) { //done
-		    state.Html.setFootnote(state,file+" unsent");		
+		    state.Html.setFootnote(state,url+" unsent");		
 		    state.Html.setProgress(state, false);
 		} else if  (regHttp.readyState  === 1) { //opened
-		    state.Html.setFootnote(state,file+" opened");		
+		    state.Html.setFootnote(state,url+" opened");		
 		    state.Html.setProgress(state, false);
 		} else if  (regHttp.readyState  === 2) { //receiving headers
-		    state.Html.setFootnote(state,file+" headers");		
+		    state.Html.setFootnote(state,url+" headers");		
 		    state.Html.setProgress(state, false);
 		} else if  (regHttp.readyState  === 3) { //loading
-		    state.Html.setFootnote(state,file+" loading");		
+		    state.Html.setFootnote(state,url+" loading");		
 		    state.Html.setProgress(state, false);
 		};
 	    };
 	    regHttp.responseType="";
 	    regHttp.overrideMimeType("text/text");
-	    var path=process.env.PUBLIC_URL+"/"+file;
-	    //console.log("Http file:",JSON.stringify(path));
+	    var path=process.env.PUBLIC_URL+"/"+url;
+	    //console.log("Http url:",JSON.stringify(path));
 	    regHttp.open("GET", path, true);
 	    regHttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
 	    regHttp.setRequestHeader('cache-control', 'max-age=0');
@@ -79,8 +79,9 @@ function File() {
 	    // Do the usual XHR stuff
 	    var regHttp = new XMLHttpRequest();
 	    regHttp.responseType="";
-	    regHttp.overrideMimeType("text/text");
+	    //regHttp.overrideMimeType("text/text");
 	    var path=process.env.PUBLIC_URL+"/"+url+params;
+	    console.log("Http url:",JSON.stringify(path));
 	    regHttp.open('GET', path, true);
 	    regHttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
 	    regHttp.setRequestHeader('cache-control', 'max-age=0');

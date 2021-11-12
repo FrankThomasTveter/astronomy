@@ -2,7 +2,7 @@
   "name": "react-boilerplate",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://localhost/alarm",
+  "homepage": "http://localhost/astro",
   "repository": {
     "type": "git",
     "url": "https://gitlab.met.no/team-frontend/react-boilerplate.git"

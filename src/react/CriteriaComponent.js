@@ -50,7 +50,7 @@ class Criteria extends Component {
     };
     handleChildClick(e) {
 	e.stopPropagation();
-	console.log('child');
+	//console.log('child');
     };
     render() {
         const { classes, state, height } = this.props; // layout, 
@@ -74,7 +74,7 @@ class Criteria extends Component {
 	} else {
 	    visible="hidden";
 	};
-	console.log("Classes:",height);
+	//console.log("Classes:",height);
 	var sheight=(height-50) + "px";
         return (
 		<Draggable key="criteria" bounds="parent" cancel=".cancel">
