@@ -43,13 +43,35 @@ class Dataset extends Component {
         super(props);
         const {state} = props;
 	this.manager= {
-	    maxZIndex: "999",
+	    maxZIndex: "100",
+	    nodes:[],
+	    indexes:[],
 	    prevDraggedNode: null,
 	    prevDraggedNodeZIndex: null
 	};
 	state.React.Dataset=this;
 	this.onDragStart=this.onDragStart.bind(this);
 	this.state={progress:false,mode:0,width:0,height:0};
+    };
+    onDragStart(e,node) {
+	console.log("Dragging...",this.manager,node);
+
+
+
+	var regex=/^([^\n]*)\n/g;
+	var name=regex.exec(node.node.outerText)[0]||"undef";
+	var ii=node.node.style.zIndex;
+	console.log("Node:",node,name,"=>",ii);
+
+
+
+	console.log("Nodes:",this.manager.nodes.length);
+        if (this.manager.prevDraggedNode) {
+            this.manager.prevDraggedNode.style.zIndex = this.manager.prevDraggedNodeZIndex;
+        }
+        this.manager.prevDraggedNode = node.node;
+        this.manager.prevDraggedNodeZIndex = this.manager.prevDraggedNode.style.zIndex;
+        this.manager.prevDraggedNode.style.zIndex = this.manager.maxZIndex;
     };
     updateDimensions = () => {
 	this.setState({ width: this.divElement.clientWidth, height: this.divElement.clientHeight });
@@ -63,15 +85,6 @@ class Dataset extends Component {
     componentWillUnmount() {
 	window.removeEventListener('resize', this.updateDimensions);
     }
-    onDragStart(e,node) {
-	console.log("Dragging...",this.manager);
-        if (this.manager.prevDraggedNode) {
-            this.manager.prevDraggedNode.style.zIndex = this.manager.prevDraggedNodeZIndex;
-        }
-        this.manager.prevDraggedNode = node.node;
-        this.manager.prevDraggedNodeZIndex = this.manager.prevDraggedNode.style.zIndex;
-        this.manager.prevDraggedNode.style.zIndex = this.manager.maxZIndex;
-    };
     render() {
         const { classes, state, layout } = this.props;
 	var rls={dataset:classes.dataset,
@@ -92,16 +105,16 @@ class Dataset extends Component {
         return (
 		<div className={classes.dataset}
 	           ref={ (el) => { this.divElement = el } }>
-		<Rnd key="time" zindex={5} bounds="parent" default={{x:10,y:10}} onDragStart={this.onDragStart}>
+		<Rnd key="time" bounds="parent" default={{x:10,y:10}} onDragStart={this.onDragStart}>
 		   <Time state={state} classes={cls} layout={layout} height={this.state.height}/>
 		</Rnd>
-		<Rnd key="layout" zindex={4} bounds="parent" default={{x:30,y:30}} onDragStart={this.onDragStart}>
+		<Rnd key="layout" bounds="parent" default={{x:30,y:30}} onDragStart={this.onDragStart}>
 		   <Events state={state} classes={cls} layout={layout} height={this.state.height}/>
 		</Rnd>
-		<Rnd key="location" zindex={2} bounds="parent" default={{x:50,y:50}} onDragStart={this.onDragStart}>
+		<Rnd key="location" bounds="parent" default={{x:50,y:50}} onDragStart={this.onDragStart}>
 		   <Location state={state} classes={cls} layout={layout} height={this.state.height}/>
 		</Rnd>
-		<Rnd key="criteria" zindex={3} bounds="parent" default={{x:70,y:70}} onDragStart={this.onDragStart}>
+		<Rnd key="criteria" bounds="parent" default={{x:70,y:70}} onDragStart={this.onDragStart}>
 		   <Criteria state={state} classes={rls} layout={layout} height={this.state.height}/>
 		</Rnd>
 		   <div style={{position:"absolute", top:0, left:0,
