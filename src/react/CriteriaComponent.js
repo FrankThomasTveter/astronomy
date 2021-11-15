@@ -1,9 +1,7 @@
 import React, {Component} from "react";
 import {withStyles} from "@material-ui/core";
 import PropTypes from  "prop-types";
-import Draggable from 'react-draggable'; // Both at the same time
 //import {black_palette} from '../mui/metMuiThemes' //, teal_palette
-import CheckboxTree from 'react-checkbox-tree';
 
 import CheckIcon from '@material-ui/icons/CheckBox';
 import UnCheckIcon from '@material-ui/icons/CheckBoxOutlineBlank';
@@ -17,6 +15,7 @@ import ParentCloseIcon from '@material-ui/icons/Folder';
 import ParentOpenIcon from '@material-ui/icons/FolderOpen';
 import LeafIcon from '@material-ui/icons/Extension';
 
+import CheckboxTree from 'react-checkbox-tree';
 import 'react-checkbox-tree/lib/react-checkbox-tree.css';
 
 //console.log("Inside Criteria.")
@@ -77,8 +76,7 @@ class Criteria extends Component {
 	//console.log("Classes:",height);
 	var sheight=(height-50) + "px";
         return (
-		<Draggable key="criteria" bounds="parent" cancel=".cancel">
-		<div className={classes.block} style={{visibility:visible}}>
+		<span className={classes.block} style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>criteria</small></legend>
 		<div onMouseDown={this.handleChildClick} style={{maxHeight:sheight,minWidth:"300px",overflowY:'auto'}} className="cancel">
@@ -103,8 +101,7 @@ class Criteria extends Component {
          />
 	        </div>
 	        </fieldset>
-	           </div> 
-		</Draggable>
+	           </span> 
         );
     };
 }

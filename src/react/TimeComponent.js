@@ -1,7 +1,6 @@
 import React, {Component} from "react";
 import {withStyles} from "@material-ui/core";
 import PropTypes from  "prop-types";
-import Draggable from 'react-draggable'; // Both at the same time
 
 import moment from 'moment';
 import DateTime from 'react-datetime';
@@ -124,12 +123,7 @@ class Time extends Component {
 	    visible="hidden";
 	};
         return (
-	  <Draggable key="time" cancel=".cancel"
-	     onnDrag={(e, data) => this.trackPos(data)}
-	     onStart={this.handleStart}
-	     onStop={this.handleEnd}
-             bounds="parent">
-	   <div onClick={this.openDate}
+	   <span onClick={this.openDate}
 	      className={classes.block} 
 	      style={{visibility:visible}}>
 	    <fieldset className={classes.field}>
@@ -185,8 +179,7 @@ class Time extends Component {
 	       </select>
 	      </div>
 	    </fieldset>
-	   </div>
-	  </Draggable>
+	   </span>
 	);
     }
 };

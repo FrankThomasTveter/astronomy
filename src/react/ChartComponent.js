@@ -8,7 +8,7 @@ import { withStyles } from '@material-ui/core/styles';
 //import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import worldGeoJSON from '../geojson/custom_world';
-import { MapContainer, GeoJSON, Marker, Popup } from 'react-leaflet';//Polygon, TileLayer ,Popup, useMapEvents
+import { MapContainer, GeoJSON, Marker, Popup, useMapEvents } from 'react-leaflet';//Polygon, TileLayer ,Popup
 import markerIconPng from "leaflet/dist/images/marker-icon.png"
 import {Icon} from 'leaflet'
 
@@ -35,13 +35,13 @@ const styles = theme => ({
 });
 
 function AddMarkerToClick(props) {
-    const {position, icon}=props; // onClick, 
-    //const map = useMapEvents({
-	//click(event) {
-	  //  //console.log("Event:",event.latlng,onClick);
-	    //onClick(event);
-	//},
-    //});
+    const {position, icon, onClick}=props; // onClick, 
+    const map = useMapEvents({
+	click(event) {
+	    //console.log("Event:",event.latlng,onClick);
+	    onClick(event);
+	},
+    });
     return (
 	position !== undefined ? (
 		<Marker

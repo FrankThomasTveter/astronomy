@@ -209,6 +209,9 @@ function Astro() {
     this.increment=function(state,dt) {
 	state.Astro.targetTime=state.Astro.targetTime+dt;
     };
+    this.getData=function(state) {
+	return state.Astro.rawData;
+    };
     //#################################
     this.countdown=function() {
 	var state=undefined;
@@ -314,13 +317,13 @@ function Astro() {
 		};
 	    };
 	};
-	console.log("XML:",xmlDoc);
+	//console.log("XML:",xmlDoc);
 	try {
 	    this.rawData=this.dataToArray(state,xmlDoc);
 	} catch (err) {
 	    console.log(err);
 	};
-	console.log("Data:",JSON.stringify(this.rawData));
+	console.log("Loaded data:",JSON.stringify(this.rawData));
     };
     this.updateTime=function(state) {
 	var now=new moment().valueOf();

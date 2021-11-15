@@ -1,7 +1,6 @@
 import React, {Component} from "react";
 import {withStyles} from "@material-ui/core";
 import PropTypes from  "prop-types";
-import Draggable from 'react-draggable'; // Both at the same time
 import Chart from './ChartComponent'; // Both at the same time
 
 //console.log("Inside Location.")
@@ -32,7 +31,7 @@ class Location extends Component {
     };
     handleChildClick(e) {
 	e.stopPropagation();
-	//console.log('Stopped propagation from child');
+	console.log('Stopped propagation from child');
     };
     setLat(e) {
         const { state } = this.props; // , classes, layout
@@ -56,7 +55,7 @@ class Location extends Component {
 	this.setState({lat:lat, lon:lng});
 	state.Astro.setLat(state,this.state.lat);
 	state.Astro.setLon(state,this.state.lon);
-	//console.log("Click:",this.state);
+	console.log("Click:",this.state);
     };
     render() {
         const { classes, state } = this.props; // , layout
@@ -72,8 +71,8 @@ class Location extends Component {
 	};
 	//onMouseDown={this.handleChildClick}
 	var cls={map:classes.map};
+	//
         return (
-		<Draggable key="location" bounds="parent" cancel=".cancel">
 		   <div className={classes.block} style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>location</small></legend>
@@ -92,7 +91,6 @@ class Location extends Component {
 	        </div>
 	        </fieldset>
 	        </div>
-		</Draggable>
         );
     };
 }

@@ -1,8 +1,9 @@
 import React, {Component} from "react";
 import {withStyles} from "@material-ui/core";
 import PropTypes from  "prop-types";
-import Draggable from 'react-draggable'; // Both at the same time
 import Button from '@material-ui/core/Button';
+
+import EventsTable from './EventsTable'; // list of events
 
 import ReloadIcon from '@material-ui/icons/Replay';
 import UpIcon from '@material-ui/icons/ArrowUpward';
@@ -69,7 +70,7 @@ class Events extends Component {
 	//console.log('child');
     };
     render() {
-        const { classes, state } = this.props; //layout
+        const { classes, state, height } = this.props; //layout
 	var togglePrev=function(){
 	     this.setState({
 	          prev: ! this.state.prev //)moment(date).format(this.frm)
@@ -98,12 +99,18 @@ class Events extends Component {
 	} else {
 	    visible="hidden";
 	};
+	var data=state.Astro.getData(state);
+	var sheight=(height-50) + "px";
+	//console.log("Data:",data) ;
         return (
-		<Draggable key="events" bounds="parent" cancel=".cancel">
-		    <div  className={classes.block} style={{visibility:visible}}>
+		<div  className={classes.block} style={{visibility:visible}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>events</small></legend>
-		<div onMouseDown={this.handleChildClick} style={{color:'black',width:"100%",display:"flex", justifyContent:"space-between", alignItems:'center'}} className="cancel">
+		<div style={{maxHeight:sheight,overflowY:'auto'}}>
+		<div onMouseDown={this.handleChildClick} style={{color:'white',width:"100%",
+								 display:"flex", 
+								 justifyContent:"left", 
+								 alignItems:'center'}} className="cancel">
 		<Button
 	          className={classes.button}
             onClick={function() {state.Astro.loadEvents(state,"",[state.Show.showAll]);}}
@@ -114,9 +121,10 @@ class Events extends Component {
 		<ToTime parent={this} state={state} classes={classes} style={{marginLeft:"auto", marginRight:"0"}}/>
 		<input name="auto" type="checkbox" defaultChecked={! this.state.auto} onTouchEnd={toggleAuto} onClick={toggleAuto}/><label>Auto</label>
 		</div>
+		<EventsTable state={state} classes={classes}/>
+		</div>
 	    </fieldset>
 		    </div>
-		</Draggable>
         );
     }
 }
