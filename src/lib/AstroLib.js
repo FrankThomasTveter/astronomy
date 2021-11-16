@@ -24,8 +24,10 @@ function Astro() {
     this.targetSet=false;      // is a target time set?
     this.targetId=undefined;   // target time event id
     this.targetTime=new moment().valueOf();   // target time is now
-    this.targetUpdate=this.targetTime;        // last target time update
+    this.targetZone=new Date().getTimezoneOffset() * 60000;// client time zone
+    this.refTime=this.targetTime;        // reference time so we dont drift during play...
     this.playing=true;
+    this.changed=false;
     // offset=target-now
     // target=target0+dt
     // dt0 =  now-target0+offset
@@ -148,12 +150,6 @@ function Astro() {
 	]}
     ];
     //
-    this.beep0s = new Audio("media/beep0s.mp3");
-    this.beep1s = new Audio("media/beep1s.mp3");
-    this.beep2s = new Audio("media/beep2s.mp3");
-    this.beep3s = new Audio("media/beep3s.mp3");
-    this.beep10s = new Audio("media/beep10s.mp3");
-    this.beep1m = new Audio("media/beep1m.mp3");
     this.lastTime=new moment().valueOf();
     this.lastCnt=0;
     this.dtime=1;
@@ -176,7 +172,13 @@ function Astro() {
 	return this.visible[type];
     }.bind(this);
     this.init=function(state){
-	//console.log("Init");
+	console.log("Init");
+	this.beep0s = new Audio("/astro/media/beep0s.mp3");
+	this.beep1s = new Audio("/astro/media/beep1s.mp3");
+	this.beep2s = new Audio("/astro/media/beep2s.mp3");
+	this.beep3s = new Audio("/astro/media/beep3s.mp3");
+	this.beep10s = new Audio("/astro/media/beep10s.mp3");
+	this.beep1m = new Audio("/astro/media/beep1m.mp3");
 	//state.Utils.init("Database",this);
     };
     this.isPlaying=function(state) {
@@ -185,15 +187,18 @@ function Astro() {
     this.togglePlay=function(state) {
 	var now=new moment().valueOf();
 	if (state.Astro.isPlaying(state)) { // stop clock
-	    this.updateTime(state);
+	    state.Astro.setRefTime(state);
+	    state.Astro.setEventTime(state);
 	    state.Astro.playing=false;
 	} else { // start clock
-	    state.Astro.targetUpdate=now;
+	    state.Astro.refTime=now;
 	    state.Astro.playing=true;
 	};
+	state.Astro.changed=true;
     };
     this.setSpeed=function(state,speed) {
-	this.updateTime(state);
+	state.Astro.setRefTime(state);
+	state.Astro.setEventTime(state);
 	state.Astro.speed=speed;
 	//console.log("Speed:",state.Astro.speed);
     };
@@ -201,66 +206,33 @@ function Astro() {
 	return state.Astro.speed;
     };
     this.rewind=function(state) {
+	state.Astro.changed=true;
 	state.Astro.increment(state,-state.Astro.speed*1000);
     };
     this.forward=function(state) {
+	state.Astro.changed=true;
 	state.Astro.increment(state,+state.Astro.speed*1000);
     };
     this.increment=function(state,dt) {
+	state.Astro.changed=true;
 	state.Astro.targetTime=state.Astro.targetTime+dt;
     };
     this.getData=function(state) {
 	return state.Astro.rawData;
     };
-    //#################################
-    this.countdown=function() {
-	var state=undefined;
-	if (this.initialise) {this.init();this.initialise=false;}
-	var d=new moment();
-	var now=d.valueOf();
-	var updateData = this.getUpdate(state);
-	// load position + load data
-	if (this.updateData && (now-this.lastUpdate) > 10000*this.lastCnt && 
-            (now-this.targetUpdate) > 10000 && this.lastCnt < 10) {
-            //console.log("Updating position.");
-            this.lastUpdate=now;
-            this.lastCnt++;
-	    if (this.positionIsSet) {
-		this.getData2(state);
-	    } else {
-		this.getPositionData(state);
-	    }
-	} else {
-	    if (now - this.lastTime > 1000)  {                                            // code suspended during event 
-	    } else if (this.targetUpdate-999 > this.lastTime & this.targetUpdate-999 < now) {       // T   0s
-		this.beep0s.play();
-	    } else if (this.targetUpdate-1999 > this.lastTime & this.targetUpdate-1999 < now) {	  // T -1s
-		this.beep1s.play();
-	    } else if (this.targetUpdate-2999 > this.lastTime & this.targetUpdate-2999 < now) {	  // T -2s
-		this.beep2s.play();
-	    } else if (this.targetUpdate-3999 > this.lastTime & this.targetUpdate-3999 < now) {	  // T -3s
-		this.beep3s.play();
-	    } else if (this.targetUpdate-10999 > this.lastTime & this.targetUpdate-10999 < now) {	  // T -10s
-		this.beep10s.play();
-	    } else if (this.targetUpdate-60999 > this.lastTime & this.targetUpdate-60999 < now) {	  // T -60s
-		this.beep1m.play();
-	    }
-	    this.lastTime=now;
-	}
-	if (! this.targetSet) {
-	    now=Date.now();
-	    this.setTargetDateOld(now);
-	    this.setEndDate(now);
-	}
-	var documentTable = this.dataTable;
-	this.drawData(documentTable,1);
-	setTimeout(this.countdown,500);
-    }
-    //#################################
+    this.bodyFocus=function(state,id) {
+	// set focus on the body i.e. sun, moon
+	console.log("Focus on id:",id);
+    };
     this.updateLoop=function(state) {
 	if (this.bdeb) {console.log("Updating Astro...");}
-	if (state.Astro.isPlaying(state)) {
-	    this.updateTime(state);
+	if (state.Astro.isPlaying(state) || state.Astro.changed) {
+	    // reload if necessary
+	    state.Astro.changed=false;
+	    state.Astro.setRefTime(state);
+	    if (! state.Astro.countdown(state)) { // are we in a countdown?
+		state.Astro.setEventTime(state);
+	    };
 	    state.Show.showTime(state);
 	    state.Show.showEvents(state);
 	};
@@ -268,6 +240,48 @@ function Astro() {
 	    state.Astro.updateLoop(state)
 	},state.Astro.delay);
     }.bind(this);
+    this.countdown=function(state) {
+	if (this.initialise) {this.init();this.initialise=false;}
+	var active=false;
+	var now=new moment().valueOf();
+	if (Math.abs(state.Astro.targetTime-state.Astro.eventTime) < 65*1000) {
+	    active=true;
+	    //console.log("We are in a countdown...",state.Astro.eventTime);
+	    // load new data if we just passed countdown...
+	    if (state.Astro.getUpdate(state) && // should we update automatically?
+		(now-state.Astro.lastUpdate) > 10000*state.Astro.lastCnt && // wait for previous retry
+		state.Astro.lastCnt < 10) {  // retry 10 times
+		state.Astro.lastCnt++;
+		state.Astro.loadEvents(state,"",[state.Show.showAll]);
+		console.log("Updating...");
+	    } else {
+		if (state.Astro.targetTime - state.Astro.lastTime > 1000)  { // code suspended during event 
+		} else if (state.Astro.eventTime-999 > state.Astro.lastTime && 
+			   state.Astro.eventTime-999 < state.Astro.targetTime) {       // T   0s
+			state.Astro.playAudio(state,state.Astro.beep0s);
+		} else if (state.Astro.eventTime-1999 > state.Astro.lastTime &&
+			   state.Astro.eventTime-1999 < state.Astro.targetTime) {	  // T -1s
+			state.Astro.playAudio(state,state.Astro.beep1s);
+		} else if (state.Astro.eventTime-2999 > state.Astro.lastTime &&
+			   state.Astro.eventTime-2999 < state.Astro.targetTime) {	  // T -2s
+			state.Astro.playAudio(state,state.Astro.beep2s);
+		} else if (state.Astro.eventTime-3999 > state.Astro.lastTime &&
+			   state.Astro.eventTime-3999 < state.Astro.targetTime) {	  // T -3s
+			state.Astro.playAudio(state,state.Astro.beep3s);
+		} else if (state.Astro.eventTime-10999 > state.Astro.lastTime &&
+			   state.Astro.eventTime-10999 < state.Astro.targetTime) {	  // T -10s
+			state.Astro.playAudio(state,state.Astro.beep10s);
+		} else if (state.Astro.eventTime-60999 > state.Astro.lastTime &&
+			   state.Astro.eventTime-60999 < state.Astro.targetTime) {	  // T -60s
+			state.Astro.playAudio(state,state.Astro.beep1m);
+		}
+		state.Astro.lastTime=state.Astro.targetTime;
+	    }
+	} else {
+	    //console.log("Not in a countdown...",state.Astro.targetTime,state.Astro.eventTime);
+	};
+	return active;
+    }
     this.loadEvents=function(state, response, callbacks) {
 	if (this.bdeb) {console.log("Loading events.");};
 	var req=this.getRequest(state);
@@ -289,6 +303,10 @@ function Astro() {
 		}
 	    );
 	    sequence.then(function() {
+		state.Astro.changed=false;
+		state.Astro.lastUpdate=new moment().valueOf();
+		state.Astro.lastCnt=1;
+		state.Astro.setEventTime(state);
 		//console.log("Normal end...");
 	    }).catch(function(err) { // Catch any error that happened along the way
 		console.log("Error msg: " + err.message);
@@ -325,22 +343,34 @@ function Astro() {
 	};
 	console.log("Loaded data:",JSON.stringify(this.rawData));
     };
-    this.updateTime=function(state) {
+    this.setRefTime=function(state) {
 	var now=new moment().valueOf();
 	if (state.Astro.isPlaying(state)) {
-	    var doff=now-state.Astro.targetUpdate;
+	    var doff=now-state.Astro.refTime;
 	    state.Astro.increment(state,doff*state.Astro.speed);
-	    state.Astro.targetUpdate=now;
+	    state.Astro.refTime=now;
 	};
 	return state.Astro.targetDate;
+    };
+    this.getTargetTime=function(state) {
+	return state.Astro.targetTime;
+    };
+    this.setTargetTime=function(state,time) {
+	if (state.Astro.targetTime===time) {
+	    state.Astro.targetTime=new moment().valueOf();
+	} else {
+	    state.Astro.targetTime=time;
+	};
+	state.Astro.changed=true;
     };
     this.getTargetDate=function(state) {
 	return new moment(state.Astro.targetTime);
     };
     this.setTargetDate=function(state,date) {
 	if (date!==undefined) {
+	    state.Astro.changed=true;
 	    state.Astro.targetTime=date.valueOf();
-	    state.Astro.targetUpdate=new moment().valueOf();
+	    state.Astro.refTime=new moment().valueOf();
 	};
     };
 
@@ -363,7 +393,7 @@ function Astro() {
 	state.Astro.criteria=criteria;
     };
     //
-    // this.updateTime=function(state) {
+    // this.setRefTime=function(state) {
     // 	var d = new moment();
     // 	var epoch=d.valueOf();
     // 	//console.log("Times:",epoch,this.epoch0);
@@ -460,8 +490,8 @@ function Astro() {
 	var newpos=this.isNewPos(position.coords.latitude,position.coords.longitude);
 	var d=new moment();
 	var now=d.valueOf();
-	//console.log("Got position."+this.targetUpdate+"  "+now);
-	if (newpos || this.targetUpdate < now) {
+	//console.log("Got position."+this.refTime+"  "+now);
+	if (newpos || this.refTime < now) {
 	    this.lastUpdate=now+10000; 
 	    //console.log("Updating data.");
 	    var req=new this.request();
@@ -568,6 +598,16 @@ function Astro() {
 	this.start_dt=d;
 	this.start_tm=t;
     };
+    this.getISODate=function(target) {
+	var tzoffset = this.targetZone; //offset in milliseconds
+	var dt=target-tzoffset;
+	var date=new moment(dt);
+	var dtg=date.toISOString();
+	//console.log("Iso date:",date,dtg,target,tzoffset,dt);
+	var d=dtg.substring(0,10);
+	var t=dtg.substring(11,19);
+	return d + " " + t;
+    };
     this.increaseEndDt=function(state) {
 	state.Astro.endDt=Math.min(99,state.Astro.endDt+1);
     };
@@ -655,6 +695,10 @@ function Astro() {
 	    // documentPos.innerHTML="Data:" + this.rawData;
 	}
     }
+    this.removeItem=function(state,item,index) {
+	state.Astro.rawData[index]=undefined;
+	state.Astro.clean(state.Astro.rawData,undefined);
+    };
     this.deleteRow=function(id,row) {
 	//console.log("Deleting row:"+row);
 	this.this.rawData[row]=undefined;
@@ -693,12 +737,13 @@ function Astro() {
 	msec -= mm * 1000 * 60;
 	var ss = Math.floor(msec / 1000);
 	msec -= ss * 1000;
-	if (dt<0) {
+	if (dt <= -1000) {
 	    s="-";
-	} else if (dt > 0) {
+	} else if (dt >= 1000) {
 	    s="+";
 	} else {
 	    s="0";
+	    return s;
 	}
 	if (dd !== 0) s=s+" "+this.numberWithCommas(dd)+"d";
 	if (hh !== 0) s=s+" "+hh+"h";
@@ -736,16 +781,26 @@ function Astro() {
 	this.rawData = [];
 	this.drawAll=true;
     }
+    this.setEventTime=function(state) {
+	state.Astro.eventTime=undefined;
+	//loop over raw array, use time after refTime...
+	var now=new moment().valueOf();
+	state.Astro.rawData.map(function(v,i) {
+	    var time=v[0];
+	    if (time > state.Astro.targetTime && 
+		(state.Astro.eventTime===undefined || state.Astro.eventTime < state.Astro.targetTime || time < state.Astro.eventTime)) {
+		state.Astro.eventTime=time;
+	    }
+	});
+    };
     this.dataToArray=function(state,data) {
 	this.lastCnt=1;
 	var ret=[];
 	//var len=ret.length; // old length
-	var d=new moment();
-	var now=d.valueOf();
+	var now=new moment().valueOf();
 	//console.log("Adding data to array");
 	var cnt=0;
 	var log="";
-	this.targetUpdate=new moment("3000-01-01T00:00:00.000Z").valueOf();
 	var events=data.getElementsByTagName("Event");
 	for (var ii = 0; ii < events.length; ii++) {
 	    var event=events[ii];
@@ -771,11 +826,6 @@ function Astro() {
 		    var t=new moment(reportDtg);
 		    var localDtg=t.valueOf();
 		    //console.log("Got date: "+reportDtg+" => "+localDtg);
-		    if (localDtg > now) {
-			if (this.targetUpdate < now || localDtg < this.targetUpdate ) {
-			    this.targetUpdate=localDtg;
-			};
-		    }
 		    var reportId=report.getAttribute("repId");
 		    var reportVal=report.getAttribute("repVal");
 		    var reportHint=report.getAttribute("hint");
@@ -1084,7 +1134,7 @@ function Astro() {
     this.getData2=function(state) {
 	var d=new moment();
 	var now=d.valueOf();
-	this.targetUpdate=now-1000;
+	this.eventTime=now-1000;
 	//var pos = new geoloc(this.lat, 
 	//		     this.lng); 
 	var pos = undefined;
@@ -1267,6 +1317,32 @@ function Astro() {
 	}
 	return array;
     };
+    this.playAudio=function(state,beep) {
+        var playPromise;
+        if (beep !== undefined) {
+            // beep.muted=true;
+	    //console.log("Playing...");
+            playPromise=beep.play();
+        } else {
+            console.log("Invalid sounds...");
+        };
+        if (playPromise !== undefined) {
+            playPromise
+                .then(_ => {
+                    console.log("Audio played.");
+                })
+                .catch(error => {
+                    if (error.name === "NotAllowedError") {
+                        state.Html.broadcast(state,"Audio permission denied.",'warning');
+                    } else {
+                        state.Html.broadcast(state,"Unable to play audio.",'warning');
+                    }
+                    console.log("playback prevented." );
+                });
+        } else {
+            console.log("No sound available...");
+        }
+    }.bind(this);
 };
 
 export default Astro;
