@@ -1,5 +1,5 @@
 import moment from 'moment';
-function Astro() {
+function Events() {
     this.bdeb=false;
     this.rawData = [];
     // old html-stuff....
@@ -63,7 +63,7 @@ function Astro() {
 		{value: "sunEleMin",label:"Min elevation"},
 		{value: "civil",label:"Civil Twilight"},
 		{value: "nautical",label:"Nautical Twilight"},
-		{value: "astronomical",label:"Astronomical Twilight"},
+		{value: "astronomical",label:"Eventnomical Twilight"},
 		{value: "night",label:"Night"}
 	    ]},
 	    { value:"sunOrbit", label:"Orbital effects",children:[
@@ -182,103 +182,103 @@ function Astro() {
 	//state.Utils.init("Database",this);
     };
     this.isPlaying=function(state) {
-	return state.Astro.playing;
+	return state.Events.playing;
     };
     this.togglePlay=function(state) {
 	var now=new moment().valueOf();
-	if (state.Astro.isPlaying(state)) { // stop clock
-	    state.Astro.setRefTime(state);
-	    state.Astro.setEventTime(state);
-	    state.Astro.playing=false;
+	if (state.Events.isPlaying(state)) { // stop clock
+	    state.Events.setRefTime(state);
+	    state.Events.setEventTime(state);
+	    state.Events.playing=false;
 	} else { // start clock
-	    state.Astro.refTime=now;
-	    state.Astro.playing=true;
+	    state.Events.refTime=now;
+	    state.Events.playing=true;
 	};
-	state.Astro.changed=true;
+	state.Events.changed=true;
     };
     this.setSpeed=function(state,speed) {
-	state.Astro.setRefTime(state);
-	state.Astro.setEventTime(state);
-	state.Astro.speed=speed;
-	//console.log("Speed:",state.Astro.speed);
+	state.Events.setRefTime(state);
+	state.Events.setEventTime(state);
+	state.Events.speed=speed;
+	//console.log("Speed:",state.Events.speed);
     };
     this.getSpeed=function(state) {
-	return state.Astro.speed;
+	return state.Events.speed;
     };
     this.rewind=function(state) {
-	state.Astro.changed=true;
-	state.Astro.increment(state,-state.Astro.speed*1000);
+	state.Events.changed=true;
+	state.Events.increment(state,-state.Events.speed*1000);
     };
     this.forward=function(state) {
-	state.Astro.changed=true;
-	state.Astro.increment(state,+state.Astro.speed*1000);
+	state.Events.changed=true;
+	state.Events.increment(state,+state.Events.speed*1000);
     };
     this.increment=function(state,dt) {
-	state.Astro.changed=true;
-	state.Astro.targetTime=state.Astro.targetTime+dt;
+	state.Events.changed=true;
+	state.Events.targetTime=state.Events.targetTime+dt;
     };
     this.getData=function(state) {
-	return state.Astro.rawData;
+	return state.Events.rawData;
     };
     this.bodyFocus=function(state,id) {
 	// set focus on the body i.e. sun, moon
 	console.log("Focus on id:",id);
     };
     this.updateLoop=function(state) {
-	if (this.bdeb) {console.log("Updating Astro...");}
-	if (state.Astro.isPlaying(state) || state.Astro.changed) {
+	if (this.bdeb) {console.log("Updating Event...");}
+	if (state.Events.isPlaying(state) || state.Events.changed) {
 	    // reload if necessary
-	    state.Astro.changed=false;
-	    state.Astro.setRefTime(state);
-	    if (! state.Astro.countdown(state)) { // are we in a countdown?
-		state.Astro.setEventTime(state);
+	    state.Events.changed=false;
+	    state.Events.setRefTime(state);
+	    if (! state.Events.countdown(state)) { // are we in a countdown?
+		state.Events.setEventTime(state);
 	    };
 	    state.Show.showTime(state);
 	    state.Show.showEvents(state);
 	};
 	setTimeout(function() {
-	    state.Astro.updateLoop(state)
-	},state.Astro.delay);
+	    state.Events.updateLoop(state)
+	},state.Events.delay);
     }.bind(this);
     this.countdown=function(state) {
 	if (this.initialise) {this.init();this.initialise=false;}
 	var active=false;
 	var now=new moment().valueOf();
-	if (Math.abs(state.Astro.targetTime-state.Astro.eventTime) < 65*1000) {
+	if (Math.abs(state.Events.targetTime-state.Events.eventTime) < 65*1000) {
 	    active=true;
-	    //console.log("We are in a countdown...",state.Astro.eventTime);
+	    //console.log("We are in a countdown...",state.Events.eventTime);
 	    // load new data if we just passed countdown...
-	    if (state.Astro.getUpdate(state) && // should we update automatically?
-		(now-state.Astro.lastUpdate) > 10000*state.Astro.lastCnt && // wait for previous retry
-		state.Astro.lastCnt < 10) {  // retry 10 times
-		state.Astro.lastCnt++;
-		state.Astro.loadEvents(state,"",[state.Show.showAll]);
+	    if (state.Events.getUpdate(state) && // should we update automatically?
+		(now-state.Events.lastUpdate) > 10000*state.Events.lastCnt && // wait for previous retry
+		state.Events.lastCnt < 10) {  // retry 10 times
+		state.Events.lastCnt++;
+		state.Events.loadEvents(state,"",[state.Show.showAll]);
 		console.log("Updating...");
 	    } else {
-		if (state.Astro.targetTime - state.Astro.lastTime > 1000)  { // code suspended during event 
-		} else if (state.Astro.eventTime-999 > state.Astro.lastTime && 
-			   state.Astro.eventTime-999 < state.Astro.targetTime) {       // T   0s
-			state.Astro.playAudio(state,state.Astro.beep0s);
-		} else if (state.Astro.eventTime-1999 > state.Astro.lastTime &&
-			   state.Astro.eventTime-1999 < state.Astro.targetTime) {	  // T -1s
-			state.Astro.playAudio(state,state.Astro.beep1s);
-		} else if (state.Astro.eventTime-2999 > state.Astro.lastTime &&
-			   state.Astro.eventTime-2999 < state.Astro.targetTime) {	  // T -2s
-			state.Astro.playAudio(state,state.Astro.beep2s);
-		} else if (state.Astro.eventTime-3999 > state.Astro.lastTime &&
-			   state.Astro.eventTime-3999 < state.Astro.targetTime) {	  // T -3s
-			state.Astro.playAudio(state,state.Astro.beep3s);
-		} else if (state.Astro.eventTime-10999 > state.Astro.lastTime &&
-			   state.Astro.eventTime-10999 < state.Astro.targetTime) {	  // T -10s
-			state.Astro.playAudio(state,state.Astro.beep10s);
-		} else if (state.Astro.eventTime-60999 > state.Astro.lastTime &&
-			   state.Astro.eventTime-60999 < state.Astro.targetTime) {	  // T -60s
-			state.Astro.playAudio(state,state.Astro.beep1m);
+		if (state.Events.targetTime - state.Events.lastTime > 1000)  { // code suspended during event 
+		} else if (state.Events.eventTime-999 > state.Events.lastTime && 
+			   state.Events.eventTime-999 < state.Events.targetTime) {       // T   0s
+			state.Events.playAudio(state,state.Events.beep0s);
+		} else if (state.Events.eventTime-1999 > state.Events.lastTime &&
+			   state.Events.eventTime-1999 < state.Events.targetTime) {	  // T -1s
+			state.Events.playAudio(state,state.Events.beep1s);
+		} else if (state.Events.eventTime-2999 > state.Events.lastTime &&
+			   state.Events.eventTime-2999 < state.Events.targetTime) {	  // T -2s
+			state.Events.playAudio(state,state.Events.beep2s);
+		} else if (state.Events.eventTime-3999 > state.Events.lastTime &&
+			   state.Events.eventTime-3999 < state.Events.targetTime) {	  // T -3s
+			state.Events.playAudio(state,state.Events.beep3s);
+		} else if (state.Events.eventTime-10999 > state.Events.lastTime &&
+			   state.Events.eventTime-10999 < state.Events.targetTime) {	  // T -10s
+			state.Events.playAudio(state,state.Events.beep10s);
+		} else if (state.Events.eventTime-60999 > state.Events.lastTime &&
+			   state.Events.eventTime-60999 < state.Events.targetTime) {	  // T -60s
+			state.Events.playAudio(state,state.Events.beep1m);
 		}
-		state.Astro.lastTime=state.Astro.targetTime;
+		state.Events.lastTime=state.Events.targetTime;
 	    }
 	} else {
-	    //console.log("Not in a countdown...",state.Astro.targetTime,state.Astro.eventTime);
+	    //console.log("Not in a countdown...",state.Events.targetTime,state.Events.eventTime);
 	};
 	return active;
     }
@@ -288,14 +288,13 @@ function Astro() {
 	if (req !==undefined) {
 	    var url="cgi-bin/event.pl";
 	    var sequence = Promise.resolve();
-	    const complete=
 	    sequence = sequence.then(
 		function() {
 		    return state.File.get(url,req);
 		}
 	    ).then(
 		function(result) {
-		    state.Astro.processEvents(state,url,result);
+		    state.Events.processEvents(state,url,result);
 		}
 	    ).catch(
 		function(err) {
@@ -303,10 +302,10 @@ function Astro() {
 		}
 	    );
 	    sequence.then(function() {
-		state.Astro.changed=false;
-		state.Astro.lastUpdate=new moment().valueOf();
-		state.Astro.lastCnt=1;
-		state.Astro.setEventTime(state);
+		state.Events.changed=false;
+		state.Events.lastUpdate=new moment().valueOf();
+		state.Events.lastCnt=1;
+		state.Events.setEventTime(state);
 		//console.log("Normal end...");
 	    }).catch(function(err) { // Catch any error that happened along the way
 		console.log("Error msg: " + err.message);
@@ -345,52 +344,52 @@ function Astro() {
     };
     this.setRefTime=function(state) {
 	var now=new moment().valueOf();
-	if (state.Astro.isPlaying(state)) {
-	    var doff=now-state.Astro.refTime;
-	    state.Astro.increment(state,doff*state.Astro.speed);
-	    state.Astro.refTime=now;
+	if (state.Events.isPlaying(state)) {
+	    var doff=now-state.Events.refTime;
+	    state.Events.increment(state,doff*state.Events.speed);
+	    state.Events.refTime=now;
 	};
-	return state.Astro.targetDate;
+	return state.Events.targetDate;
     };
     this.getTargetTime=function(state) {
-	return state.Astro.targetTime;
+	return state.Events.targetTime;
     };
     this.setTargetTime=function(state,time) {
-	if (state.Astro.targetTime===time) {
-	    state.Astro.targetTime=new moment().valueOf();
+	if (state.Events.targetTime===time) {
+	    state.Events.targetTime=new moment().valueOf();
 	} else {
-	    state.Astro.targetTime=time;
+	    state.Events.targetTime=time;
 	};
-	state.Astro.changed=true;
+	state.Events.changed=true;
     };
     this.getTargetDate=function(state) {
-	return new moment(state.Astro.targetTime);
+	return new moment(state.Events.targetTime);
     };
     this.setTargetDate=function(state,date) {
 	if (date!==undefined) {
-	    state.Astro.changed=true;
-	    state.Astro.targetTime=date.valueOf();
-	    state.Astro.refTime=new moment().valueOf();
+	    state.Events.changed=true;
+	    state.Events.targetTime=date.valueOf();
+	    state.Events.refTime=new moment().valueOf();
 	};
     };
 
     this.getNodes=function(state) {
-	return state.Astro.nodes;
+	return state.Events.nodes;
     };
     this.getExpanded=function(state) {
-	return state.Astro.expanded;
+	return state.Events.expanded;
     };
     this.setExpanded=function(state,expanded) {
-	state.Astro.expanded=expanded;
+	state.Events.expanded=expanded;
 	//console.log("Expanded:",expanded);
     };
     this.getChecked=function(state) {
-	return Object.keys(state.Astro.criteria);
+	return Object.keys(state.Events.criteria);
     };
     this.setChecked=function(state,checked) {
 	var criteria={};
 	checked.forEach((x,i) => {criteria[x]=true;});
-	state.Astro.criteria=criteria;
+	state.Events.criteria=criteria;
     };
     //
     // this.setRefTime=function(state) {
@@ -409,7 +408,7 @@ function Astro() {
     // 	state.Show.
     // };
     
-    this.getRequest=function(state,replace) {
+    this.getRequest=function(state) {
 	//console.log("Updating data.");
 	var now=new moment().valueOf();
 	var req=new this.request();
@@ -417,7 +416,7 @@ function Astro() {
 	var replace=true;
 	if (this.targetSet) {replace=false;requestTime=this.targetTime;};
 	req.addDebug();
-	req.addPosition("",state.Astro.lat,state.Astro.lng,0)
+	req.addPosition("",state.Events.lat,state.Events.lng,0)
 	if(this.getPrev(state)) {
 	    if (this.getNext(state)) {
 		if (replace) {
@@ -495,7 +494,7 @@ function Astro() {
 	    this.lastUpdate=now+10000; 
 	    //console.log("Updating data.");
 	    var req=new this.request();
-	    var dt = 86400000.0;
+	    //var dt = 86400000.0;
 	    var requestTime=now;
 	    var replace=true;
 	    if (this.targetSet) {replace=false;requestTime=this.targetTime;};
@@ -555,40 +554,40 @@ function Astro() {
 	}
     };
     this.setEndDt=function(state,dt) {
-	state.Astro.endDt=dt;
+	state.Events.endDt=dt;
     };
     this.getEndDt=function (state) {
-	return state.Astro.endDt;
+	return state.Events.endDt;
     };
     this.getUpdate=function(state) {
-	return state.Astro.updateCheck;
+	return state.Events.updateCheck;
     };
     this.setUpdate=function(state,update) {
-	state.Astro.updateCheck=update;
+	state.Events.updateCheck=update;
     };
     this.getPrev=function(state) {
-	return state.Astro.previousCheck;
+	return state.Events.previousCheck;
     };
     this.setPrev=function(state,prev) {
-	state.Astro.previousCheck=prev;
+	state.Events.previousCheck=prev;
     };
     this.getNext=function(state) {
-	return state.Astro.nextCheck;
+	return state.Events.nextCheck;
     };
     this.setNext=function(state,next) {
-	state.Astro.nextCheck=next;
+	state.Events.nextCheck=next;
     };
     this.getLat=function(state) {
-	return state.Astro.lat;
+	return state.Events.lat;
     };
     this.setLat=function(state,lat) {
-	state.Astro.lat=lat;
+	state.Events.lat=lat;
     };
     this.getLon=function(state) {
-	return state.Astro.lng;
+	return state.Events.lng;
     };
     this.setLon=function(state,lon) {
-	state.Astro.lng=lon;
+	state.Events.lng=lon;
     };
     this.setTargetDateOld=function(target) {
 	var tzoffset = (new moment(target)).getTimezoneOffset() * 60000; //offset in milliseconds
@@ -609,95 +608,95 @@ function Astro() {
 	return d + " " + t;
     };
     this.increaseEndDt=function(state) {
-	state.Astro.endDt=Math.min(99,state.Astro.endDt+1);
+	state.Events.endDt=Math.min(99,state.Events.endDt+1);
     };
     this.decreaseEndDt=function(state) {
-	state.Astro.endDt=Math.max(1,state.Astro.endDt-1);
+	state.Events.endDt=Math.max(1,state.Events.endDt-1);
     };
     this.getEndDt=function(state) {
-	return state.Astro.endDt;
+	return state.Events.endDt;
     };
-    this.drawData=function (documentTable, id) {
-	if (this.rawData === undefined) {
-	    //documentTable.innerHTML="<em>No data available.</em>";
-	} else {
-	    var d=new moment();
-	    var now=d.valueOf();
-	    var cellCnt=4;
-	    var reportCnt=0;
-	    var documentReportCnt=documentTable.rows.length;
-	    this.clean(this.rawData,undefined);
-	    var dataReportsCnt=this.rawData.length;
-	    if (dataReportsCnt !== documentReportCnt) {
-		//console.log("Must redraw."+dataReportsCnt+" "+documentReportCnt);
-		this.drawAll=true;
-	    };
-	    if (this.drawAll && documentReportCnt === 0) {
-		//documentTable.innerHTML="";
-	    };
-	    for (var jj=0; jj< dataReportsCnt;jj++) {
-		if (this.drawAll) {
-		    if (reportCnt >= documentReportCnt) { // create row
-			//console.log("Report:"+reportCnt+"  "+jj+" "+dataReportsCnt+this.rawData[jj][0]);
-			var row=documentTable.insertRow(reportCnt);
-			for (var kk=0; kk < cellCnt;kk++) {
-			    var cell=row.insertCell(kk);
-			    //cell.innerHTML="init"+reportCnt;
-			}
-		    };
-		};
-		var dataReport=this.rawData[jj];
-		var documentReport=documentTable.rows[reportCnt];
-		var documentCells=documentReport.cells;
-		var t=new moment(dataReport[0]);
-		var repid=dataReport[3];
-		if (this.drawAll) {
-                    //console.log("Drawing buttons.");
- 		    //documentCells[0].innerHTML="<button class=\"delete\" onclick=\"deleteRow("+
-			//id+","+reportCnt+")\">X</button>";
-		    //documentCells[1].innerHTML="<button class=\"hot\" onclick=\"setTarget("+
-			//(t*1)+","+(repid)+")\">"+this.nice(t)+"</button>";
-		    //console.log("drawing button:"+this.nice(t));
-		}
-		var dt=t-now;
-		if (this.targetSet) {dt=t-this.targetTime;}
-		//documentCells[2].innerHTML=this.getTimeDiff(dt);
-		//documentCells[4].innerHTML=dataReport[0];
-		if (this.drawAll) {
-		    //documentCells[3].innerHTML="<button class=\"launch\" onclick=\"setTargetId("+
-			//(t*1)+","+(repid)+");launch3D();\">"+dataReport[5].substring(20)+"</button>";
-		    //documentCells[3].innerHTML=dataReport[5].substring(20);
-		}
-		if (Math.abs(dt) < 1100) {
-		    documentReport.style.backgroundColor="#FFFFFF";
-		} else if (dt < 0) {
-		    documentReport.style.backgroundColor="#AAAAAA";
-		} else {
-		    documentReport.style.backgroundColor="#00FF00";
-		}
-		reportCnt=reportCnt+1;
-	    }
-	    if (this.drawAll) {
-		if (documentReportCnt > reportCnt) {
-		    for (var ii=documentReportCnt-1; ii>= reportCnt;ii--) {
-			documentTable.deleteRow(ii);
-		    }
-		}
-	    }
-	    if (this.drawAll && reportCnt === 0) {
-		//documentTable.innerHTML="<em>No data available.</em>";
-	    }
-	    if (this.drawAll) {
-		this.drawAll=false;
-		//console.log("Stopped redrawing."+documentTable.rows.length);
-	    }
-	    //console.log(this.rawData[0][0]);
-	    // documentPos.innerHTML="Data:" + this.rawData;
-	}
-    }
+    // this.drawData=function (documentTable, id) {
+    // 	if (this.rawData === undefined) {
+    // 	    //documentTable.innerHTML="<em>No data available.</em>";
+    // 	} else {
+    // 	    var d=new moment();
+    // 	    var now=d.valueOf();
+    // 	    var cellCnt=4;
+    // 	    var reportCnt=0;
+    // 	    var documentReportCnt=documentTable.rows.length;
+    // 	    this.clean(this.rawData,undefined);
+    // 	    var dataReportsCnt=this.rawData.length;
+    // 	    if (dataReportsCnt !== documentReportCnt) {
+    // 		//console.log("Must redraw."+dataReportsCnt+" "+documentReportCnt);
+    // 		this.drawAll=true;
+    // 	    };
+    // 	    if (this.drawAll && documentReportCnt === 0) {
+    // 		//documentTable.innerHTML="";
+    // 	    };
+    // 	    for (var jj=0; jj< dataReportsCnt;jj++) {
+    // 		if (this.drawAll) {
+    // 		    if (reportCnt >= documentReportCnt) { // create row
+    // 			//console.log("Report:"+reportCnt+"  "+jj+" "+dataReportsCnt+this.rawData[jj][0]);
+    // 			var row=documentTable.insertRow(reportCnt);
+    // 			for (var kk=0; kk < cellCnt;kk++) {
+    // 			    var cell=row.insertCell(kk);
+    // 			    //cell.innerHTML="init"+reportCnt;
+    // 			}
+    // 		    };
+    // 		};
+    // 		var dataReport=this.rawData[jj];
+    // 		var documentReport=documentTable.rows[reportCnt];
+    // 		var documentCells=documentReport.cells;
+    // 		var t=new moment(dataReport[0]);
+    // 		var repid=dataReport[3];
+    // 		if (this.drawAll) {
+    //                 //console.log("Drawing buttons.");
+    // 		    //documentCells[0].innerHTML="<button class=\"delete\" onclick=\"deleteRow("+
+    // 			//id+","+reportCnt+")\">X</button>";
+    // 		    //documentCells[1].innerHTML="<button class=\"hot\" onclick=\"setTarget("+
+    // 			//(t*1)+","+(repid)+")\">"+this.nice(t)+"</button>";
+    // 		    //console.log("drawing button:"+this.nice(t));
+    // 		}
+    // 		var dt=t-now;
+    // 		if (this.targetSet) {dt=t-this.targetTime;}
+    // 		//documentCells[2].innerHTML=this.getTimeDiff(dt);
+    // 		//documentCells[4].innerHTML=dataReport[0];
+    // 		if (this.drawAll) {
+    // 		    //documentCells[3].innerHTML="<button class=\"launch\" onclick=\"setTargetId("+
+    // 			//(t*1)+","+(repid)+");launch3D();\">"+dataReport[5].substring(20)+"</button>";
+    // 		    //documentCells[3].innerHTML=dataReport[5].substring(20);
+    // 		}
+    // 		if (Math.abs(dt) < 1100) {
+    // 		    documentReport.style.backgroundColor="#FFFFFF";
+    // 		} else if (dt < 0) {
+    // 		    documentReport.style.backgroundColor="#AAAAAA";
+    // 		} else {
+    // 		    documentReport.style.backgroundColor="#00FF00";
+    // 		}
+    // 		reportCnt=reportCnt+1;
+    // 	    }
+    // 	    if (this.drawAll) {
+    // 		if (documentReportCnt > reportCnt) {
+    // 		    for (var ii=documentReportCnt-1; ii>= reportCnt;ii--) {
+    // 			documentTable.deleteRow(ii);
+    // 		    }
+    // 		}
+    // 	    }
+    // 	    if (this.drawAll && reportCnt === 0) {
+    // 		//documentTable.innerHTML="<em>No data available.</em>";
+    // 	    }
+    // 	    if (this.drawAll) {
+    // 		this.drawAll=false;
+    // 		//console.log("Stopped redrawing."+documentTable.rows.length);
+    // 	    }
+    // 	    //console.log(this.rawData[0][0]);
+    // 	    // documentPos.innerHTML="Data:" + this.rawData;
+    // 	}
+    // }
     this.removeItem=function(state,item,index) {
-	state.Astro.rawData[index]=undefined;
-	state.Astro.clean(state.Astro.rawData,undefined);
+	state.Events.rawData[index]=undefined;
+	state.Events.clean(state.Events.rawData,undefined);
     };
     this.deleteRow=function(id,row) {
 	//console.log("Deleting row:"+row);
@@ -782,14 +781,14 @@ function Astro() {
 	this.drawAll=true;
     }
     this.setEventTime=function(state) {
-	state.Astro.eventTime=undefined;
+	state.Events.eventTime=undefined;
 	//loop over raw array, use time after refTime...
-	var now=new moment().valueOf();
-	state.Astro.rawData.map(function(v,i) {
+	//var now=new moment().valueOf();
+	state.Events.rawData.forEach(function(v,i) {
 	    var time=v[0];
-	    if (time > state.Astro.targetTime && 
-		(state.Astro.eventTime===undefined || state.Astro.eventTime < state.Astro.targetTime || time < state.Astro.eventTime)) {
-		state.Astro.eventTime=time;
+	    if (time > state.Events.targetTime && 
+		(state.Events.eventTime===undefined || state.Events.eventTime < state.Events.targetTime || time < state.Events.eventTime)) {
+		state.Events.eventTime=time;
 	    }
 	});
     };
@@ -797,26 +796,26 @@ function Astro() {
 	this.lastCnt=1;
 	var ret=[];
 	//var len=ret.length; // old length
-	var now=new moment().valueOf();
+	//var now=new moment().valueOf();
 	//console.log("Adding data to array");
 	var cnt=0;
-	var log="";
+	//var log="";
 	var events=data.getElementsByTagName("Event");
 	for (var ii = 0; ii < events.length; ii++) {
 	    var event=events[ii];
-	    var eventSeq = event.getAttribute("Seq");
+	    //var eventSeq = event.getAttribute("Seq");
 	    var eventId = event.getAttribute("Id");
-	    var eventStart = event.getAttribute("Start");
-	    var eventSearch = event.getAttribute("Search");
-	    var eventStop = event.getAttribute("Stop");
-	    var eventVal1 = event.getAttribute("Val1");
-	    var eventVal2 = event.getAttribute("Val2");
-	    var eventVal3 = event.getAttribute("Val3");
-	    var eventReports = event.getAttribute("reports");
+	    //var eventStart = event.getAttribute("Start");
+	    //var eventSearch = event.getAttribute("Search");
+	    //var eventStop = event.getAttribute("Stop");
+	    //var eventVal1 = event.getAttribute("Val1");
+	    //var eventVal2 = event.getAttribute("Val2");
+	    //var eventVal3 = event.getAttribute("Val3");
+	    //var eventReports = event.getAttribute("reports");
 	    var costms=event.getAttribute("cost")||[];
 	    var reports=event.getElementsByTagName("Report");
 	    var cost = 0;
-	    if (costms.length > 0) cost=costms.match(/^[\d\.]+/g);
+	    if (costms.length > 0) cost=costms.match(/^[\d.]+/g);
 	    this.updateCost(cost);
 	    for (var jj = 0; jj < reports.length; jj++) {
 		var report=reports[jj];
@@ -832,16 +831,15 @@ function Astro() {
 		    var localSort=this.getSortTime(localDtg,eventId,reportId);
 		    ret[cnt++]=[localDtg,localSort,eventId,reportId,reportVal,reportHint];
 		} else {
-		    var hint=report.getAttribute("hint");
-		    log="<em>Server-request:"+hint+"</em>";
+		    // var hint=report.getAttribute("hint");
+		    // log="<em>Server-request:"+hint+"</em>";
 		};
 	    };
 	};
 	//if (cnt < len) {ret.splice(cnt, len-cnt);}
 	ret.sort(function(a, b){return a[1]-b[1]});
-	return ret;
 	this.drawAll=true;
-	
+	return ret;	
     };
     this.request=function() {
 	this.wipe             = function () {var obj=Object.keys(this);for (var ii=0; ii<obj.length;ii++) 
@@ -923,8 +921,8 @@ function Astro() {
 		   "twilightCivilStop" :         function(id) {id++;this["event"+id+"Id"]=650;return id;}.bind(this),
 		   "twilightNauticalStart" :     function(id) {id++;this["event"+id+"Id"]=660;return id;}.bind(this),
 		   "twilightNauticalStop" :      function(id) {id++;this["event"+id+"Id"]=670;return id;}.bind(this),
-		   "twilightAstronomicalStart" : function(id) {id++;this["event"+id+"Id"]=680;return id;}.bind(this),
-		   "twilightAstronomicalStop" :  function(id) {id++;this["event"+id+"Id"]=690;return id;}.bind(this),
+		   "twilightEventnomicalStart" : function(id) {id++;this["event"+id+"Id"]=680;return id;}.bind(this),
+		   "twilightEventnomicalStop" :  function(id) {id++;this["event"+id+"Id"]=690;return id;}.bind(this),
 		   "nightStart" : function(id) {id++;this["event"+id+"Id"]=700;return id;}.bind(this),
 		   "nightStop" :  function(id) {id++;this["event"+id+"Id"]=710;return id;}.bind(this),
 		   "sunAzi" :     function(id,target) {id++;this["event"+id+"Id"]=750;
@@ -1141,7 +1139,7 @@ function Astro() {
 	this.setPositionData(state,pos);
     }
     this.searchPosition=function(state) {
-	var string=this.search;
+	// var string=this.search;
 	// var geocoder = new google.maps.Geocoder();
 	// geocoder.geocode(
 	//     {"address": string},
@@ -1342,7 +1340,7 @@ function Astro() {
         } else {
             console.log("No sound available...");
         }
-    }.bind(this);
+    }; // .bind(this)
 };
 
-export default Astro;
+export default Events;

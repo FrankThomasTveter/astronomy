@@ -27,9 +27,9 @@ class ConfigLocation extends Component {
 	    return null;
 	} else if (visible !== undefined) {
 	    //var cls={button:classes.button};
- 	    this.onClick = event => {state.Astro.toggle(state,"location");};
+ 	    this.onClick = event => {state.Events.toggle(state,"location");};
 	    var classname;
-	    if (state.Astro.show(state,"location")) {
+	    if (state.Events.show(state,"location")) {
 		classname=classes.button;
 	    } else {
 		classname=classes.buttonInvisible;

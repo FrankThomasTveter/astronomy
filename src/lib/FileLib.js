@@ -2,6 +2,8 @@
 
 function File() {
     this.ready=true;
+    this.allLoaders = {};
+    this.currentScenarioLoaders=[];
     this.next=function(state, response, callbacks ) {
 	//console.log("Next:",JSON.stringify(callbacks));
 	if (callbacks !== undefined) {
@@ -122,6 +124,27 @@ function File() {
 		return key+"="+encodeURIComponent(params[key])
             })
             .join("&")
+    }
+    this.getCached=function(id){
+	if(this.allLoaders[id]){
+	    this.currentScenarioLoaders.push(this.allLoaders[id]);
+	    return this.allLoaders[id];
+	}
+    };
+    this.reset=function(){
+	this.currentScenarioLoaders = [];
+    };
+    this.loadJSON=function(dataSrc){
+	var onDataLoaded = this.getCached(dataSrc);
+	if(onDataLoaded) return onDataLoaded;
+	//onDataLoaded = $.ajax({
+	//    url : dataSrc,
+	//    dataType : 'json'
+	//});
+	this.allLoaders[dataSrc] = onDataLoaded.promise();
+	this.currentScenarioLoaders.push(onDataLoaded.promise());
+	console.warn("Use File instead...");
+	return onDataLoaded;
     }
 };
 

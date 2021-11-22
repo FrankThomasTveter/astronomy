@@ -20,7 +20,7 @@ class Location extends Component {
 	super(props);
         const {state} = props;
 	state.React.Location=this;
-	this.state={lat:state.Astro.getLat(state),lon:state.Astro.getLon(state)};
+	this.state={lat:state.Events.getLat(state),lon:state.Events.getLon(state)};
 	this.show=this.show.bind(this);
 	this.setLat=this.setLat.bind(this);
 	this.setLon=this.setLon.bind(this);
@@ -39,7 +39,7 @@ class Location extends Component {
 	var lat=parseFloat(e.target.value);
 	if (isNaN(lat)) {lat=60.0;};
 	this.setState({lat:lat});
-	state.Astro.setLat(state,this.state.lat);
+	state.Events.setLat(state,this.state.lat);
     };
     setLon(e) {
         const { state } = this.props; // classes, layout 
@@ -47,14 +47,14 @@ class Location extends Component {
 	var lon=parseFloat(e.target.value);
 	if (isNaN(lon)) {lon=0.0;};
 	this.setState({lon:lon});
-	state.Astro.setLon(state,this.state.lon);
+	state.Events.setLon(state,this.state.lon);
     };
     onClick(event) {
         const { state } = this.props; // , classes, layout
 	const { lat, lng } = event.latlng;
 	this.setState({lat:lat, lon:lng});
-	state.Astro.setLat(state,this.state.lat);
-	state.Astro.setLon(state,this.state.lon);
+	state.Events.setLat(state,this.state.lat);
+	state.Events.setLon(state,this.state.lon);
 	console.log("Click:",this.state);
     };
     render() {
@@ -64,7 +64,7 @@ class Location extends Component {
 	//	 button:classes.button,
 	//	 buttonDisabled:classes.buttonDisabled};
 	var visible;
-	if (state.Astro.show(state,"location")) {
+	if (state.Events.show(state,"location")) {
 	    visible="visible";
 	} else {
 	    visible="hidden";

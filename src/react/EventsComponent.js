@@ -23,14 +23,14 @@ const styles = theme => ({
 function ToTime(props){
     const { state,classes,parent } = props;
     var decreaseEndDt=function() {
-	state.Astro.decreaseEndDt(state);
-	parent.setState({endDt:state.Astro.getEndDt(state)});
+	state.Events.decreaseEndDt(state);
+	parent.setState({endDt:state.Events.getEndDt(state)});
     };
     var increaseEndDt=function() {
-	state.Astro.increaseEndDt(state);
-	parent.setState({endDt:state.Astro.getEndDt(state)});
+	state.Events.increaseEndDt(state);
+	parent.setState({endDt:state.Events.getEndDt(state)});
     };
-    var disabled=state.Astro.getPrev(state) || state.Astro.getNext(state);
+    var disabled=state.Events.getPrev(state) || state.Events.getNext(state);
     //var visible=! disabled;
     var btncls=classes.button;
     if (disabled) { 
@@ -48,7 +48,7 @@ function ToTime(props){
 	    title={"Increase end date"}
 	    disabled={disabled}><UpIcon/> </Button>
 	    <input type="text" className={btncls} style={{height:"100%"}}
-	    value={state.Astro.getEndDt(state)} maxLength="1" size="1" disabled/>
+	    value={state.Events.getEndDt(state)} maxLength="1" size="1" disabled/>
 	    </>);
 };
 class Events extends Component {
@@ -57,10 +57,10 @@ class Events extends Component {
         const {state} = props;
 	state.React.Events=this;
 	this.show=this.show.bind(this);
-	this.state={prev:! state.Astro.getPrev(state),
-		    next:! state.Astro.getNext(state),
-		    auto:! state.Astro.getUpdate(state),
-		    endDt: state.Astro.getEndDt(state)};   //undefined //moment().format(this.frm)
+	this.state={prev:! state.Events.getPrev(state),
+		    next:! state.Events.getNext(state),
+		    auto:! state.Events.getUpdate(state),
+		    endDt: state.Events.getEndDt(state)};   //undefined //moment().format(this.frm)
     };
     show(state) {
 	this.forceUpdate();
@@ -75,31 +75,31 @@ class Events extends Component {
 	     this.setState({
 	          prev: ! this.state.prev //)moment(date).format(this.frm)
 	      });
-	    state.Astro.setPrev(state,this.state.prev);
+	    state.Events.setPrev(state,this.state.prev);
 	}.bind(this);
 	var toggleNext=function(){
 	     this.setState({
 	          next: ! this.state.next //)moment(date).format(this.frm)
 	      });
-	    state.Astro.setNext(state,this.state.next);
+	    state.Events.setNext(state,this.state.next);
 	}.bind(this);
 	var toggleAuto=function(){
 	     this.setState({
 	          auto: ! this.state.auto //)moment(date).format(this.frm)
 	      });
-	    state.Astro.setUpdate(state,this.state.auto);
+	    state.Events.setUpdate(state,this.state.auto);
 	}.bind(this);
 	//var cls={events:classes.events,
 	//	 content:classes.content,
 	//	 button:classes.button,
 	//	 buttonDisabled:classes.buttonDisabled};
 	var visible;
-	if (state.Astro.show(state,"events")) {
+	if (state.Events.show(state,"events")) {
 	    visible="visible";
 	} else {
 	    visible="hidden";
 	};
-	var data=state.Astro.getData(state);
+	//var data=state.Events.getData(state);
 	var sheight=(height-50) + "px";
 	//console.log("Data:",data) ;
         return (
@@ -113,7 +113,7 @@ class Events extends Component {
 								 alignItems:'center'}} className="cancel">
 		<Button
 	          className={classes.button}
-            onClick={function() {state.Astro.loadEvents(state,"",[state.Show.showAll]);}}
+            onClick={function() {state.Events.loadEvents(state,"",[state.Show.showAll]);}}
 	          title={"Reload events"}
 	          disabled={false}> <ReloadIcon/> </Button>
 		<input name="prev" type="checkbox" defaultChecked={! this.state.prev} onTouchEnd={togglePrev} onClick={togglePrev}/><label>Prev</label>

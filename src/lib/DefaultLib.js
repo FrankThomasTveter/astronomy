@@ -18,10 +18,10 @@ function Default() {
     // Syntax: [[target, source],...], target=[level0,level1,level2...] etc.
     // what we copy from Setup-file to the default setup at startup (before url) | if default setup is empty...
     this.toStateFocus = [
-	// [["start","dt"],  ["Astro","start_dt"]],
-	// [["start","tm"],  ["Astro","start_tm"]],
-	// [["latitude"],    ["Astro","lat"]],
-	// [["longitude"],   ["Astro","lng"]]
+	// [["start","dt"],  ["Event","start_dt"]],
+	// [["start","tm"],  ["Event","start_tm"]],
+	// [["latitude"],    ["Event","lat"]],
+	// [["longitude"],   ["Event","lng"]]
     ];
     this.toStateURL = [
 	// [["url"],   ["Default","url"]]

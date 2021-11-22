@@ -127,19 +127,6 @@ function Show() {
 	this.showEvents(state);
 	//console.log("Showing table done...");
     };
-    this.showPolygons=function(state) {
-	var mode = state.Layout.getLayoutMode(state);
-	if (mode === state.Layout.modes.layout.Chart) {
-	    state.Polygon.makePolygon(state,0,function(state,polygons,changed){
-		if (changed) {
-		    //console.log("Polygons loaded? ",changed);
-		    state.Show.showDataset(state,state.React.matrix,true);
-		} else {
-		    //console.log("Polygons loaded? ",changed);
-		}
-	    });
-	};
-    };
     this.showFocus=function(state) {
 	if (state.React.Chart !== undefined) {
 	    state.React.Chart.showFocus(state);

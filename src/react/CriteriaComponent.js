@@ -39,9 +39,9 @@ class Criteria extends Component {
     };
     componentDidMount() {
         const { state } = this.props;
-        var checked=state.Astro.getChecked(state);
+        var checked=state.Events.getChecked(state);
         this.setState({ checked });
-        var expanded=state.Astro.getExpanded(state);
+        var expanded=state.Events.getExpanded(state);
         this.setState({ expanded });
     }
     show(state) {
@@ -58,17 +58,17 @@ class Criteria extends Component {
 	//	 button:classes.button,
 	//	 buttonDisabled:classes.buttonDisabled};
 	var visible;
-	var items=state.Astro.getNodes(state);
+	var items=state.Events.getNodes(state);
 	this.checkfunction= (checked)=>{
             this.setState({ checked });
-            state.Astro.setChecked(state,checked);
+            state.Events.setChecked(state,checked);
 	};
 	this.expandfunction=(expanded)=>{
             this.setState({ expanded });
-            state.Astro.setExpanded(state,expanded);
+            state.Events.setExpanded(state,expanded);
             //force();
 	};
-	if (state.Astro.show(state,"criteria")) {
+	if (state.Events.show(state,"criteria")) {
 	    visible="visible";
 	} else {
 	    visible="hidden";

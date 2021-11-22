@@ -36,7 +36,7 @@ const styles = theme => ({
 
 function AddMarkerToClick(props) {
     const {position, icon, onClick}=props; // onClick, 
-    const map = useMapEvents({
+    useMapEvents({
 	click(event) {
 	    //console.log("Event:",event.latlng,onClick);
 	    onClick(event);

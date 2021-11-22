@@ -27,9 +27,9 @@ class ConfigCriteria extends Component {
 	    return null;
 	} else if (visible !== undefined) {
 	    //var cls={button:classes.button};
- 	    this.onClick = event => {state.Astro.toggle(state,"criteria");};
+ 	    this.onClick = event => {state.Events.toggle(state,"criteria");};
 	    var classname;
-	    if (state.Astro.show(state,"criteria")) {
+	    if (state.Events.show(state,"criteria")) {
 		classname=classes.button;
 	    } else {
 		classname=classes.buttonInvisible;

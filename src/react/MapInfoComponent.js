@@ -43,7 +43,7 @@ class MapInfo extends Component {
     render() {
 	const { classes, state } = this.props;
 	var font=state.Layout.getExtraLargeFont();
-	var label=state.Path.getLabel(state);
+	var label="Label";
 	//console.log("Label:",label);
 	return (
 		<div className={classes.info} style={{font:font}}> {label} </div>

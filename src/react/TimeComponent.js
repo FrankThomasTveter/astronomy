@@ -31,7 +31,7 @@ const styles = theme => ({
 
 function PlayOrPauseIcon(props) {
     const {state}=props;
-    if (state.Astro.isPlaying(state)) {
+    if (state.Events.isPlaying(state)) {
 	return <PlayIcon/>;
     } else {
 	return <PauseIcon/>;
@@ -48,8 +48,8 @@ class Time extends Component {
 	this.openDate = this.openDate.bind(this);
 	this.show=this.show.bind(this);
 	this.changeSpeed=this.changeSpeed.bind(this);
-	this.state={speed:state.Astro.getSpeed(state),
-		    targetDate: state.Astro.getTargetDate(state)};
+	this.state={speed:state.Events.getSpeed(state),
+		    targetDate: state.Events.getTargetDate(state)};
 	this.setTargetDate=this.setTargetDate.bind(this);
     };
     show(state) {
@@ -58,9 +58,9 @@ class Time extends Component {
     };
     setTargetDate(state,date){
 	//console.log("Date:",date);
-	state.Astro.setTargetDate(state,date);
+	state.Events.setTargetDate(state,date);
 	this.setState({
-	    targetDate: state.Astro.getTargetDate(state)
+	    targetDate: state.Events.getTargetDate(state)
 	});
     };
     // Draggable functions
@@ -81,7 +81,7 @@ class Time extends Component {
         const {state} = this.props;
 	var speed=e.target.value;
 	this.setState({ speed:speed });
-	state.Astro.setSpeed(state,speed);
+	state.Events.setSpeed(state,speed);
     };
     handleChildClick(e) {
 	e.stopPropagation();
@@ -94,30 +94,30 @@ class Time extends Component {
 	}.bind(this);
 	var forward=function(state) {
             //const { setTarget } = this.props;
-	    state.Astro.forward(state);
+	    state.Events.forward(state);
 	    this.setTargetDate(state);
 	}.bind(this);
 	var rewind=function(state) {
             //const { setTarget } = this.props;
-	    state.Astro.rewind(state);
+	    state.Events.rewind(state);
 	    this.setTargetDate(state);
 	}.bind(this);
 	var togglePlay=function(state) {
-	    state.Astro.togglePlay(state);
+	    state.Events.togglePlay(state);
 	    this.show(state);
 	}.bind(this);
 	// var setEndDt=function(dt){
 	//     this.setState({
 	// 	endDt: dt //)moment(date).format(this.frm)
 	//     });
-	//     state.Astro.setEndDt(state,this.state.endDt);
+	//     state.Events.setEndDt(state,this.state.endDt);
 	// }.bind(this);
 	//var cls={time:classes.time,
 	//	 content:classes.content,
 	//	 button:classes.button,
 	//	 buttonDisabled:classes.buttonDisabled};
 	var visible;
-	if (state.Astro.show(state,"time")) {
+	if (state.Events.show(state,"time")) {
 	    visible="visible";
 	} else {
 	    visible="hidden";

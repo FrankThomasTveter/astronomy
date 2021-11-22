@@ -2,9 +2,9 @@ import React, {Component} from "react";
 import {withStyles} from "@material-ui/core";
 import PropTypes from  "prop-types";
 import CloseIcon from '@material-ui/icons/Close';
-import CheckIcon from '@material-ui/icons/CheckBox';
-import UnCheckIcon from '@material-ui/icons/CheckBoxOutlineBlank';
-import moment from 'moment';
+//import CheckIcon from '@material-ui/icons/CheckBox';
+//import UnCheckIcon from '@material-ui/icons/CheckBoxOutlineBlank';
+//import moment from 'moment';
 
 //console.log("Inside EventsTable.")
 
@@ -43,9 +43,6 @@ const styles = theme => ({
 	color: 'black',
         //borderRadius: "5px",
     },
-    divTableBody : {
-        display: 'table-row-group',
-    },
     block:{},
     field:{},
     legend:{},
@@ -55,8 +52,8 @@ const styles = theme => ({
 //        maxWidth: theme.spacing.getMaxWidth.maxWidth,
 
 function HdrRow(props) {
-    const {state, classes} = props;
-    var onclick=function(){};
+    // const {state, classes} = props; // 
+    //var onclick=function(){};
     return null;
     // return (<div className={classes.divTableHdr} key='hdrRow'>
     // 	    <div className={classes.divTableCell} onClick={onclick} key={`remove`}>
@@ -79,9 +76,9 @@ function HdrRow(props) {
 function DataRow(props) {
     const {state, classes, item, index, target} = props;
     var key='dataRow'+index;
-    var onTime=function() {state.Astro.setTargetTime(state,item[0]);};
-    var onRemove=function() {state.Astro.removeItem(state,item,index);};
-    var bodyFocus=function() {state.Astro.bodyFocus(state,item[2]);};
+    var onTime=function() {state.Events.setTargetTime(state,item[0]);};
+    var onRemove=function() {state.Events.removeItem(state,item,index);};
+    var bodyFocus=function() {state.Events.bodyFocus(state,item[2]);};
     //console.log("Item:",item,key);
     if (index === null || index === undefined) {
 	return (null);
@@ -89,7 +86,7 @@ function DataRow(props) {
 	var time=item[0];
 	var age=(item[1]-target)||0;
 	var bgcolor=(age<=-1000)?"#AAAAAA":(age>=1000)?"#00FF00":"#FFFFFF";
-	var id=item[3];
+	//var id=item[3];
 	var val=item[4];
 	var hint=item[5];
 	//console.log("Color:",age,bgcolor);
@@ -98,10 +95,10 @@ function DataRow(props) {
 		<CloseIcon/>
 		</div>
 		<div className={classes.divTableCell} key={'time'} style={{backgroundColor:bgcolor}}>
-		{state.Astro.getISODate(time)}
+		{state.Events.getISODate(time)}
 		</div>
 		<div className={classes.divTableCellCursor} key={'age'} onClick={onTime} style={{backgroundColor:bgcolor}}>
-		{state.Astro.getTimeDiff(age)}
+		{state.Events.getTimeDiff(age)}
 		</div>
 		<div className={classes.divTableCellCursor} key={'hint'} onClick={bodyFocus} style={{backgroundColor:bgcolor}}>
 		{hint}
@@ -127,8 +124,8 @@ class EventsTable extends Component {
         const { state, classes } = this.props; //layout
 	//var mapFunction= (val,index)=>renderline(classes,state,val,index);
 	//{data.map(mapFunction)}
-	var data=state.Astro.getData(state);
-	var target=state.Astro.getTargetTime(state);
+	var data=state.Events.getData(state);
+	var target=state.Events.getTargetTime(state);
 	//console.log("Data:",data) ;
         return (
 	    <div className={classes.divTable} key={'table'}>

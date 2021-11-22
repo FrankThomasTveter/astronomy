@@ -1121,6 +1121,14 @@ function Utils() {
 	};
 	return ret;
     }.bind(this);
+    this.addHours=function(state,d,h) {
+	d.setTime(d.getTime() + (h*60*60*1000)); 
+	return d;
+    };
+
+
 };
+
+
 export default Utils;
     

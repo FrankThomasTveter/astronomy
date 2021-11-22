@@ -27,9 +27,9 @@ class ConfigTime extends Component {
 	    return null;
 	} else if (visible !== undefined) {
 	    //var cls={button:classes.button};
- 	    this.onClick = event => {state.Astro.toggle(state,"time");};
+ 	    this.onClick = event => {state.Events.toggle(state,"time");};
 	    var classname;
-	    if (state.Astro.show(state,"time")) {
+	    if (state.Events.show(state,"time")) {
 		classname=classes.button;
 	    } else {
 		classname=classes.buttonInvisible;

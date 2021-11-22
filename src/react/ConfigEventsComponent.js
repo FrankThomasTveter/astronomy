@@ -27,9 +27,9 @@ class ConfigEvents extends Component {
 	    return null;
 	} else if (visible !== undefined) {
 	    //var cls={button:classes.button};
- 	    this.onClick = event => {state.Astro.toggle(state,"events");};
+ 	    this.onClick = event => {state.Events.toggle(state,"events");};
 	    var classname;
-	    if (state.Astro.show(state,"events")) {
+	    if (state.Events.show(state,"events")) {
 		classname=classes.button;
 	    } else {
 		classname=classes.buttonInvisible;
