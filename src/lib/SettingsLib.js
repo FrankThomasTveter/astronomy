@@ -5,7 +5,7 @@ function Settings() {
     this.controls=["Time","Location","Criteria","Events",
 		   "FullScreen","About","Qr"];
     // list of visible controls...
-    this.visible=[];//["Time","Location","Criteria","Events"];
+    this.visible=["Time","Location","Criteria","Events"];
     this.init=function(state){
 	//state.Utils.init("Settings",this);
     };

@@ -190,7 +190,7 @@ function Default() {
 	//console.log("Path Start",JSON.stringify(state.Path.keys),JSON.stringify(state.Path.select));
 	//console.log("Filling blanks...",JSON.stringify(state.Default.config.start));
 	// replace any critical objects removed by the url...
-	console.log("Check:",state.Utils.type.fill, state.Default.config.start, state);
+	//console.log("Check:",state.Utils.type.fill, state.Default.config.start, state);
 	state.Utils.copyMap(state, state.Utils.type.fill, state.Default.config.start, state);
 	//console.log("Filling blanks done...");
 	//console.log("Path Done",JSON.stringify(state.Path.keys),JSON.stringify(state.Path.select));

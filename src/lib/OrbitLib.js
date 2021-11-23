@@ -3,7 +3,7 @@ import Vector3 from './Vector3Lib';
 import * as THREE from 'three';
 //import {Vector3,Matrix4,Quaternion} from 'three';
 
-console.log("Loading orbit.js");
+console.log("Loading OrbitLib");
 
 // calculates to and from osculating elements
 function Orbit(){

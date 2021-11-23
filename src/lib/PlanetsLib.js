@@ -1,7 +1,7 @@
 import Vector3 from './Vector3Lib';
 //import Vector2 from './Vector2Lib';
 
-console.log("Loading planets.js");
+console.log("Loading PlanetsLib");
 
 function Planets() {
     this.bodies={

@@ -1,4 +1,4 @@
-console.log("Loading vector3.js");
+console.log("Loading VectorLib");
 /**
  * @author mrdoob / http://mrdoob.com/
  * @author *kile / http://kile.stravaganza.org/

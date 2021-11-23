@@ -17,7 +17,7 @@ import Vector3 from './Vector3Lib';
 //import * as TWEEN from './tween';
 import * as THREE from 'three';
 
-console.log("Loading chain.js");
+console.log("Loading ModelLib");
 
 function Chain() { 
     this.modelRedraw=false; 

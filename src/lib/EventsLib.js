@@ -21,6 +21,14 @@ function Events() {
     this.cost=0;
     this.delay=500;
     //
+    this.manager= {
+	minimum: 100,
+	names:[],
+	indexes:[],
+	nodes:{},
+	prevDraggedNode: null,
+	prevDraggedNodeZIndex: null
+    };
     this.targetSet=false;      // is a target time set?
     this.targetId=undefined;   // target time event id
     this.targetTime=new moment().valueOf();   // target time is now
@@ -167,12 +175,19 @@ function Events() {
     }.bind(this);
     this.toggle=function(state,type) {
 	if (this.visible[type] === undefined) { this.visible[type]=false;}
-	this.visible[type]=! this.visible[type];
+	if (!this.visible[type] || this.isPromoted(state,type)) {
+	    this.visible[type]=! this.visible[type];
+	};
+	if (this.visible[type]) {
+	    this.promoteType(state,type);
+	} else {
+	    this.demoteType(state,type);
+	}
 	state.Show.showDataset(state,true);
 	return this.visible[type];
     }.bind(this);
     this.init=function(state){
-	console.log("Init");
+	//console.log("Init");
 	this.beep0s = new Audio("/astro/media/beep0s.mp3");
 	this.beep1s = new Audio("/astro/media/beep1s.mp3");
 	this.beep2s = new Audio("/astro/media/beep2s.mp3");
@@ -180,6 +195,59 @@ function Events() {
 	this.beep10s = new Audio("/astro/media/beep10s.mp3");
 	this.beep1m = new Audio("/astro/media/beep1m.mp3");
 	//state.Utils.init("Database",this);
+    };
+    this.promoteNode=function(state,node) {
+	var regex=/(.*)/;
+	var name=regex.exec(node.outerText)[0]||[];
+	var index=Math.max((node.style.zIndex||0),this.manager.minimum);
+ 	//console.log("Node:",this.manager.names.length,name,"=>",index,node);
+ 	var pos = this.manager.names.indexOf(name);
+	if (pos===-1) { // add node
+	    this.manager.nodes[name]=node;
+	    this.manager.names.push(name);
+	    this.manager.indexes.push(index);
+	} else {
+	    this.manager.names.splice(pos,1);
+	    this.manager.names.push(name);
+	}
+	this.promote(state);
+    };
+    this.isPromoted=function(state,name) {
+ 	var pos = this.manager.names.indexOf(name);
+	var len = this.manager.names.length;
+	return (pos === -1 || pos+1 === len);
+    };
+    this.promoteType=function(state,name) {
+ 	var pos = this.manager.names.indexOf(name);
+	if (pos !== -1) {
+	    this.manager.names.splice(pos,1);
+	    this.manager.names.push(name);
+	};
+	this.promote(state);
+    };
+    this.demoteType=function(state,name) {
+ 	var pos = this.manager.names.indexOf(name);
+	if (pos !== -1) {
+	    this.manager.names.splice(pos,1);
+	    this.manager.names.unshift(name);
+	};
+	this.promote(state);
+    };
+    this.promote=function(state) {
+	// make sure indexes are unique
+	var last;
+	this.manager.indexes.sort(function(a, b) {return a - b;});
+	this.manager.indexes.map(function(v,i){
+	    if (last===undefined) {
+		last=v;
+	    } else if( last >= v)  {
+		last=last+1;
+		this.manager.indexes[i]=last;
+	    }
+	}.bind(this));
+	this.manager.names.forEach(function(v,i){
+	    this.manager.nodes[v].style.zIndex=this.manager.indexes[i];
+	}.bind(this));
     };
     this.isPlaying=function(state) {
 	return state.Events.playing;

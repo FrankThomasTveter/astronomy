@@ -54,6 +54,7 @@ function ToTime(props){
 class Events extends Component {
     constructor(props) {
 	super(props);
+	this.props=props;
         const {state} = props;
 	state.React.Events=this;
 	this.show=this.show.bind(this);
@@ -61,6 +62,8 @@ class Events extends Component {
 		    next:! state.Events.getNext(state),
 		    auto:! state.Events.getUpdate(state),
 		    endDt: state.Events.getEndDt(state)};   //undefined //moment().format(this.frm)
+	//console.log("Events:",this);
+	//state.Events.promoteNode(state,this);
     };
     show(state) {
 	this.forceUpdate();
