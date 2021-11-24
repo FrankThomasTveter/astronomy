@@ -21,6 +21,18 @@ function Events() {
     this.cost=0;
     this.delay=500;
     //
+    this.lastTime=new moment().valueOf();
+    this.lastCnt=0;
+    this.dtime=1;
+    this.documentLog = this.log;
+    this.documentPos = this.pos;
+    this.initialise=true;
+    this.positionIsSet=false;
+    this.totalCost=0.00;
+    this.window3D=undefined;
+    this.map=undefined; //Will contain map object.
+    this.marker=undefined; //Has the user plotted their location marker? 
+    //
     this.manager= {
 	minimum: 100,
 	names:[],
@@ -71,7 +83,7 @@ function Events() {
 		{value: "sunEleMin",label:"Min elevation"},
 		{value: "civil",label:"Civil Twilight"},
 		{value: "nautical",label:"Nautical Twilight"},
-		{value: "astronomical",label:"Eventnomical Twilight"},
+		{value: "astronomical",label:"Astronomical Twilight"},
 		{value: "night",label:"Night"}
 	    ]},
 	    { value:"sunOrbit", label:"Orbital effects",children:[
@@ -157,36 +169,7 @@ function Events() {
 	    ]}
 	]}
     ];
-    //
-    this.lastTime=new moment().valueOf();
-    this.lastCnt=0;
-    this.dtime=1;
-    this.documentLog = this.log;
-    this.documentPos = this.pos;
-    this.initialise=true;
-    this.positionIsSet=false;
-    this.totalCost=0.00;
-    this.window3D=undefined;
-    this.map=undefined; //Will contain map object.
-    this.marker=undefined; //Has the user plotted their location marker? 
-    this.show=function(state,type) {
-	if (this.visible[type] === undefined) { this.visible[type]=false;}
-	return this.visible[type];
-    }.bind(this);
-    this.toggle=function(state,type) {
-	if (this.visible[type] === undefined) { this.visible[type]=false;}
-	if (!this.visible[type] || this.isPromoted(state,type)) {
-	    this.visible[type]=! this.visible[type];
-	};
-	if (this.visible[type]) {
-	    this.promoteType(state,type);
-	} else {
-	    this.demoteType(state,type);
-	}
-	state.Show.showDataset(state,true);
-	return this.visible[type];
-    }.bind(this);
-    this.init=function(state){
+    this.init = function(state){
 	//console.log("Init");
 	this.beep0s = new Audio("/astro/media/beep0s.mp3");
 	this.beep1s = new Audio("/astro/media/beep1s.mp3");
@@ -196,103 +179,7 @@ function Events() {
 	this.beep1m = new Audio("/astro/media/beep1m.mp3");
 	//state.Utils.init("Database",this);
     };
-    this.promoteNode=function(state,node) {
-	var regex=/(.*)/;
-	var name=regex.exec(node.outerText)[0]||[];
-	var index=Math.max((node.style.zIndex||0),this.manager.minimum);
- 	//console.log("Node:",this.manager.names.length,name,"=>",index,node);
- 	var pos = this.manager.names.indexOf(name);
-	if (pos===-1) { // add node
-	    this.manager.nodes[name]=node;
-	    this.manager.names.push(name);
-	    this.manager.indexes.push(index);
-	} else {
-	    this.manager.names.splice(pos,1);
-	    this.manager.names.push(name);
-	}
-	this.promote(state);
-    };
-    this.isPromoted=function(state,name) {
- 	var pos = this.manager.names.indexOf(name);
-	var len = this.manager.names.length;
-	return (pos === -1 || pos+1 === len);
-    };
-    this.promoteType=function(state,name) {
- 	var pos = this.manager.names.indexOf(name);
-	if (pos !== -1) {
-	    this.manager.names.splice(pos,1);
-	    this.manager.names.push(name);
-	};
-	this.promote(state);
-    };
-    this.demoteType=function(state,name) {
- 	var pos = this.manager.names.indexOf(name);
-	if (pos !== -1) {
-	    this.manager.names.splice(pos,1);
-	    this.manager.names.unshift(name);
-	};
-	this.promote(state);
-    };
-    this.promote=function(state) {
-	// make sure indexes are unique
-	var last;
-	this.manager.indexes.sort(function(a, b) {return a - b;});
-	this.manager.indexes.map(function(v,i){
-	    if (last===undefined) {
-		last=v;
-	    } else if( last >= v)  {
-		last=last+1;
-		this.manager.indexes[i]=last;
-	    }
-	}.bind(this));
-	this.manager.names.forEach(function(v,i){
-	    this.manager.nodes[v].style.zIndex=this.manager.indexes[i];
-	}.bind(this));
-    };
-    this.isPlaying=function(state) {
-	return state.Events.playing;
-    };
-    this.togglePlay=function(state) {
-	var now=new moment().valueOf();
-	if (state.Events.isPlaying(state)) { // stop clock
-	    state.Events.setRefTime(state);
-	    state.Events.setEventTime(state);
-	    state.Events.playing=false;
-	} else { // start clock
-	    state.Events.refTime=now;
-	    state.Events.playing=true;
-	};
-	state.Events.changed=true;
-    };
-    this.setSpeed=function(state,speed) {
-	state.Events.setRefTime(state);
-	state.Events.setEventTime(state);
-	state.Events.speed=speed;
-	//console.log("Speed:",state.Events.speed);
-    };
-    this.getSpeed=function(state) {
-	return state.Events.speed;
-    };
-    this.rewind=function(state) {
-	state.Events.changed=true;
-	state.Events.increment(state,-state.Events.speed*1000);
-    };
-    this.forward=function(state) {
-	state.Events.changed=true;
-	state.Events.increment(state,+state.Events.speed*1000);
-    };
-    this.increment=function(state,dt) {
-	state.Events.changed=true;
-	state.Events.targetTime=state.Events.targetTime+dt;
-    };
-    this.getData=function(state) {
-	return state.Events.rawData;
-    };
-    this.bodyFocus=function(state,id) {
-	// set focus on the body i.e. sun, moon
-	console.log("Focus on id:",id);
-    };
-    this.updateLoop=function(state) {
+    this.updateLoop = function(state) {
 	if (this.bdeb) {console.log("Updating Event...");}
 	if (state.Events.isPlaying(state) || state.Events.changed) {
 	    // reload if necessary
@@ -308,7 +195,7 @@ function Events() {
 	    state.Events.updateLoop(state)
 	},state.Events.delay);
     }.bind(this);
-    this.countdown=function(state) {
+    this.countdown = function(state) {
 	if (this.initialise) {this.init();this.initialise=false;}
 	var active=false;
 	var now=new moment().valueOf();
@@ -350,7 +237,7 @@ function Events() {
 	};
 	return active;
     }
-    this.loadEvents=function(state, response, callbacks) {
+    this.loadEvents = function(state, response, callbacks) {
 	if (this.bdeb) {console.log("Loading events.");};
 	var req=this.getRequest(state);
 	if (req !==undefined) {
@@ -386,7 +273,7 @@ function Events() {
 	};
 	//console.log("Polygons:",JSON.stringify(state.Polygon.names));
     }.bind(this);
-    this.processEvents=function(state,url,result){
+    this.processEvents = function(state,url,result){
 	//console.log("Result:",result);
 	var xmlDoc;
 	if (typeof result === "string") {
@@ -410,7 +297,120 @@ function Events() {
 	};
 	console.log("Loaded data:",JSON.stringify(this.rawData));
     };
-    this.setRefTime=function(state) {
+    this.show = function(state,type) {
+	if (this.visible[type] === undefined) { this.visible[type]=false;}
+	return this.visible[type];
+    }.bind(this);
+    this.toggle = function(state,type) {
+	if (this.visible[type] === undefined) { this.visible[type]=false;}
+	if (!this.visible[type] || this.isPromoted(state,type)) {
+	    this.visible[type]=! this.visible[type];
+	};
+	if (this.visible[type]) {
+	    this.promoteType(state,type);
+	} else {
+	    this.demoteType(state,type);
+	}
+	state.Show.showDataset(state,true);
+	return this.visible[type];
+    }.bind(this);
+    this.promoteNode = function(state,node) {
+	var regex=/(.*)/;
+	var name=regex.exec(node.outerText)[0]||[];
+	var index=Math.max((node.style.zIndex||0),this.manager.minimum);
+ 	//console.log("Node:",this.manager.names.length,name,"=>",index,node);
+ 	var pos = this.manager.names.indexOf(name);
+	if (pos===-1) { // add node
+	    this.manager.nodes[name]=node;
+	    this.manager.names.push(name);
+	    this.manager.indexes.push(index);
+	} else {
+	    this.manager.names.splice(pos,1);
+	    this.manager.names.push(name);
+	}
+	this.promote(state);
+    };
+    this.isPromoted = function(state,name) {
+ 	var pos = this.manager.names.indexOf(name);
+	var len = this.manager.names.length;
+	return (pos === -1 || pos+1 === len);
+    };
+    this.promoteType = function(state,name) {
+ 	var pos = this.manager.names.indexOf(name);
+	if (pos !== -1) {
+	    this.manager.names.splice(pos,1);
+	    this.manager.names.push(name);
+	};
+	this.promote(state);
+    };
+    this.demoteType = function(state,name) {
+ 	var pos = this.manager.names.indexOf(name);
+	if (pos !== -1) {
+	    this.manager.names.splice(pos,1);
+	    this.manager.names.unshift(name);
+	};
+	this.promote(state);
+    };
+    this.promote = function(state) {
+	// make sure indexes are unique
+	var last;
+	this.manager.indexes.sort(function(a, b) {return a - b;});
+	this.manager.indexes.map(function(v,i){
+	    if (last===undefined) {
+		last=v;
+	    } else if( last >= v)  {
+		last=last+1;
+		this.manager.indexes[i]=last;
+	    }
+	}.bind(this));
+	this.manager.names.forEach(function(v,i){
+	    this.manager.nodes[v].style.zIndex=this.manager.indexes[i];
+	}.bind(this));
+    };
+    this.isPlaying = function(state) {
+	return state.Events.playing;
+    };
+    this.togglePlay = function(state) {
+	var now=new moment().valueOf();
+	if (state.Events.isPlaying(state)) { // stop clock
+	    state.Events.setRefTime(state);
+	    state.Events.setEventTime(state);
+	    state.Events.playing=false;
+	} else { // start clock
+	    state.Events.refTime=now;
+	    state.Events.playing=true;
+	};
+	state.Events.changed=true;
+    };
+    this.setSpeed = function(state,speed) {
+	state.Events.setRefTime(state);
+	state.Events.setEventTime(state);
+	state.Events.speed=speed;
+	//console.log("Speed:",state.Events.speed);
+    };
+    this.getSpeed = function(state) {
+	return state.Events.speed;
+    };
+    this.rewind = function(state) {
+	state.Events.changed=true;
+	state.Events.increment(state,-state.Events.speed*1000);
+    };
+    this.forward = function(state) {
+	state.Events.changed=true;
+	state.Events.increment(state,+state.Events.speed*1000);
+    };
+    this.increment = function(state,dt) {
+	state.Events.changed=true;
+	state.Events.targetTime=state.Events.targetTime+dt;
+    };
+    this.getData = function(state) {
+	return state.Events.rawData;
+    };
+    this.bodyFocus = function(state,id) {
+	// set focus on the body i.e. sun, moon
+	console.log("Focus on id:",id);
+    };
+    this.setRefTime = function(state) {
 	var now=new moment().valueOf();
 	if (state.Events.isPlaying(state)) {
 	    var doff=now-state.Events.refTime;
@@ -419,10 +419,10 @@ function Events() {
 	};
 	return state.Events.targetDate;
     };
-    this.getTargetTime=function(state) {
+    this.getTargetTime = function(state) {
 	return state.Events.targetTime;
     };
-    this.setTargetTime=function(state,time) {
+    this.setTargetTime = function(state,time) {
 	if (state.Events.targetTime===time) {
 	    state.Events.targetTime=new moment().valueOf();
 	} else {
@@ -430,10 +430,10 @@ function Events() {
 	};
 	state.Events.changed=true;
     };
-    this.getTargetDate=function(state) {
+    this.getTargetDate = function(state) {
 	return new moment(state.Events.targetTime);
     };
-    this.setTargetDate=function(state,date) {
+    this.setTargetDate = function(state,date) {
 	if (date!==undefined) {
 	    state.Events.changed=true;
 	    state.Events.targetTime=date.valueOf();
@@ -441,26 +441,26 @@ function Events() {
 	};
     };
 
-    this.getNodes=function(state) {
+    this.getNodes = function(state) {
 	return state.Events.nodes;
     };
-    this.getExpanded=function(state) {
+    this.getExpanded = function(state) {
 	return state.Events.expanded;
     };
-    this.setExpanded=function(state,expanded) {
+    this.setExpanded = function(state,expanded) {
 	state.Events.expanded=expanded;
 	//console.log("Expanded:",expanded);
     };
-    this.getChecked=function(state) {
+    this.getChecked = function(state) {
 	return Object.keys(state.Events.criteria);
     };
-    this.setChecked=function(state,checked) {
+    this.setChecked = function(state,checked) {
 	var criteria={};
 	checked.forEach((x,i) => {criteria[x]=true;});
 	state.Events.criteria=criteria;
     };
     //
-    // this.setRefTime=function(state) {
+    // this.setRefTime = function(state) {
     // 	var d = new moment();
     // 	var epoch=d.valueOf();
     // 	//console.log("Times:",epoch,this.epoch0);
@@ -476,7 +476,7 @@ function Events() {
     // 	state.Show.
     // };
     
-    this.getRequest=function(state) {
+    this.getRequest = function(state) {
 	//console.log("Updating data.");
 	var now=new moment().valueOf();
 	var req=new this.request();
@@ -529,7 +529,7 @@ function Events() {
 	    return; // nothing to do...
 	}
     };
-    this.addEvents=function(state,req) {
+    this.addEvents = function(state,req) {
 	if (this.getUpdate(state)){this.setCookie("updateCheck","t",10);}    else {this.setCookie("updateCheck","f",0);};
 	if (this.getPrev(state))  {this.setCookie("previousCheck","t",10);}  else {this.setCookie("previousCheck","f",0);};
 	if (this.getNext(state))  {this.setCookie("nextCheck","t",10);}      else {this.setCookie("nextCheck","f",0);};
@@ -550,9 +550,9 @@ function Events() {
 	this.setCookie("longitudeCheck",this.lng,10)
 	return id-1;
     }.bind(this);
-    this.processData=function(data) {
+    this.processData = function(data) {
     };
-    this.setPositionData=function(state,position) {
+    this.setPositionData = function(state,position) {
 	this.setPosition(position);
 	var newpos=this.isNewPos(position.coords.latitude,position.coords.longitude);
 	var d=new moment();
@@ -621,43 +621,43 @@ function Events() {
 	    }
 	}
     };
-    this.setEndDt=function(state,dt) {
+    this.setEndDt = function(state,dt) {
 	state.Events.endDt=dt;
     };
-    this.getEndDt=function (state) {
+    this.getEndDt = function (state) {
 	return state.Events.endDt;
     };
-    this.getUpdate=function(state) {
+    this.getUpdate = function(state) {
 	return state.Events.updateCheck;
     };
-    this.setUpdate=function(state,update) {
+    this.setUpdate = function(state,update) {
 	state.Events.updateCheck=update;
     };
-    this.getPrev=function(state) {
+    this.getPrev = function(state) {
 	return state.Events.previousCheck;
     };
-    this.setPrev=function(state,prev) {
+    this.setPrev = function(state,prev) {
 	state.Events.previousCheck=prev;
     };
-    this.getNext=function(state) {
+    this.getNext = function(state) {
 	return state.Events.nextCheck;
     };
-    this.setNext=function(state,next) {
+    this.setNext = function(state,next) {
 	state.Events.nextCheck=next;
     };
-    this.getLat=function(state) {
+    this.getLat = function(state) {
 	return state.Events.lat;
     };
-    this.setLat=function(state,lat) {
+    this.setLat = function(state,lat) {
 	state.Events.lat=lat;
     };
-    this.getLon=function(state) {
+    this.getLon = function(state) {
 	return state.Events.lng;
     };
-    this.setLon=function(state,lon) {
+    this.setLon = function(state,lon) {
 	state.Events.lng=lon;
     };
-    this.setTargetDateOld=function(target) {
+    this.setTargetDateOld = function(target) {
 	var tzoffset = (new moment(target)).getTimezoneOffset() * 60000; //offset in milliseconds
 	var dtg=new moment(target - tzoffset).toISOString();
 	var d=dtg.substring(0,10);
@@ -665,7 +665,7 @@ function Events() {
 	this.start_dt=d;
 	this.start_tm=t;
     };
-    this.getISODate=function(target) {
+    this.getISODate = function(target) {
 	var tzoffset = this.targetZone; //offset in milliseconds
 	var dt=target-tzoffset;
 	var date=new moment(dt);
@@ -675,16 +675,16 @@ function Events() {
 	var t=dtg.substring(11,19);
 	return d + " " + t;
     };
-    this.increaseEndDt=function(state) {
+    this.increaseEndDt = function(state) {
 	state.Events.endDt=Math.min(99,state.Events.endDt+1);
     };
-    this.decreaseEndDt=function(state) {
+    this.decreaseEndDt = function(state) {
 	state.Events.endDt=Math.max(1,state.Events.endDt-1);
     };
-    this.getEndDt=function(state) {
+    this.getEndDt = function(state) {
 	return state.Events.endDt;
     };
-    // this.drawData=function (documentTable, id) {
+    // this.drawData = function (documentTable, id) {
     // 	if (this.rawData === undefined) {
     // 	    //documentTable.innerHTML="<em>No data available.</em>";
     // 	} else {
@@ -762,16 +762,16 @@ function Events() {
     // 	    // documentPos.innerHTML="Data:" + this.rawData;
     // 	}
     // }
-    this.removeItem=function(state,item,index) {
+    this.removeItem = function(state,item,index) {
 	state.Events.rawData[index]=undefined;
 	state.Events.clean(state.Events.rawData,undefined);
     };
-    this.deleteRow=function(id,row) {
+    this.deleteRow = function(id,row) {
 	//console.log("Deleting row:"+row);
 	this.this.rawData[row]=undefined;
 	this.drawAll=true;
     }
-    this.setTarget=function(tt,id) {
+    this.setTarget = function(tt,id) {
 	//console.log("Setting target to:"+tt+" "+this.targetSet);
 	if (this.targetSet && tt === this.targetTime) {
 	    this.targetSet=false;
@@ -784,7 +784,7 @@ function Events() {
 	    this.targetId=id;
 	}
     }
-    this.setTargetId=function(tt,id) {
+    this.setTargetId = function(tt,id) {
 	//console.log("Setting target to:"+tt+" "+this.targetSet);
 	this.targetSet=true;
 	this.targetTime=tt;
@@ -793,7 +793,7 @@ function Events() {
 	this.targetId=id;
     }
 
-    this.getTimeDiff=function(dt) {
+    this.getTimeDiff = function(dt) {
 	var s="";
 	var msec=Math.abs(dt);
 	var dd = Math.floor(msec / 1000 / 60 / 60 / 24);
@@ -819,11 +819,11 @@ function Events() {
 	return s;
     }
 
-    this.numberWithCommas=function(x) {
+    this.numberWithCommas = function(x) {
 	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     }
 
-    this.isNewPos=function(lat,lon) {
+    this.isNewPos = function(lat,lon) {
 	var ret= (Math.abs(this.lastLat-lat)+Math.abs(this.lastLon-lon) > 1./40000000.0);
 	//console.log("Lat:"+lat+" Lon:"+lon+"  "+ret);
 	if (ret) {
@@ -832,7 +832,7 @@ function Events() {
 	}
 	return ret;
     }
-    this.addDataToArray=function(state,data) {
+    this.addDataToArray = function(state,data) {
 	//console.log("adding data to array.");
 	if (this.rawData !== undefined) {
 	    var raw=this.dataToArray(state,data);
@@ -841,14 +841,14 @@ function Events() {
 	    this.rawData=this.dataToArray(state,data);
 	}
     }
-    this.dataMerge=function(raw1,raw2) {
+    this.dataMerge = function(raw1,raw2) {
 	return this.unique(raw1.concat(raw2)).sort(function(a, b){return a[0]-b[0]});
     }
-    this.clearArray=function() {
+    this.clearArray = function() {
 	this.rawData = [];
 	this.drawAll=true;
     }
-    this.setEventTime=function(state) {
+    this.setEventTime = function(state) {
 	state.Events.eventTime=undefined;
 	//loop over raw array, use time after refTime...
 	//var now=new moment().valueOf();
@@ -860,7 +860,7 @@ function Events() {
 	    }
 	});
     };
-    this.dataToArray=function(state,data) {
+    this.dataToArray = function(state,data) {
 	this.lastCnt=1;
 	var ret=[];
 	//var len=ret.length; // old length
@@ -909,7 +909,7 @@ function Events() {
 	this.drawAll=true;
 	return ret;	
     };
-    this.request=function() {
+    this.request = function() {
 	this.wipe             = function () {var obj=Object.keys(this);for (var ii=0; ii<obj.length;ii++) 
 					      {if (! obj[ii].match(/^event/g) && ! obj[ii].match(/^debug/g)) {delete this[obj[ii]];}}}
 	this.addDebug          = function(id,val) {this["debug"]=1;};
@@ -989,8 +989,8 @@ function Events() {
 		   "twilightCivilStop" :         function(id) {id++;this["event"+id+"Id"]=650;return id;}.bind(this),
 		   "twilightNauticalStart" :     function(id) {id++;this["event"+id+"Id"]=660;return id;}.bind(this),
 		   "twilightNauticalStop" :      function(id) {id++;this["event"+id+"Id"]=670;return id;}.bind(this),
-		   "twilightEventnomicalStart" : function(id) {id++;this["event"+id+"Id"]=680;return id;}.bind(this),
-		   "twilightEventnomicalStop" :  function(id) {id++;this["event"+id+"Id"]=690;return id;}.bind(this),
+		   "twilightAstronomicalStart" : function(id) {id++;this["event"+id+"Id"]=680;return id;}.bind(this),
+		   "twilightAstronomicalStop" :  function(id) {id++;this["event"+id+"Id"]=690;return id;}.bind(this),
 		   "nightStart" : function(id) {id++;this["event"+id+"Id"]=700;return id;}.bind(this),
 		   "nightStop" :  function(id) {id++;this["event"+id+"Id"]=710;return id;}.bind(this),
 		   "sunAzi" :     function(id,target) {id++;this["event"+id+"Id"]=750;
@@ -1021,7 +1021,7 @@ function Events() {
 							this["event"+id+"Val4"]=dt;}.bind(this)
 		  };
     };
-    this.getSortTime=function(localDtg,eventId,reportId) {
+    this.getSortTime = function(localDtg,eventId,reportId) {
 	if (eventId === 640 ) { // civil twilight start
 	    return localDtg+1;
 	} else if (eventId === 650) {
@@ -1033,7 +1033,7 @@ function Events() {
 
     //Function called to initialize / create the map.
     //This is called when the page has loaded.
-    this.initMap=function() {
+    this.initMap = function() {
 	// //console.log("Initialising map.");
 	// //The center location of our map.
 	// var lat= +(this.lat);
@@ -1102,18 +1102,18 @@ function Events() {
     
     //This function will get the marker's current location and then add the lat/long
     //values to our textfields so that we can save the location.
-    this.markerLocation=function(){
+    this.markerLocation = function(){
 	//Get location.
 	var currentLocation = this.marker.getPosition();
 	//Add lat and lng values to a field that we can save.
 	document.getElementById('lat').value = currentLocation.lat(); //latitude
 	document.getElementById('lng').value = currentLocation.lng(); //longitude
     }
-    this.geoloc=function(latitude, longitude)
+    this.geoloc = function(latitude, longitude)
     {
 	this.coords={latitude:latitude,longitude:longitude};
     }    
-    this.setMapPosition=function() {
+    this.setMapPosition = function() {
 	if (this.mapReady) {
 	    // var lat= +(this.lat);
 	    // var lng= +(this.lng);
@@ -1127,13 +1127,13 @@ function Events() {
 
     // //Load the map when the page has finished loading.
     // google.maps.event.addDomListener(window, 'load', this.initMap);
-    this.setCookie=function(cname, cvalue, exdays) {
+    this.setCookie = function(cname, cvalue, exdays) {
 	var d = new moment();
 	d=new moment(d.valueOf() + (exdays*24*60*60*1000));
 	var expires = "expires="+d.toISOString();
 	document.cookie = cname + "=" + cvalue + "; " + expires;
     }
-    this.getCookie=function(cname) {
+    this.getCookie = function(cname) {
 	var name = cname + "=";
 	var ca = document.cookie.split(';');
 	for(var i=0; i<ca.length; i++) {
@@ -1143,7 +1143,7 @@ function Events() {
 	}
 	return "";
     } 
-    this.updateCost=function(cost) {
+    this.updateCost = function(cost) {
 	if (cost === -1) {
 	    this.totalCost=0;  
 	} else {
@@ -1157,7 +1157,7 @@ function Events() {
 	this.cost="$"+(+this.totalCost).toFixed(2);
 	this.setCookie("costCheck",this.totalCost,365);
     }
-    this.minus=function() {
+    this.minus = function() {
 	this.dtime=Math.max(1,this.dtime-1);
 	if (this.targetSet) {
 	    this.setEndDate(this.targetTime);
@@ -1165,7 +1165,7 @@ function Events() {
 	    this.setEndDate(Date.now());
 	}
     }
-    this.pluss=function() {
+    this.pluss = function() {
 	this.dtime=Math.min(365,this.dtime+1);
 	if (this.targetSet) {
 	    this.setEndDate(this.targetTime);
@@ -1173,7 +1173,7 @@ function Events() {
 	    this.setEndDate(Date.now());
 	}
     }
-    this.setTargetDateOld=function(target) {
+    this.setTargetDateOld = function(target) {
 	var tzoffset = (new moment(target)).getTimezoneOffset() * 60000; //offset in milliseconds
 	var dtg=new moment(target - tzoffset).toISOString();
 	var d=dtg.substring(0,10);
@@ -1181,23 +1181,23 @@ function Events() {
 	this.start_dt=d;
 	this.start_tm=t;
     }
-    this.startfocus=function() {
+    this.startfocus = function() {
 	this.targetSet=true;
     }
-    this.startblur=function() {
+    this.startblur = function() {
 	this.targetSet=true;
 	var dtg=this.start_dt+"T"+this.start_tm+"Z"
 	var tzoffset = (new moment(dtg)).getTimezoneOffset() * 60000; //offset in milliseconds
 	this.targetTime=new moment(dtg).valueOf()+tzoffset;
 	this.setEndDate(this.targetTime);
     }
-    this.setEndDate=function(target) {
+    this.setEndDate = function(target) {
 	var tzoffset = (new moment(target)).getTimezoneOffset() * 60000; //offset in milliseconds
 	var dtg=new moment(target - tzoffset + this.dtime*86400000).toISOString();
 	var d=dtg.substring(0,10);
 	this.end_dt=d;
     }
-    this.getData2=function(state) {
+    this.getData2 = function(state) {
 	var d=new moment();
 	var now=d.valueOf();
 	this.eventTime=now-1000;
@@ -1206,7 +1206,7 @@ function Events() {
 	var pos = undefined;
 	this.setPositionData(state,pos);
     }
-    this.searchPosition=function(state) {
+    this.searchPosition = function(state) {
 	// var string=this.search;
 	// var geocoder = new google.maps.Geocoder();
 	// geocoder.geocode(
@@ -1220,24 +1220,24 @@ function Events() {
 	//     }
 	// );
     }
-    this.getPosition=function(state) {
+    this.getPosition = function(state) {
 	// if (navigator.geolocation) {
 	//     //console.log("Getting position.");
 	//     navigator.geolocation.getCurrentPosition(this.setPosition);
 	// }
     }
-    this.setPosition=function(state,position) {
+    this.setPosition = function(state,position) {
 	this.lat=position.coords.latitude;
 	this.lng=position.coords.longitude;
 	this.positionIsSet=true;
 	this.setMapPosition();
     }
-    this.getPositionData=function(state) {
+    this.getPositionData = function(state) {
 	// if (navigator.geolocation) {
 	//     navigator.geolocation.getCurrentPosition(this.setPositionData);
 	// }
     }
-    this.checkEnd=function(state) {
+    this.checkEnd = function(state) {
 	// disable end-time...
 	if (!this.prev(state) && !this.getNext(state)) {
 	    // this.end_p.style.display = "block";
@@ -1251,7 +1251,7 @@ function Events() {
 	    //$("#end_dt").fadeOut();
 	}
     }
-    this.launch3D=function(dtg) {
+    this.launch3D = function(dtg) {
 	if (dtg === undefined) {
 	    if (this.targetSet) {
 		dtg=new moment(this.targetTime).toISOString();
@@ -1283,7 +1283,7 @@ function Events() {
 	    this.window3D=window.open(url);
 	}
     };
-    this.getTarget=function(id) {
+    this.getTarget = function(id) {
 	var ret;
 	if ((id >= 200 && id <= 299)||
 	    (id >= 550 && id <= 570)||
@@ -1306,7 +1306,7 @@ function Events() {
 	}
 	return ret;
     }
-    this.getFov=function(id) {
+    this.getFov = function(id) {
 	var ret;
 	if ((id >= 200 && id <= 299)||
 	    (id >= 550 && id <= 570)||
@@ -1330,7 +1330,7 @@ function Events() {
 	}
 	return ret;
     }
-    this.init_old=function(state) {
+    this.init_old = function(state) {
 	// read cookies
 	var masterCookie=this.getCookie("cookieCheck");
 	if ( masterCookie === "t") {
@@ -1353,7 +1353,7 @@ function Events() {
 	}
 	this.checkEnd();
     }
-    this.unique=function(array) {
+    this.unique = function(array) {
 	var a = array.concat();
 	for(var i=0; i<a.length; ++i) {
             for(var j=i+1; j<a.length; ++j) {
@@ -1383,7 +1383,7 @@ function Events() {
 	}
 	return array;
     };
-    this.playAudio=function(state,beep) {
+    this.playAudio = function(state,beep) {
         var playPromise;
         if (beep !== undefined) {
             // beep.muted=true;

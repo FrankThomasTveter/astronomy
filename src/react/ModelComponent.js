@@ -2,13 +2,13 @@ import React, {Component, useState, useEffect, useRef} from "react";
 import PropTypes from 'prop-types';
 import { withStyles } from '@material-ui/core/styles';
 
-import ReactGlobe from '../globe/ReactGlobe';
+import ReactModel from '../model/ReactModel';
 
 //import Tooltip from './TooltipDataComponent'
 import MapInfo from './MapInfoComponent'
 import markerRenderer from './markerRenderer';
 
-import './react-globe-styles.css';
+import './react-model-styles.css';
 
 const styles = theme => ({
     root: {
@@ -28,8 +28,8 @@ const styles = theme => ({
 });
 
 
-function MapGlobe(props) {
-    const {classes,onClickMarker,config} = props;//update,
+function Model(props) {
+    const {state,classes,onClickMarker,config} = props;//update,
     // Use State to keep the values
     const [markers, setMarkers] = useState([]);
     let animations=[];
@@ -66,7 +66,8 @@ function MapGlobe(props) {
     }
     useEffect( ()=>{updateLoop(props);
 		    return () => id.current && clearTimeout(id.current) } );
-    return (<ReactGlobe className={classes.map}
+    return (<ReactModel  state={state}
+	        className={classes.map}
 	        animations={animations}
                 markers={markers}
                 onClickMarker={onClickMarker}
@@ -85,11 +86,11 @@ function MapGlobe(props) {
 
 //, rotateSpeed:0.1
 
-class EarthMap extends Component {
+class MapModel extends Component {
     constructor(props) {
 	super(props);
 	const {state}=this.props;
-	state.React.Globe=this;
+	state.React.Model=this;
 	this._ismounted = false;
 	this.elem=null;
 	this.config={cnt:99,markers:[],animations:[],focus:[0,0],dist:2};
@@ -97,7 +98,7 @@ class EarthMap extends Component {
 	this.cnt=0;
     };	
     update() {
-	//console.log("Force update EarthMap...");
+	//console.log("Force update MapModel...");
 	this.forceUpdate();
     };
     componentDidMount() { 
@@ -115,7 +116,7 @@ class EarthMap extends Component {
 	state.Navigate.selectElement(state,marker.element);
     };
     showMap(state,force) {
-	// dont re-render the globe... - only change the markers
+	// dont re-render the model... - only change the markers
 	//console.log("Rendering markers...",force);
 	this.getMarkers(state);//this.config.markers=this.getMarkers(state);
 	if (force !== undefined && force) {
@@ -262,7 +263,8 @@ class EarthMap extends Component {
 			height: '100%',
 			overflow:'hidden'}} >
 		<MapInfo state={state}/>
-		<MapGlobe onClickMarker={this.onClickMarker}
+		<Model    state={state}
+		          onClickMarker={this.onClickMarker}
 		          config={this.config}
 		          update={this.update}
 		          classes={cls}/>
@@ -271,8 +273,8 @@ class EarthMap extends Component {
     }
 }
 
-EarthMap.propTypes = {
+MapModel.propTypes = {
     classes: PropTypes.object.isRequired,
 };
 
-export default withStyles(styles)(EarthMap);
+export default withStyles(styles)(MapModel);

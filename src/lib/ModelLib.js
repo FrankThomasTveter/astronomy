@@ -19,7 +19,7 @@ import * as THREE from 'three';
 
 console.log("Loading ModelLib");
 
-function Chain() { 
+function Model() { 
     this.modelRedraw=false; 
     this.controlsRedraw=false; 
     this.stackRedraw=false; 
@@ -54,6 +54,9 @@ function Chain() {
                       1 : {},
                       current : 0
 		    };
+    this.hello=function () {
+	console.log("Hello world!");
+    };
     this.initRequest = function (state) {
 	var url=this.getUrlVars();
 	Request.launch(url["lat"],url["lon"],url["dtg"],url["hrs"],url["label"],url["target"],url["fov"],url["dir"],url["con"],url["play"]);
@@ -66,7 +69,6 @@ function Chain() {
 	this.initScene(state);
 	this.initControls(state);
     }
-
     this.run = function (state) {
 	this.requestAnimFrame(this.run);
 	this.nowMsec=new Date().getTime();
@@ -109,7 +111,6 @@ function Chain() {
 	//setTimeout(function(){ this.run();},10);
 
     };
-
     this.initRenderer = function (state,context) {
 	//renderer = new Renderer(context);
 	//renderer.setSize( window.innerWidth, window.innerHeight );
@@ -1025,4 +1026,4 @@ function Chain() {
     })();
 };
 
-export default Chain;
+export default Model;

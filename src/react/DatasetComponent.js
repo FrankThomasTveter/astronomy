@@ -5,7 +5,7 @@ import Time      from   './TimeComponent';
 import Location  from   './LocationComponent';
 import Criteria  from   './CriteriaComponent';
 import Events    from   './EventsComponent';
-import Globe     from  "./GlobeComponent";
+import Model     from  "./ModelComponent";
 import {Rnd} from 'react-rnd'; // Both at the same time
 
 
@@ -64,7 +64,7 @@ class Dataset extends Component {
 	this.setState({ width: this.divElement.clientWidth, height: this.divElement.clientHeight });
     };
     componentDidMount() {
-	const height = this.divElement.clientHeight;
+	//const height = this.divElement.clientHeight;
 	//console.log("Height:",height);
 	this.updateDimensions();
 	window.addEventListener('resize', this.updateDimensions);
@@ -110,7 +110,7 @@ class Dataset extends Component {
 		</Rnd>
 		   <div style={{position:"absolute", top:0, left:0,
 	   	      width:"100%",height:"100%", zIndex:-99,pointerEvents:"auto"}}>
-		      <Globe   state={state}   classes={gls}/>
+		      <Model state={state} classes={gls}/>
 		   </div>
 		</div>
         );
