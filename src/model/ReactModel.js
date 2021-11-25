@@ -40,7 +40,7 @@ export default function ReactModel({
     
     // init
     useEffect(() => {
-	console.log("State:",state);
+	//console.log("State:",state);
 	const mount = mountRef.current;
 	const modelInstance = new Model(state, canvasRef.current, tooltipRef.current);
 	mount.appendChild(modelInstance.renderer.domElement);
