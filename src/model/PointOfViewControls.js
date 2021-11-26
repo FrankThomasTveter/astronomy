@@ -586,7 +586,10 @@ var PointOfViewControls = function ( object, domElement ) {
 				var y = ( event.touches[ 0 ].pageY + event.touches[ 1 ].pageY ) / 2;
 				_panEnd.copy( getMouseOnScreen( x, y ) );
 				_panStart.copy( _panEnd );
-				break;
+		                break;
+
+		        default :
+		                break;
 
 		}
 

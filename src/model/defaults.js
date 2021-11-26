@@ -41,7 +41,7 @@ export const defaultCameraOptions = {
   maxPolarAngle: CAMERA_MAX_POLAR_ANGLE,
   minPolarAngle: CAMERA_MIN_POLAR_ANGLE,
   rotateSpeed: 0.2,
-  zoomSpeed: 1,
+  zoomSpeed: 2.5,
 };
 
 export const defaultFocusOptions = {

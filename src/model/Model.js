@@ -126,7 +126,7 @@ const defaultOptions = {
 	maxPolarAngle: Math.PI,
 	minPolarAngle: 0,
 	rotateSpeed: 0.2,
-	zoomSpeed: 1,
+	zoomSpeed: 2.5,
     }
 };
 // utility function
@@ -161,6 +161,8 @@ const cleanScene =  (o) => {
 
 export default class Model {
     constructor(state, canvas, tooltip) {
+	this.state=state;
+	this.callbacks = defaultCallbacks;
 	// create objects
 	this.renderer = new THREE.WebGLRenderer({
 	    alpha: true,
@@ -168,23 +170,19 @@ export default class Model {
 	    canvas,
 	});
 
-
-
+	this.renderer.shadowMap.enabled=true;
+	//this.renderer.shadowMap.type=THREE.BasicShadowMap;
+	//this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+	
 	// create camera and controls
 	// create scenes and add objects (planets, moons etc.)
-
-
 	this.camera = new THREE.PerspectiveCamera();
-	var x=state.Planets.bodies.sun.radius*10;
-	var y=0;
-	var z=0;
-	this.camera.position.set(x, y, z);
+	this.camera.position.set(state.Planets.bodies.sun.radius*1.1, 0, 0);
 
-	this.scenes = this.createScenes(state,this.camera);
 	this.controls = new PointOfViewControls(this.camera, this.renderer.domElement);
 
 	this.controls.rotateSpeed = 1.0;
-	this.controls.zoomSpeed = 1.2;
+	this.controls.zoomSpeed = 2.5;
 	this.controls.panSpeed = 0.0;
 	this.controls.noZoom = false;
 	this.controls.noPan = true;
@@ -193,107 +191,126 @@ export default class Model {
 	this.controls.keys = [ 65, 83, 68 ];
 	
 	this.scene = new THREE.Scene();
-	const model = new THREE.Group();
-	model.add(state.Planets.createSunMesh());
-	this.scene.add(model);
-	this.scene.add(this.camera);
+	this.test(state);
 	
-	this.scene.display=0;
-	this.scene.axis=0;
+	// var light   = new THREE.DirectionalLight( 0xffffff, 1, 100 )
+	// light.position.set(0.5*state.Planets.bodies.sun.radius,
+	// 		   2*state.Planets.bodies.sun.radius,
+	// 		   state.Planets.bodies.sun.radius);
+	// light.castShadow            = true;
+	// this.scene.add(light);
+	// light.shadow.mapSize.width  = 512; // default
+	// light.shadow.mapSize.height = 512; // default
+	// light.shadow.camera.near    = 0.0001 * state.Planets.bodies.sun.radius;
+	// light.shadow.camera.far     = 10.0 * state.Planets.bodies.sun.radius;
+	// //const model = new THREE.Group();
+	// this.scene.add(state.Planets.createSaturnMesh());
+	// this.scene.add(state.Planets.createSaturnRingMesh());
+	// this.scene.add(state.Planets.createDeathStarMesh());
+	// state.Planets.setPosition(this.scene,"deathstar",200,state.Planets.bodies.saturn.radius*1.01,100);
+	// //this.scene.add(state.Planets.createLight());
 
-	//console.log(this.scene);
 
-	this.camera.up = new THREE.Vector3(0,0,1);
-	this.camera.lookAt(new THREE.Vector3(0,0,0));
-
-	// const cameraAmbientLight = new AmbientLight('white');
-	// const cameraPointLight = new PointLight('white');
-	// const model = new Group();
-	// const modelBackground = new Mesh();
-	// const modelClouds = new Mesh();
-	// const modelSphere = new Mesh();
-	// const markerObjects = new Group();
-	// const pointOfViewControls = new PointOfViewControls(camera, this.renderer.domElement);
-
-	// pointOfViewControls.rotateSpeed = 1.0;
-	// pointOfViewControls.zoomSpeed = 1.2;
-	// pointOfViewControls.panSpeed = 0.0;
+	// //this.scene.add(new THREE.AmbientLight('white'));
+	// //this.scene.add(model);
+	// this.scene.add(this.camera);
 	
-	// pointOfViewControls.noZoom = false;
-	// pointOfViewControls.noPan = true;
+	// this.scene.display=0;
+	// this.scene.axis=0;
+
+	// //console.log(this.scene);
+
+	// this.camera.up = new THREE.Vector3(0,0,1);
+	// this.camera.lookAt(new THREE.Vector3(0,0,0));
+
+	// // const cameraAmbientLight = new AmbientLight('white');
+	// // const cameraPointLight = new PointLight('white');
+	// // const model = new Group();
+	// // const modelBackground = new Mesh();
+	// // const modelClouds = new Mesh();
+	// // const modelSphere = new Mesh();
+	// // const markerObjects = new Group();
+	// // const pointOfViewControls = new PointOfViewControls(camera, this.renderer.domElement);
+
+	// // pointOfViewControls.rotateSpeed = 1.0;
+	// // pointOfViewControls.zoomSpeed = 2.5;
+	// // pointOfViewControls.panSpeed = 0.0;
 	
-	// pointOfViewControls.staticMoving = true;
-	// pointOfViewControls.dynamicDampingFactor = 0.3;
+	// // pointOfViewControls.noZoom = false;
+	// // pointOfViewControls.noPan = true;
+	
+	// // pointOfViewControls.staticMoving = true;
+	// // pointOfViewControls.dynamicDampingFactor = 0.3;
 	
 
-	// const scene =  new Scene();
-	// scene.add( new THREE.AxesHelper() );
+	// // const scene =  new Scene();
+	// // scene.add( new THREE.AxesHelper() );
 
-	// // name objects
- 	// this.camera.name = ObjectName.Camera;
- 	// cameraAmbientLight.name = ObjectName.CameraAmbientLight;
- 	// cameraPointLight.name = ObjectName.CameraPointLight;
-	// model.name = ObjectName.Model;
-	// modelBackground.name = ObjectName.ModelBackground;
-	// modelClouds.name = ObjectName.ModelClouds;
-	// modelSphere.name = ObjectName.ModelSphere;
-	// markerObjects.name = ObjectName.MarkerObjects;
-	// scene.name = ObjectName.Scene;
+	// // // name objects
+ 	// // this.camera.name = ObjectName.Camera;
+ 	// // cameraAmbientLight.name = ObjectName.CameraAmbientLight;
+ 	// // cameraPointLight.name = ObjectName.CameraPointLight;
+	// // model.name = ObjectName.Model;
+	// // modelBackground.name = ObjectName.ModelBackground;
+	// // modelClouds.name = ObjectName.ModelClouds;
+	// // modelSphere.name = ObjectName.ModelSphere;
+	// // markerObjects.name = ObjectName.MarkerObjects;
+	// // scene.name = ObjectName.Scene;
 
-	// // add objects to scene
- 	// this.camera.add(cameraAmbientLight);
- 	// this.camera.add(cameraPointLight);
- 	// model.add(modelBackground);
- 	// model.add(modelClouds);
- 	// model.add(modelSphere);
-	// scene.add(markerObjects);
-	// scene.add(camera);
- 	// this.scene.add(model);
+	// // // add objects to scene
+ 	// // this.camera.add(cameraAmbientLight);
+ 	// // this.camera.add(cameraPointLight);
+ 	// // model.add(modelBackground);
+ 	// // model.add(modelClouds);
+ 	// // model.add(modelSphere);
+	// // scene.add(markerObjects);
+	// // scene.add(camera);
+ 	// // this.scene.add(model);
 
-	// add interactions to scene
-	//this.interactions=new Interaction(this.renderer, this.scene, this.camera);
-	// this.scene.on('mousemove', function(event){
-    	//     if (this.isFocusing()) {
-	// 	return;
-      	//     }
-	//     if (this.activeMarker) {
-	// 	const { activeScale } = this.options.marker;
-	// 	const from = [activeScale, activeScale, activeScale];
-	// 	this.tween(
-	// 	    from,
-	// 	    [1, 1, 1],
-	// 	    100,
-	// 	    [ 'Cubic',  'In', ],
-	// 	    () => {
-	// 		if (this.activeMarkerObject) {
-	// 		    this.activeMarkerObject.scale.set(...from);
-	// 		}
-	// 	    },
-	// 	    () => {
-	// 		this.activeMarker = undefined;
-	// 		this.activeMarkerObject = undefined;
-	// 	    },
-	// 	);
-	// 	this.callbacks.onMouseOutMarker(
-	// 	    this.activeMarker,
-	// 	    this.activeMarkerObject,
-	// 	    event.data.originalEvent,
-	// 	);
-	// 	//this.tooltip.hide(); // the tooltip hides itself...
-	//     }
-	// }.bind(this));
-	// this.scene.on('click', (event) => {
-	//     if (this.isFocusing()) {
-	// 	return;
-	//     }
-	//     if (this.options.focus.enableDefocus && this.preFocusPosition) {
-	// 	this.callbacks.onDefocus(this.focus, event.data.originalEvent);
-	// 	this.updateFocus(undefined, this.options.focus);
-	//     }
-	// });
+	// // add interactions to scene
+	// //this.interactions=new Interaction(this.renderer, this.scene, this.camera);
+	// // this.scene.on('mousemove', function(event){
+    	// //     if (this.isFocusing()) {
+	// // 	return;
+      	// //     }
+	// //     if (this.activeMarker) {
+	// // 	const { activeScale } = this.options.marker;
+	// // 	const from = [activeScale, activeScale, activeScale];
+	// // 	this.tween(
+	// // 	    from,
+	// // 	    [1, 1, 1],
+	// // 	    100,
+	// // 	    [ 'Cubic',  'In', ],
+	// // 	    () => {
+	// // 		if (this.activeMarkerObject) {
+	// // 		    this.activeMarkerObject.scale.set(...from);
+	// // 		}
+	// // 	    },
+	// // 	    () => {
+	// // 		this.activeMarker = undefined;
+	// // 		this.activeMarkerObject = undefined;
+	// // 	    },
+	// // 	);
+	// // 	this.callbacks.onMouseOutMarker(
+	// // 	    this.activeMarker,
+	// // 	    this.activeMarkerObject,
+	// // 	    event.data.originalEvent,
+	// // 	);
+	// // 	//this.tooltip.hide(); // the tooltip hides itself...
+	// //     }
+	// // }.bind(this));
+	// // this.scene.on('click', (event) => {
+	// //     if (this.isFocusing()) {
+	// // 	return;
+	// //     }
+	// //     if (this.options.focus.enableDefocus && this.preFocusPosition) {
+	// // 	this.callbacks.onDefocus(this.focus, event.data.originalEvent);
+	// // 	this.updateFocus(undefined, this.options.focus);
+	// //     }
+	// // });
 	// assign values to class variables
-	this.state=state;
-	this.callbacks = defaultCallbacks;
+	// this.state=state;
+	// this.callbacks = defaultCallbacks;
 	// this.activeMarker = undefined;
 	// this.activeMarkerObject = undefined;
 	// this.animationFrameId = undefined;
@@ -310,18 +327,58 @@ export default class Model {
 	// this.scene = scene;
 	// this.tooltip = tooltip;
 
-	// update objects
-	this.updateCallbacks(state);
-	this.updateCamera(state);
-	this.updateFocus(state);
-	this.updateModel({
-	    enableBackground: false,
-	    enableClouds: false,
-	});
-	this.updateLights(state);
-	this.updateMarkers(state);
-	this.updateSize();
+	// // update objects
+	// this.updateCallbacks(state);
+	// this.updateCamera(state);
+	// this.updateFocus(state);
+	// this.updateModel({
+	//     enableBackground: false,
+	//     enableClouds: false,
+	// });
+	// //this.updateLights(state);
+	// //this.updateMarkers(state);
+	// //this.updateSize();
     }
+
+    test(state) {
+
+	this.camera.position.set(20, 0, 0);
+	this.renderer.shadowMap.enabled = true;
+	this.renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+	
+	//Create a DirectionalLight and turn on shadows for the light
+	const light = new THREE.DirectionalLight( 0xffffff, 1, 100 );
+	light.position.set( 0, 1, 0 ); //default; light shining from top
+	light.castShadow = true; // default false
+	this.scene.add( light );
+	
+	//Set up shadow properties for the light
+	light.shadow.mapSize.width = 512; // default
+	light.shadow.mapSize.height = 512; // default
+	light.shadow.camera.near = 0.5; // default
+	light.shadow.camera.far = 500; // default
+	
+	//Create a sphere that cast shadows (but does not receive them)
+	const sphereGeometry = new THREE.SphereGeometry( 5, 32, 32 );
+	const sphereMaterial = new THREE.MeshStandardMaterial( { color: 0xff0000 } );
+	const sphere = new THREE.Mesh( sphereGeometry, sphereMaterial );
+	sphere.castShadow = true; //default is false
+	sphere.receiveShadow = false; //default
+	this.scene.add( sphere );
+	
+	//Create a plane that receives shadows (but does not cast them)
+	const planeGeometry = new THREE.PlaneGeometry( 20, 20, 32, 32 );
+	const planeMaterial = new THREE.MeshStandardMaterial( { color: 0x00ff00 } )
+	const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+	plane.position.set(0,-10,0);
+	plane.lookAt(0,1,0);
+	plane.receiveShadow = true;
+	this.scene.add( plane );
+	
+	//Create a helper for the shadow camera (optional)
+	const helper = new THREE.CameraHelper( light.shadow.camera );
+	this.scene.add( helper );
+    };
 
     createScenes(state,camera) {
 	//scene.getObjectByName( "light" );
@@ -409,6 +466,9 @@ export default class Model {
 	//console.log("Rendering...");
 	this.renderer.sortObjects = false;
 	this.renderer.render(this.scene, this.camera);
+
+	//console.log("texture:",this.scene);
+
 	//this.renderClouds();
 	this.controls.update();
 	TWEEN.update();
@@ -927,9 +987,6 @@ export default class Model {
     };
 
     tween(from, to, animationDuration, easingFunction, onUpdate, onEnd) {
-
-	console.log(easingFunction);
-	
 	new TWEEN.Tween(from)
             .to(to, animationDuration)
             .easing(TWEEN.Easing[easingFunction[0]][easingFunction[1]])
