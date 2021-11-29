@@ -57,7 +57,6 @@ class Criteria extends Component {
 	//	 content:classes.content,
 	//	 button:classes.button,
 	//	 buttonDisabled:classes.buttonDisabled};
-	var visible;
 	var items=state.Events.getNodes(state);
 	this.checkfunction= (checked)=>{
             this.setState({ checked });
@@ -68,15 +67,18 @@ class Criteria extends Component {
             state.Events.setExpanded(state,expanded);
             //force();
 	};
+	var visible, events;
 	if (state.Events.show(state,"criteria")) {
 	    visible="visible";
+	    events="auto";
 	} else {
 	    visible="hidden";
+	    events="none";
 	};
 	//console.log("Classes:",height);
 	var sheight=(height-50) + "px";
         return (
-		<span className={classes.block} style={{visibility:visible}}>
+		<span className={classes.block} style={{visibility:visible, pointerEvents:events}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>criteria</small></legend>
 		<div onMouseDown={this.handleChildClick} style={{maxHeight:sheight,minWidth:"300px",overflowY:'auto'}} className="cancel">

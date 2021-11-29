@@ -96,17 +96,19 @@ class Events extends Component {
 	//	 content:classes.content,
 	//	 button:classes.button,
 	//	 buttonDisabled:classes.buttonDisabled};
-	var visible;
+	var visible, events;
 	if (state.Events.show(state,"events")) {
 	    visible="visible";
+	    events="auto";
 	} else {
 	    visible="hidden";
+	    events="none";
 	};
 	//var data=state.Events.getData(state);
 	var sheight=(height-50) + "px";
 	//console.log("Data:",data) ;
         return (
-		<div  className={classes.block} style={{visibility:visible}}>
+		<div  className={classes.block} style={{visibility:visible, pointerEvents:events}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>events</small></legend>
 		<div style={{maxHeight:sheight,overflowY:'auto'}}>

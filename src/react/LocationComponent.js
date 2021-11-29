@@ -63,17 +63,19 @@ class Location extends Component {
 	//	 content:classes.content,
 	//	 button:classes.button,
 	//	 buttonDisabled:classes.buttonDisabled};
-	var visible;
+	var visible,events;
 	if (state.Events.show(state,"location")) {
 	    visible="visible";
+	    events="auto";
 	} else {
 	    visible="hidden";
+	    events="none";
 	};
 	//onMouseDown={this.handleChildClick}
 	var cls={map:classes.map};
 	//
         return (
-		   <div className={classes.block} style={{visibility:visible}}>
+		   <div className={classes.block} style={{visibility:visible, pointerEvents:events}}>
 		<fieldset className={classes.field}>
 		<legend className={classes.legend}><small>location</small></legend>
 		<div onMouseDown={this.handleChildClick} style={{display:'flex', flexDirection:'column'}} className="cancel">

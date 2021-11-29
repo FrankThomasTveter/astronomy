@@ -92,19 +92,19 @@ class Dataset extends Component {
         return (
 		<div className={classes.dataset}
 	           ref={ (el) => { this.divElement = el } }>
-		<Rnd key="time" bounds="parent" default={{x:10,y:10}} enableResizing={false} 
+		<Rnd key="time" bounds="parent" style={{pointerEvents:'none'}} default={{x:10,y:10}} enableResizing={false} 
 	           onDragStart={this.onDragStart}>
 		   <Time state={state} classes={cls} layout={layout} height={this.state.height}/>
 		</Rnd>
-		<Rnd key="events" bounds="parent" default={{x:30,y:30}} enableResizing={false} 
+		<Rnd key="events" bounds="parent" style={{pointerEvents:'none'}} default={{x:30,y:30}} enableResizing={false} 
 	           onDragStart={this.onDragStart}>
 		   <Events state={state} classes={cls} layout={layout} height={this.state.height}/>
 		</Rnd>
-		<Rnd key="location" bounds="parent" default={{x:50,y:50}} enableResizing={false} 
+		<Rnd key="location" bounds="parent" style={{pointerEvents:'none'}} default={{x:50,y:50}} enableResizing={false} 
 	           onDragStart={this.onDragStart}>
 		   <Location state={state} classes={cls} layout={layout} height={this.state.height}/>
 		</Rnd>
-		<Rnd key="criteria" bounds="parent" default={{x:70,y:70}} enableResizing={false}
+		<Rnd key="criteria" bounds="parent" style={{pointerEvents:'none'}} default={{x:70,y:70}} enableResizing={false}
 	           onDragStart={this.onDragStart}>
 		   <Criteria state={state} classes={rls} layout={layout} height={this.state.height}/>
 		</Rnd>

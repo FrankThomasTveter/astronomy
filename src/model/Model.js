@@ -170,6 +170,7 @@ export default class Model {
 	    canvas,
 	});
 
+	this.renderer.setClearColor (0x000000, 1);
 	this.renderer.shadowMap.enabled=true;
 	//this.renderer.shadowMap.type=THREE.BasicShadowMap;
 	//this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -177,7 +178,12 @@ export default class Model {
 	// create camera and controls
 	// create scenes and add objects (planets, moons etc.)
 	this.camera = new THREE.PerspectiveCamera();
-	this.camera.position.set(state.Planets.bodies.sun.radius*1.1, 0, 0);
+	    //45,1,
+	//					  state.Planets.bodies.sun.radius*0.00001,
+	//					  state.Planets.bodies.sun.radius*5);
+	
+	this.camera.position.set(state.Planets.bodies.sun.radius*2.0, 0, 0);
+	this.camera.up = new THREE.Vector3(0,0,1);
 
 	this.controls = new PointOfViewControls(this.camera, this.renderer.domElement);
 
@@ -191,25 +197,59 @@ export default class Model {
 	this.controls.keys = [ 65, 83, 68 ];
 	
 	this.scene = new THREE.Scene();
-	this.test(state);
+
+	//this.test(state);
 	
-	// var light   = new THREE.DirectionalLight( 0xffffff, 1, 100 )
+	// var light   = new THREE.DirectionalLight( 0xffffff, 1,100 )
 	// light.position.set(0.5*state.Planets.bodies.sun.radius,
-	// 		   2*state.Planets.bodies.sun.radius,
-	// 		   state.Planets.bodies.sun.radius);
+	// 		   1*state.Planets.bodies.sun.radius,
+	// 		   0.5*state.Planets.bodies.sun.radius);
 	// light.castShadow            = true;
 	// this.scene.add(light);
-	// light.shadow.mapSize.width  = 512; // default
-	// light.shadow.mapSize.height = 512; // default
-	// light.shadow.camera.near    = 0.0001 * state.Planets.bodies.sun.radius;
-	// light.shadow.camera.far     = 10.0 * state.Planets.bodies.sun.radius;
-	// //const model = new THREE.Group();
-	// this.scene.add(state.Planets.createSaturnMesh());
-	// this.scene.add(state.Planets.createSaturnRingMesh());
-	// this.scene.add(state.Planets.createDeathStarMesh());
-	// state.Planets.setPosition(this.scene,"deathstar",200,state.Planets.bodies.saturn.radius*1.01,100);
-	// //this.scene.add(state.Planets.createLight());
+	// light.shadow.mapSize.width  = 1024; //512; // default
+	// light.shadow.mapSize.height = 1024; //512; // default
+	// light.shadow.camera.near    = 0.0 * state.Planets.bodies.sun.radius;
+	// light.shadow.camera.far     = 3.0 * state.Planets.bodies.sun.radius;
+	//const model = new THREE.Group();
+	//this.scene.add(state.Planets.createSaturnMesh());
+	//this.scene.add(state.Planets.createSaturnRingMesh(THREE.FrontSide));
+	//this.scene.add(state.Planets.createSaturnRingMesh(THREE.BackSide));
+	//this.scene.add(state.Planets.createDeathStarMesh());
 
+
+	//this.scene=state.Planets.createSunScene(this.camera);
+	//this.scene=state.Planets.createMercuryScene(this.camera);
+	//this.scene=state.Planets.createVenusScene(this.camera);
+	//this.scene=state.Planets.createEarthScene(this.camera);
+	//this.scene=state.Planets.createMarsScene(this.camera);
+	//this.scene=state.Planets.createJupiterScene(this.camera);
+	//this.scene=state.Planets.createSaturnScene(this.camera);
+	this.scene=state.Planets.createUranusScene(this.camera);
+	//this.scene=state.Planets.createNeptuneScene(this.camera);
+	//this.scene=state.Planets.createPlutoScene(this.camera);
+	state.Planets.setPosition(this.scene,"deathstar",
+				  20000*state.Planets.SCALE,
+				  state.Planets.bodies.saturn.radius*1.01,
+				  10000*state.Planets.SCALE);//
+	state.Planets.setPosition(this.scene,"moon",
+				  20000*state.Planets.SCALE,
+				  state.Planets.bodies.saturn.radius*1.01,
+				  10000*state.Planets.SCALE);//
+	//this.scene.add(state.Planets.createLight());
+
+	//Create a plane that receives shadows (but does not cast them)
+	const planeGeometry = new THREE.PlaneGeometry( 2*state.Planets.bodies.sun.radius, 
+						       2*state.Planets.bodies.sun.radius, 
+						       32, 
+						       32);
+	const planeMaterial = new THREE.MeshStandardMaterial( { color: 0x00ff00 } )
+	const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+	plane.position.set(0,-1*state.Planets.bodies.sun.radius,0);
+	plane.lookAt(0,1,0);
+	plane.receiveShadow = true;
+	this.scene.add(plane)
+	//const helper = new THREE.CameraHelper( light.shadow.camera );
+	//this.scene.add( helper );
 
 	// //this.scene.add(new THREE.AmbientLight('white'));
 	// //this.scene.add(model);

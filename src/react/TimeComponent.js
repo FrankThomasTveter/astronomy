@@ -116,16 +116,18 @@ class Time extends Component {
 	//	 content:classes.content,
 	//	 button:classes.button,
 	//	 buttonDisabled:classes.buttonDisabled};
-	var visible;
+	var visible, events;
 	if (state.Events.show(state,"time")) {
 	    visible="visible";
+	    events="auto";
 	} else {
 	    visible="hidden";
+	    events="none";
 	};
         return (
 	   <span onClick={this.openDate}
 	      className={classes.block} 
-	      style={{visibility:visible}}>
+	      style={{visibility:visible, pointerEvents:events}}>
 	    <fieldset className={classes.field}>
 	      <legend className={classes.legend}><small>time</small></legend>
 	      <div onMouseDown={this.handleChildClick}
