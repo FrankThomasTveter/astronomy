@@ -192,7 +192,7 @@ function Planets() {
 	    map : 'uranusmap.jpg',
 	    bumpScale : 10.0*this.SCALE,
 	    ring : {
-		innerRadius : 5450*this.SCALE,
+		innerRadius : 54500*this.SCALE,
 		outerRadius : 57580*this.SCALE,
 		thickness : 1000*this.SCALE,
 		trans : 'uranusringtrans.gif',
@@ -237,6 +237,8 @@ function Planets() {
 	    map : 'plutomap1k.jpg',
 	    bumpMap : 'plutobump1k.jpg',
 	    bumpScale : 5.5*this.SCALE,
+	    dispMap : 'plutomap1k.jpg', //'plutodisplacement.jpg',
+	    dispScale : 50*this.SCALE,
 	    orbit : {
 		base : {a : 39.48211675 * this.AU ,  e : 0.24882730, i: 17.14001206, l : 238.92903833, lp : 224.06891629, o : 110.30393684},
 		cy : {a : -0.00031596 * this.AU ,  e : 0.00005170, i: 0.00004818, l : 145.20780515, lp : -0.04062942, o : -0.01183482}
@@ -489,7 +491,7 @@ function Planets() {
 				     transparent:true,
 				     opacity:0.9,
 				    });
-	var geometry	= this.RingGeometry(this.bodies.saturn.ring.innerRadius, this.bodies.saturn.ring.outerRadius, 64);
+	var geometry	= this.RingGeometry(this.bodies.saturn.ring.innerRadius, this.bodies.saturn.ring.outerRadius, 128);
 	var mesh	= new THREE.Mesh(geometry, material);
 	var normal=new THREE.Vector3(1,0,5).normalize();
 	var offset;
@@ -521,14 +523,14 @@ function Planets() {
     this.createUranusRingMesh	= function(side){
 	var material;
 	material    = this.Material({map:this.baseURL+this.bodies.uranus.ring.map,
-//					 transMap:this.baseURL+this.bodies.saturn.ring.trans,
+					 transMap:this.baseURL+this.bodies.uranus.ring.trans,
 					 side:THREE.FrontSide,
 					 transparent:true,
 					 opacity:0.8,
 					});
-	var geometry	= this.RingGeometry(this.bodies.uranus.ring.innerRadius, this.bodies.uranus.ring.outerRadius, 64);
+	var geometry	= this.RingGeometry(this.bodies.uranus.ring.innerRadius, this.bodies.uranus.ring.outerRadius, 128);
 	var mesh	= new THREE.Mesh(geometry, material);
-	var normal=new THREE.Vector3(5,0,1).normalize();
+	var normal=new THREE.Vector3(0.1,-0.3,1).normalize();
 	var offset;
 	if (side === THREE.BackSide) {
 	    mesh.name       ="uranusringbottom";
@@ -558,7 +560,9 @@ function Planets() {
     this.createPlutoMesh	= function(){
 	var material	= this.Material({map:this.baseURL+this.bodies.pluto.map,
 					 bumpMap:this.baseURL+this.bodies.pluto.bumpMap,
-					 bumpScale: this.bodies.pluto.bumpScale});
+					 bumpScale: this.bodies.pluto.bumpScale,
+					 displacementMap:this.baseURL+this.bodies.pluto.dispMap,
+					 displacementScale: this.bodies.pluto.dispScale});
 	var geometry	= new THREE.SphereGeometry(this.bodies.pluto.radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = "pluto";
@@ -655,9 +659,9 @@ function Planets() {
     };
     this.createUranusScene = function (icamera) {
 	var scene = this.createScene(icamera);
-	//scene.add(this.createUranusMesh());
+	scene.add(this.createUranusMesh());
 	scene.add(this.createUranusRingMesh(THREE.FrontSide));
-	//scene.add(this.createUranusRingMesh(THREE.BackSide));
+	scene.add(this.createUranusRingMesh(THREE.BackSide));
 	scene.add(this.createLight());
 	return scene;
     };
@@ -722,7 +726,7 @@ function Planets() {
 		vj.crossVectors(vk,vi);
 	    };
 	    var rr=v3.length();               // distance from center
-	    var uu=1-(rr-rmin)/rdel;            // distance grid location
+	    var uu=(rr-rmin)/rdel;            // distance grid location
 	    var vv=this.getKAngle(vi,vj,vk,v3)/(2 * Math.PI); // angle grid location
 	    //console.log("RingGeometry:",i,uu,vv,rr,rmin,rdel);
 	    let u =geometry.attributes.uv.getX(i);  // original U coordinate
@@ -746,6 +750,19 @@ function Planets() {
 	if (aa < 0) {aa=aa+Math.PI * 2;};
 	return aa;
     };
+    this.loadMap=function(type,map,fn) {
+	if (map !== undefined) {
+	    new THREE.TextureLoader().load(
+		map,fn,
+		function ( xhr ) {
+		    console.log( type,":", (xhr.loaded / xhr.total * 100) + '% loaded' );
+		},
+		function ( xhr ) {
+		    console.log( type,': An error happened '+map );
+		}
+	    );
+	};
+    };
     this.Material = function (opt) {
 	if (opt===undefined) {opt={};};
 	var material= new THREE.MeshPhongMaterial();
@@ -760,6 +777,11 @@ function Planets() {
 	if (opt.bumpMap !== undefined) {
 	    console.log("Bump:",opt.bumpMap);
 	    this.addBumpMap(material,opt.bumpMap,opt.bumpScale);
+	};
+	// load displacement
+	if (opt.displacementMap !== undefined) {
+	    console.log("Displacement:",opt.displacementMap);
+	    this.addDisplacementMap(material,opt.displacementMap,opt.displacementScale,32,32);
 	};
 	// load specular
 	if (opt.specularMap !== undefined) {
@@ -779,7 +801,9 @@ function Planets() {
 	    );
 	};
 	// process other options
-	var ignore=["map","transMap","specularMap","specularColor","bumpMap","bumpScale"];
+	var ignore=["map","transMap","specularMap","specularColor",
+		    "bumpMap","bumpScale",
+		    "displacementMap", "displacementScale"];
 	for (const [key, value] of Object.entries(opt)) {
 	    if (ignore.indexOf(key)===-1) {
 		console.log("Key:",key,value);
@@ -825,18 +849,31 @@ function Planets() {
 	};
 	return material;
     };
+    this.addDisplacementMap2=function(material,displacementMap,displacementScale) {
+	if (displacementMap !== undefined) {
+	    new THREE.TextureLoader().load(
+		displacementMap,function(displacementTexture) {
+		    material.displacementMap=displacementTexture;
+		    material.displacementScale=displacementScale;		    
+		    material.needsUpdate=true;
+		},function ( xhr ) {
+		    console.log( "Displacement:", (xhr.loaded / xhr.total * 100) + '% loaded' );
+		},
+		function ( xhr ) {
+		    console.log( 'Displacement: An error happened '+displacementMap );
+		}
+	    );
+	};
+	return material;
+    };
     this.addTransparentMap = function (material, map, transMap) {
-	var canvasResult	= document.createElement('canvas')
-	canvasResult.width	= 915
-	canvasResult.height	= 64
-	var contextResult	= canvasResult.getContext('2d')	
 	// load earthcloudmap
 	const maploader = new THREE.ImageLoader();
 	maploader.load(map, function(imageMap) {
 	    // create dataMap ImageData for saturnring
 	    var canvasMap	= document.createElement('canvas')
 	    canvasMap.width	= imageMap.width
-	    canvasMap.height= imageMap.height
+	    canvasMap.height    = imageMap.height
 	    var contextMap	= canvasMap.getContext('2d')
 	    contextMap.drawImage(imageMap, 0, 0)
 	    var dataMap	= contextMap.getImageData(0, 0, canvasMap.width, canvasMap.height)
@@ -851,7 +888,12 @@ function Planets() {
 		contextTrans.drawImage(imageTrans, 0, 0)
 		var dataTrans		= contextTrans.getImageData(0, 0, canvasTrans.width, canvasTrans.height)
 		// merge dataMap + dataTrans into dataResult
-		var dataResult		= contextMap.createImageData(canvasResult.width, canvasResult.height)
+		var canvasResult	= document.createElement('canvas')
+		canvasResult.width	= Math.min(imageMap.width,imageTrans.width);
+		canvasResult.height	= Math.min(imageMap.height,imageTrans.height);
+		var contextResult	= canvasResult.getContext('2d')	
+		//console.log("Width/height:",imageMap.width,imageMap.height,imageTrans.width,imageTrans.height);
+		var dataResult		= contextResult.createImageData(canvasResult.width, canvasResult.height)
 		for(var y = 0, offset = 0; y < imageMap.height; y++){
 		    for(var x = 0; x < imageMap.width; x++, offset += 4){
 			dataResult.data[offset+0]	= dataMap.data[offset+0]
@@ -879,6 +921,80 @@ function Planets() {
 	});
 	return material;
     };
+    this.addDisplacementMap=function (material,dispMap,dispScale,nx,ny) {
+	const disploader = new THREE.ImageLoader();
+	disploader.load(dispMap, function(imageDisp) {
+	    // create dataDisp ImageData
+	    var canvasDisp	= document.createElement('canvas')
+	    canvasDisp.width	= imageDisp.width
+	    canvasDisp.height	= imageDisp.height
+	    var contextDisp	= canvasDisp.getContext('2d')
+	    contextDisp.drawImage(imageDisp, 0, 0)
+	    var dataDisp	= contextDisp.getImageData(0, 0, canvasDisp.width, canvasDisp.height)
+	    // merge dataMap + dataDisp into dataResult
+	    var canvasResult	= document.createElement('canvas')
+	    canvasResult.width	= nx
+	    canvasResult.height	= ny
+	    var contextResult	= canvasResult.getContext('2d')	
+	    var dataResult	= contextResult.createImageData(canvasResult.width, canvasResult.height)
+	    // initialise
+	    for(var ii = 0; ii < nx*ny*4; ii++){
+		dataResult.data[ii]=0
+	    };
+	    // make statistics
+	    var stat=[];
+	    for(let iy = 0; iy < ny; iy++){
+		stat[iy]=[];
+		for(let ix = 0; ix < nx; ix++){
+		    stat[iy][ix]=[0,0,0,0,0];
+		};
+	    };
+	    for(let y = 0; y < imageDisp.height; y++){
+		for(let x = 0; x < imageDisp.width; x++){
+		    let iy     = Math.floor(ny*((y+0.5)/imageDisp.height));
+		    let ix     = Math.floor(nx*((x+0.5)/imageDisp.width));
+		    let offorg = (x + y*imageDisp.width)*4
+		    let offnew = (ix + iy*nx)*4
+		    stat[iy][ix][0]=stat[iy][ix][0]+dataDisp.data[offorg+0];
+		    stat[iy][ix][1]=stat[iy][ix][1]+dataDisp.data[offorg+1];
+		    stat[iy][ix][2]=stat[iy][ix][2]+dataDisp.data[offorg+2];
+		    stat[iy][ix][3]=stat[iy][ix][3]+dataDisp.data[offorg+3];
+		    stat[iy][ix][4]=stat[iy][ix][4]+1.0;
+		    //if ((offorg< 40)) {
+		//	console.log("Item:",x,y,ix,iy,stat[iy][ix][0],dataDisp.data[offorg+0]);
+		    //}
+		}
+	    }
+	    // make smoothed disp
+	    for(let iy = 0; iy < ny; iy++){
+		for(let ix = 0; ix < nx; ix++){
+		    let offnew = (ix + iy*nx)*4
+		    dataResult.data[offnew+0]= Math.floor(stat[iy][ix][0]/stat[iy][ix][4]);
+		    dataResult.data[offnew+1]= Math.floor(stat[iy][ix][1]/stat[iy][ix][4]);
+		    dataResult.data[offnew+2]= Math.floor(stat[iy][ix][2]/stat[iy][ix][4]);
+		    dataResult.data[offnew+3]= Math.floor(stat[iy][ix][3]/stat[iy][ix][4]);
+		    //console.log("Data:",offnew,dataResult.data[offnew+0],dataResult.data[offnew+3]);
+		}
+	    }
+	    
+	    // update texture with result
+	    console.log("Result:",dataResult);
+	    contextResult.putImageData(dataResult,0,0)	
+	    //material.map=new THREE.Texture(canvasResult); // canvasResult);
+	    //material.map.needsUpdate=true;
+	    material.displacementMap=new THREE.Texture(canvasResult);
+	    material.displacementScale=dispScale;
+	    material.displacementMap.needsUpdate=true;
+	    material.needsUpdate=true;
+	    console.log( "Created disp:",dispMap );
+
+	},function ( xhr ) {
+	    console.log( "Disp:", (xhr.loaded / xhr.total * 100) + '% loaded' );
+	},function ( xhr ) {
+	    console.log( 'Disp: An error happened '+dispMap );
+	});
+    };	
+
     this.setPosition=function(scene,body,x,y,z) {
 	var bdy=scene.getObjectByName(body);
 	if (bdy !== undefined) {

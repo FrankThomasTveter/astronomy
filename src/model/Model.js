@@ -220,11 +220,11 @@ export default class Model {
 	//this.scene=state.Planets.createSunScene(this.camera);
 	//this.scene=state.Planets.createMercuryScene(this.camera);
 	//this.scene=state.Planets.createVenusScene(this.camera);
-	//this.scene=state.Planets.createEarthScene(this.camera);
+	this.scene=state.Planets.createEarthScene(this.camera);
 	//this.scene=state.Planets.createMarsScene(this.camera);
 	//this.scene=state.Planets.createJupiterScene(this.camera);
 	//this.scene=state.Planets.createSaturnScene(this.camera);
-	this.scene=state.Planets.createUranusScene(this.camera);
+	//this.scene=state.Planets.createUranusScene(this.camera);
 	//this.scene=state.Planets.createNeptuneScene(this.camera);
 	//this.scene=state.Planets.createPlutoScene(this.camera);
 	state.Planets.setPosition(this.scene,"deathstar",
