@@ -1,9 +1,11 @@
 import Vector3 from './Vector3Lib';
 //import Vector2 from './Vector2Lib';
+import * as THREE from 'three';
 
-//console.log("Loading Milkyway");
+console.log("Loading Milkyway");
 
 function Milkyway() { 
+    this.SCALE = 1.0e-15;
     this.X =          0;
     this.Y =          1;
     this.Z =          2;
@@ -18,9 +20,11 @@ function Milkyway() {
     this.NAME =       11;
     this.BRIGHTNESS = 12;
     this.BRIGHTNLEV = 13;
+    this.DIST = 5.0*Math.PI/180.0;
+    this.NLAT=Math.ceil(Math.PI/this.DIST);
+    this.NLON=2*this.NLAT;
     this.SMAG = 5;
     this.NMAG = 10;
-    this.DIST = 5.0*Math.PI/180.0;
     this.spectralColors = [
 	0xfbf8ff,
 	0xc8d5ff,
@@ -34,239 +38,77 @@ function Milkyway() {
 	0xebd3da,
 	0xe7dbf3
     ];
+    this.sprites=["star_white01.png","star_white02.png","star_white03.png","star_white04.png"];
+    this.baseURL=process.env.PUBLIC_URL+"/media/stars/";
     this.constellations=[];
     this.stars = {
-	'ZubenElschemali' : [
-	    'ZubenElgenubi',
-	    'Brachium',
-	    'gLibra'
-	],
-	'ZubenElgenubi' : [
-	    'Brachium'
-	],
-	'gLibra' : [
-	    'dLibra'
-	],
-	'Brachium' : [
-	    'uLibra'
-	],
-	
-	'Mesarthim' : [
-	    'Sharatan'
-	],
-	'Sharatan' : [
-	    'Hamal'
-	],
-	'Hamal' : [
-	    'xAries'
-	],
-	'AsellusAustralis' : [
-	    'Acubens',
-	    'Altarf',
-	    'AsellusBorealis'
-	],
-	'AsellusBorealis' : [
-	    'CancerIota'
-	],
-	'Sadalsuud' : [
-	    'Albali',
-	    'Sadalmeilk'
-	],
-	'Sadalmeilk' : [
-	    'Ancha',
-	    'etaAqua'
-	],
-	'Ancha' : [
-	    'iotaAqua'
-	],
-	'etaAqua' : [
-	    'phiAqua'
-	],
-	'phiAqua' : [
-	    'lambdaAqua'
-	],
-	'lambdaAqua' : [
-	    'tau2Aqua'
-	],
-	'tau2Aqua' : [
-	    'xAqua'
-	],
-	'Dabih' : [
-	    'SecundaGiedi',
-	    'psiCap',
-	    'thetaCap'
-	],
-	'psiCap' : [
-	    'omegaCap'
-	],
-	'omegaCap' : [
-	    'zetaCap'
-	],
-	'DenebAlgedi' : [
-	    'zetaCap',
-	    'thetaCap'
-	],
-	'Alhena' : [
-	    'Alzirr',
-	    'TejatPosterior'
-	],
-	'TejatPosterior' : [
-	    'Mebsuta'
-	],
-	'Castor' : [
-	    'Mebsuta',
-	    'Pollux'
-	],
-	'Wasat' : [
-	    'Alhena',
-	    'Pollux'
-	],
-	'Denebola' : [
-	    'Zosma',
-	    'Chort'
-	],
-	'Algeiba' : [
-	    'Zosma',
-	    'etaLeo',
-	    'Adhafera'
-	],
-	'Adhafera' : [
-	    'RasElasedBorealis'
-	],
-	'RasElasedBorealis' : [
-	    'RasElasedAustralis'
-	],
-	'Regulus' : [
-	    'etaLeo',
-	    'Chort'
-	],
-	'deltaPisces' : [
-	    'nuPisces',
-	    'iotaPisces'
-	],
-	'kappaPisces' : [
-	    'gammaPisces',
-	    'xPisces'
-	],
-	'iotaPisces' : [
-	    'xPisces',
-	    'thetaPisces'
-	],
-	'gammaPisces' : [
-	    'thetaPisces'
-	],
-	
+	'ZubenElschemali' : ['ZubenElgenubi','Brachium','gLibra'],
+	'ZubenElgenubi'   : ['Brachium'],
+	'gLibra'          : ['dLibra'],
+	'Brachium'        : ['uLibra'],
+	'Mesarthim'       : ['Sharatan'],
+	'Sharatan'        : ['Hamal'],
+	'Hamal'           : ['xAries'],
+	'AsellusAustralis' : ['Acubens','Altarf','AsellusBorealis'],
+	'AsellusBorealis' : ['CancerIota'],
+	'Sadalsuud'       : ['Albali','Sadalmeilk'],
+	'Sadalmeilk'      : ['Ancha','etaAqua'],
+	'Ancha'           : ['iotaAqua'],
+	'etaAqua'         : ['phiAqua'],
+	'phiAqua'         : ['lambdaAqua'],
+	'lambdaAqua'      : ['tau2Aqua'],
+	'tau2Aqua'        : ['xAqua'],
+	'Dabih'           : ['SecundaGiedi','psiCap','thetaCap'],
+	'psiCap'          : ['omegaCap'],
+	'omegaCap'        : ['zetaCap'],
+	'DenebAlgedi'     : ['zetaCap','thetaCap'],
+	'Alhena'          : ['Alzirr','TejatPosterior'],
+	'TejatPosterior'  : ['Mebsuta'],
+	'Castor'          : ['Mebsuta','Pollux'],
+	'Wasat'           : ['Alhena','Pollux'],
+	'Denebola'        : ['Zosma','Chort'],
+	'Algeiba'         : ['Zosma','etaLeo','Adhafera'],
+	'Adhafera'        : ['RasElasedBorealis'],
+	'RasElasedBorealis' : ['RasElasedAustralis'],
+	'Regulus'         : ['etaLeo','Chort'],
+	'deltaPisces'     : ['nuPisces','iotaPisces'],
+	'kappaPisces'     : ['gammaPisces','xPisces'],
+	'iotaPisces'      : ['xPisces','thetaPisces'],
+	'gammaPisces'     : ['thetaPisces'],
 	//scorpius
-	'Jabbah' : [
-	    'Graffias'
-	],
-	'Dschubba' : [
-	    'Graffias',
-	    'piScorp',
-	    'Antares'
-	],
-	'piScorp' : [
-	    'rhoScorp'
-	],
-	'Antares' : [
-	    'tauScorp'
-	],
-	'epsilonScorp' : [
-	    'tauScorp',
-	    'zeta2Scorp'
-	],
-	'etaScorp' : [
-	    'Sargas',
-	    'zeta2Scorp'
-	],
-	'Sargas' : [
-	    'Shaula'
-	],
-
+	'Jabbah'          : ['Graffias'],
+	'Dschubba'        : ['Graffias','piScorp','Antares'],
+	'piScorp'         : ['rhoScorp'],
+	'Antares'         : ['tauScorp'],
+	'epsilonScorp'    : ['tauScorp','zeta2Scorp'],
+	'etaScorp'        : ['Sargas','zeta2Scorp'],
+	'Sargas'          : ['Shaula'],
 	//virgo
-
-	'Syrma' : [
-	    'RijlAlAwwa',
-	    'kappaVirgo'
-	],
-	'Spica' : [
-	    'Heze',
-	    'kappaVirgo',
-	    'thetaVirgo'
-	],
-	'Porrima' : [
-	    'Auva',
-	    'Zaniah',
-	    'thetaVirgo'
-	],
-	'Zavijah' : [
-	    'Zaniah'
-	],
-	'Auva' : [
-	    'Vindemiatrix',
-	    'Heze'
-	],
-	'tauVirgo' : [
-	    '8781',
-	    'Heze'
-	],
-
+	'Syrma'           : ['RijlAlAwwa','kappaVirgo'],
+	'Spica'           : ['Heze','kappaVirgo','thetaVirgo'],
+	'Porrima'         : ['Auva','Zaniah','thetaVirgo'],
+	'Zavijah'         : ['Zaniah'],
+	'Auva'            : ['Vindemiatrix','Heze'],
+	'tauVirgo'        : ['8781','Heze'],
 	//taurus
-	'HyadumI' : [
-	    'lambdaTaurus',
-	    'HyadumII',
-	    'Aldebaran'
-	],
-	'Ain' : [
-	    'tauTaurus',
-	    'HyadumII'
-	],
-	'AlNath' : [
-	    'tauTaurus'
-	],
-	'zetaTaurus' : [
-	    'Aldebaran'
-	],
-	'omicronTaurus' : [
-	    'lambdaTaurus'
-	],
-
+	'HyadumI'         : ['lambdaTaurus','HyadumII','Aldebaran'],
+	'Ain'             : ['tauTaurus','HyadumII'],
+	'AlNath'          : ['tauTaurus'],
+	'zetaTaurus'      : ['Aldebaran'],
+	'omicronTaurus'   : ['lambdaTaurus'],
 	//sagittarius
-	'Nash' : [
-	    'KausMedia',
-	    '7317'
-	],
-	'KausAustralis' : [
-	    'KausMedia',
-	    'etaSag'
-	],
-
-	'KausBorealis' : [
-	    'phiSag',
-	    'KausMedia',
-	    'muSag'
-	],
-	'Nunki' : [
-	    'phiSag',
-	    'tauSag'
-	],
-	'Ascella' : [
-	    'phiSag',
-	    'tauSag'
-	],
-
-	'7320' : [
-	    'tauSag',
-	    '7336'
-	],
-	'theta1Sag' : [
-	    '7336'
-	]
+	'Nash'            : ['KausMedia','7317'],
+	'KausAustralis'   : ['KausMedia','etaSag'],
+	'KausBorealis'    : ['phiSag','KausMedia','muSag'],
+	'Nunki'           : ['phiSag','tauSag'],
+	'Ascella'         : ['phiSag','tauSag'],
+	'7320'            : ['tauSag','7336'],
+	'theta1Sag'       : ['7336']
     };
     this.descriptions=undefined;
-    this.starsJson = 'js/jsorrery/data/stars.json';
-    this.constJson = 'js/jsorrery/data/const.json';
-    this.descrJson = 'js/jsorrery/data/descr.json';
+    this.starsJson = 'data/stars.json';
+    this.constJson = 'data/const.json';
+    this.descrJson = 'data/descr.json';
     this.pxRatio = (window.devicePixelRatio || 1);
     //keys of the loaded array
     this.namedStars = {};
@@ -291,6 +133,7 @@ function Milkyway() {
     this.ln10=Math.log(10);
     this.parsec= 3.08567758e13;// km 
     this.lightyear = 9.4605284e12; // km
+    this.radius = 30000.0*this.lightyear*this.SCALE;
     this.cons=undefined;
     this.cpos=undefined;
     this.dist=undefined;
@@ -298,6 +141,84 @@ function Milkyway() {
     this.oh=undefined;
     this.period=5000.0;
     this.first=undefined;
+    this.addTextureMap=function(material,map) {
+	if (map !== undefined) {
+	    const textureLoader=new THREE.TextureLoader();
+	    textureLoader.load(
+		map,
+		function(mapTexture) {
+		    mapTexture.name=map;
+		    mapTexture.center.setScalar(0.5);
+		    mapTexture.rotation= -Math.PI * 0.5;
+		    material.map=mapTexture;
+		    material.needsUpdate=true;
+		},
+		function ( xhr ) {
+		    console.log( "Map:", (xhr.loaded / xhr.total * 100) + '% loaded' );
+		},
+		function ( xhr ) {
+		    console.log( 'Map: An error happened '+map  );
+		}
+	    );
+	};
+	return material;
+    };
+    this.createStarsMesh	= function(){
+	//https://jsfiddle.net/prisoner849/z3yfw208/
+	var material = new THREE.PointsMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.5});
+
+
+	//this.addTextureMap(material,this.baseURL + "ball.png");
+	this.addTextureMap(material,this.baseURL + this.sprites[0]);
+	material.onBeforeCompile = shader => {
+	    shader.vertexShader = `
+    attribute float sizes;
+    attribute vec3 offset;
+    ` + shader.vertexShader;
+	    console.log(shader.vertexShader);
+	    shader.vertexShader = shader.vertexShader.replace(
+  		`#include <begin_vertex>`,
+		`#include <begin_vertex>
+    transformed += offset;
+    `
+	    )
+	    shader.vertexShader = shader.vertexShader.replace(
+  		`gl_PointSize = size;`,
+		`gl_PointSize = size * sizes;`
+	    )
+	};
+	//var geometry = new THREE.BufferGeometry();
+	var positions = new Float32Array(30000);
+	var colors = new Float32Array(30000);
+	var sizes = new Float32Array(10000);
+	var alphas = new Float32Array(10000);
+	for (let i = 0; i < 10000; i++) {
+            let x = 2000 * Math.random() - 1000;
+            let y = 2000 * Math.random() - 1000;
+            let z = 2000 * Math.random() - 1000;
+            positions[i * 3 + 0] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+            
+            colors[i * 3 + 0] = Math.random();
+            colors[i * 3 + 1] = Math.random();
+            colors[i * 3 + 2] = Math.random();
+            
+            sizes[i] = (Math.random() * 90) + 10;
+            //alphas[i] = 1;
+	}
+	var sumDisplacement =  [0, 0, 0, 0, 0, 0, 0, 0, 0];
+	var geometry = new THREE.InstancedBufferGeometry();
+	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+	geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
+	geometry.setAttribute( 'sizes', new THREE.BufferAttribute( sizes, 1 ) );
+	//geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
+	const sumDisp = new Float32Array(sumDisplacement);
+	geometry.setAttribute('offset', new THREE.InstancedBufferAttribute(sumDisp, 3 ));
+	var mesh = new THREE.Points( geometry, material );
+	mesh.name       = "stars";
+	return mesh	
+    };
     this.lightenDarkenColor = function (hex, amount) {
 	var col = [hex >> 16, (hex >> 8) & 0x00FF,  hex & 0x0000FF];
 	var mc=Math.max(1,Math.max(col[0],col[1],col[2]));
@@ -310,9 +231,8 @@ function Milkyway() {
     this.numberWithCommas = function (x) {
 	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
     };
-    this.init = function(state,starsJson, constJson, descrJson) {
-	this.NLAT=Math.ceil(Math.PI/this.DIST);
-	this.NLON=2*this.NLAT;
+    this.init = function(state) {
+	this.starList=[];
 	for (var imag=this.SMAG;imag < this.NMAG; imag++) {
 	    this.starList[imag]=[];
 	    for (var ilat=0;ilat < this.NLAT; ilat++) {	    
@@ -322,30 +242,21 @@ function Milkyway() {
 		}
 	    }
 	};
-	//console.log("Initialised:", this.NMAG,this.NLAT,this.NLON);
-	starsJson=starsJson || this.starsJson;
-	constJson=constJson || this.constJson;
-	descrJson=descrJson || this.descrJson;
-	console.warn("Not implemented.",starsJson,constJson,descrJson);
-	//var onStarsLoaded = state.Resource.loadJSON(starsJson);
-	//var onConstLoaded = state.Resource.loadJSON(constJson);
-	//var onDescrLoaded = state.Resource.loadJSON(descrJson);
-	// var this_ = this;
-	//var onReady = $.Deferred();
-	//$.when(onStarsLoaded,onConstLoaded,onDescrLoaded).then(
-	  //  function(stars,consts,descr) {
-	//	this_.generateDescr(descr[0],this_);
-	//	this_.generateConst(consts[0],this_);
-	//	this_.generateStars(stars[0],this_);
-	//	onReady.resolve();
-	  //  },
-          //  function(starsResponse, constResonse, descrResponse){
-          //      console.log("Failed:", starsResponse);
-          //  }
-	//);
-	//return onReady.promise();
+	var processStars=function(state,response,callbacks){this.generateStars(state,response,callbacks)}.bind(this);
+	var processDescr=function(state,response,callbacks){this.generateDescr(state,response,callbacks)}.bind(this);
+	var processConst=function(state,response,callbacks){this.generateConst(state,response,callbacks)}.bind(this);
+	var loadStars=function(state,response,callbacks) {state.File.load(state,this.starsJson,callbacks)}.bind(this);
+	var loadDescr=function(state,response,callbacks) {state.File.load(state,this.descrJson,callbacks)}.bind(this);
+	var loadConst=function(state,response,callbacks) {state.File.load(state,this.constJson,callbacks)}.bind(this);
+	state.File.next(state,"",[loadStars,processStars,
+				  loadDescr,processDescr,
+				  loadConst,processConst,
+				  function(state,response,callbacks) {
+				      console.log("Done loading milkyway data...")
+				  }]);
     };
-    this.generateStars = function(stars,this_) {
+    this.generateStars = function(state,json,callbacks) {
+	var stars=JSON.parse(json);
 	var star;
 	//var starVect;
 	var mag;
@@ -359,46 +270,48 @@ function Milkyway() {
 	    //if (i > 1000) {continue;};
 	    star = stars[i];
 	    //console.log("Looping:",i,star);
-	    this.position = new Vector3(star[this_.X], star[this_.Y], star[this_.Z]);
+	    this.position = new Vector3(star[this.X], star[this.Y], star[this.Z]);
 	    this.position.cartesian2Spherical();
 	    //console.log("Looping:",i,star,this.position);
 	    if(this.position.x === 0 && this.position.y === 0 && this.position.z === 0) continue;//dont add the sun
 	    //this.position.multiplyScalar(9.4605284e9);//normalize().
 	    this.position.multiplyScalar(this.parsec);// parsecs...
-	    mag = this.position.mag = star[this_.MAG];
-	    name = star[this_.NAME] || "";
-	    spectralType = Math.round(star[this_.SPECT]);
-	    starColor  = this_.spectralColors[spectralType] || this_.spectralColors.F;
+	    mag = this.position.mag = star[this.MAG];
+	    name = star[this.NAME] || "";
+	    spectralType = Math.round(star[this.SPECT]);
+	    starColor  = this.spectralColors[spectralType] || this.spectralColors.F;
 	    /**/
 	    //this.position.size = Math.floor(10 * (2 + (1 / mag))) / 10;
-	    var starRGB = this_.lightenDarkenColor(starColor, Math.pow(10,-mag/2.5));
+	    var starRGB = this.lightenDarkenColor(starColor, Math.pow(10,-mag/2.5));
 	    this.position.color = starRGB;
 	    this.position.maxcolor=Math.max(starRGB[0],starRGB[1],starRGB[2]);
 	    //console.log("Adding star:",starRGB,spectralType,mag);
 	    if(name) {
-		this_.namedStars[name] = this.position;
+		this.namedStars[name] = this.position;
 		cnt++;
 	    };
-	    this.position.ra=star[this_.RA];
-	    this.position.dec=star[this_.DEC];
-	    this.position.lab=star[this_.LABEL] || "";
-	    this.position.cls=star[this_.CLASS] || "";
-	    this.position.con=star[this_.CONST] || "";
-	    this.position.cid=star[this_.CONSTID];
+	    this.position.ra=star[this.RA];
+	    this.position.dec=star[this.DEC];
+	    this.position.lab=star[this.LABEL] || "";
+	    this.position.cls=star[this.CLASS] || "";
+	    this.position.con=star[this.CONST] || "";
+	    this.position.cid=star[this.CONSTID];
 	    this.position.name=name;
-	    this.position.brt=star[this_.BRIGHTNESS] || "";
-	    this.position.lev=star[this_.BRIGHTNLEV] || "";
+	    this.position.brt=star[this.BRIGHTNESS] || "";
+	    this.position.lev=star[this.BRIGHTNLEV] || "";
 	    this.position.imag = Math.min(this.NMAG-1,Math.max(this.SMAG,Math.floor(this.getIMag(this.position.mag))));
 	    this.position.ilat = this.modulus(this.getILat(this.position.lat),this.NLAT);
 	    this.position.ilon = this.modulus(this.getILon(this.position.lon),this.NLON);
 	    this.position.phase=Math.random()*Math.PI*2.0;
-	    this.list = this.starList[this.position.imag][this.position.ilat][this.position.ilon];
-	    this.list.push( this.position );
+	    var list = this.starList[this.position.imag][this.position.ilat][this.position.ilon];
+	    list.push( this.position );
 	};
 	console.log("Stars with name:",cnt);
-	this_.initialised=true;
-    };
-    this.generateConst = function(consts,this_) {
+	this.initialised=true;
+	state.File.next(state,"",callbacks);
+    }.bind(this);
+    this.generateConst = function(state,json,callbacks) {
+	var consts=JSON.parse(json);
 	for (var con in consts) {
 	    var spos=new Vector3();
 	    var xpos=new Vector3();
@@ -428,16 +341,19 @@ function Milkyway() {
 	    };
 	    spos.divideScalar(Math.max(1,scnt));
 	    spos.multiplyScalar(this.parsec);
-	    this_.constellations.push([spos,strokes,smg,con,
-				       this_.getConstellation(con,this_),
-				       this_.getConstellationD(con,this_)]);
+	    this.constellations.push([spos,strokes,smg,con,
+				       this.getConstellation(con),
+				       this.getConstellationD(con)]);
 	}
 	console.log("Adding constellations.");
-    };
-    this.generateDescr = function(descr,this_) {
-	this_.descriptions=descr;
+	state.File.next(state,"",callbacks);
+    }.bind(this);
+    this.generateDescr = function(state,json,callbacks) {
+	var descr=JSON.parse(json);
+	this.descriptions=descr;
 	console.log("Adding descriptions.");
-    };
+	state.File.next(state,"",callbacks);
+    }.bind(this);
     this.componentToHex= function (c) {var hex = c.toString(16);return hex.length === 1 ? "0" + hex : hex;};
     this.rgbToHex = function (r, g, b) {
 	return "#" + this.componentToHex(r) + this.componentToHex(g) + this.componentToHex(b);};
@@ -474,16 +390,16 @@ function Milkyway() {
 	    for (var ilat = limits.nlatmin; ilat <= limits.nlatmax; ilat++) {
 		for (var ilon = limits.nlonmin; ilon <= limits.nlonmax; ilon++) {
 		    for (var imag = this.SMAG; imag < limits.nmag; imag++) {
-			this.list=this.starList[imag][this.modulus(ilat,this.NLAT)][this.modulus(ilon,this.NLON)];
-			if (this.list === undefined) {
+			var list=this.starList[imag][this.modulus(ilat,this.NLAT)][this.modulus(ilon,this.NLON)];
+			if (list === undefined) {
 			    console.log("Missing starlist:",
 					imag,
 					this.modulus(ilat,this.NLAT),
 					this.modulus(ilon,this.NLON));
 			}
-			this.ll = this.list.length;
+			this.ll = list.length;
 			for (var ii = 0; ii < this.ll; ii++) { // LOOP OVER SECTOR STARS
-			    this.position=this.list[ii];
+			    this.position=list[ii];
 			    this.tot=this.tot+1;
 			    this.mf=Math.min(this.fact,255/this.position.maxcolor);
 //			    var cc=this.position.maxcolor*(0.9 + 0.1*Math.sin(phase+this.position.phase));
@@ -781,25 +697,21 @@ function Milkyway() {
     this.log10 = function (a) {
 	return Math.log(a)/this.ln10;
     };
-    this.getConstellation = function (con,this_) {
-	this_=this_||this;
-	return this_.descriptions["con"][con]["name"]||con;
-    };
-    this.getConstellationD = function (con, this_) {
-	this_=this_||this;
-	return this_.descriptions["con"][con]["descr"]||con;
-    };
-    this.getBrightness = function (brt, this_) {
-	this_=this_||this;
-	if (this_.descriptions["brt"][brt]) {
-	    return String.fromCharCode(this_.descriptions["brt"][brt]["code"]);
+    this.getConstellation = function (con) {
+	return this.descriptions["con"][con]["name"]||con;
+    }.bind(this);
+    this.getConstellationD = function (con) {
+	return this.descriptions["con"][con]["descr"]||con;
+    }.bind(this);
+    this.getBrightness = function (brt) {
+	if (this.descriptions["brt"][brt]) {
+	    return String.fromCharCode(this.descriptions["brt"][brt]["code"]);
 	} else {
 	    return brt;
 	}
     };
-    this.getClass = function (cls, this_) {
-	this_=this_||this;
-	return this_.descriptions["class"][cls]||cls;
+    this.getClass = function (cls) {
+	return this.descriptions["class"][cls]||cls;
     }
     
 };

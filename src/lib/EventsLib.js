@@ -171,12 +171,13 @@ function Events() {
     ];
     this.init = function(state){
 	//console.log("Init");
-	this.beep0s = new Audio("/astro/media/beep0s.mp3");
-	this.beep1s = new Audio("/astro/media/beep1s.mp3");
-	this.beep2s = new Audio("/astro/media/beep2s.mp3");
-	this.beep3s = new Audio("/astro/media/beep3s.mp3");
-	this.beep10s = new Audio("/astro/media/beep10s.mp3");
-	this.beep1m = new Audio("/astro/media/beep1m.mp3");
+	var baseURL="/astro/media/sounds/";
+	this.beep0s = new Audio(baseURL+"beep0s.mp3");
+	this.beep1s = new Audio(baseURL+"beep1s.mp3");
+	this.beep2s = new Audio(baseURL+"beep2s.mp3");
+	this.beep3s = new Audio(baseURL+"beep3s.mp3");
+	this.beep10s= new Audio(baseURL+"beep10s.mp3");
+	this.beep1m = new Audio(baseURL+"beep1m.mp3");
 	//state.Utils.init("Database",this);
     };
     this.updateLoop = function(state) {

@@ -72,6 +72,7 @@ class Dataset extends Component {
     componentWillUnmount() {
 	window.removeEventListener('resize', this.updateDimensions);
     }
+    setProgress(state,active) {};
     render() {
         const { classes, state, layout } = this.props;
 	var rls={dataset:classes.dataset,

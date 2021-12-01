@@ -27,7 +27,16 @@ function Planets() {
     //duration in days
     this.CENTURY = 100 * this.YEAR;
     this.SIDERAL_DAY = 3600 * 23.9344696;
+    this.parsec= 3.08567758e13;// km 
+    this.lightyear = 9.4605284e12; // km
 
+    this.ln10=Math.log(10);
+    this.DIST = 5.0*Math.PI/180.0;
+    this.NLAT=Math.ceil(Math.PI/this.DIST);
+    this.NLON=2*this.NLAT;
+    this.SMAG = 5;
+    this.NMAG = 10;
+    
     this.J2000 = new Date('2000-01-01T12:00:00-00:00');
     this.scenes={};
     
@@ -93,8 +102,8 @@ function Planets() {
 	    radius : 6371.0088*this.SCALE,
 	    color : '#1F7CDA',
 	    map : 'earthmap1k.jpg',
-	    bumpMap : 'eartbump1k.jpg',
-	    bumpScale : 10.0*this.SCALE,
+	    bumpMap : 'earthbump1k.jpg',
+	    bumpScale : 20.0*this.SCALE,
 	    spec : 'earthspec1k.jpg',
 	    atmosphere : {
 		radius : 6381.0088*this.SCALE,
@@ -301,7 +310,7 @@ function Planets() {
 	    // 	    TweenMax.to(this, 2, {baseMapRotation : this.getMapRotation(this.getAngleTo('earth')), ease:Sine.easeInOut});
 	    // 	}
 	    // },
-            orbits: 'earth',
+	    orbits: 'earth',
 	    type:   'sphere',
 	    shade : 'sun',
 	    shadows : ['earth'],
@@ -328,10 +337,6 @@ function Planets() {
 	    rotation : new Vector3(),
 	    position : new Vector3()
 	},
-	stars : {
-	    map : 'galaxy_starfield.png',
-	    radius : 1000*this.AU,
-	},	
 	observer : {
 	    position : new Vector3(),
 	    i : new Vector3(),
@@ -339,6 +344,9 @@ function Planets() {
 	    k : new Vector3(),
 	    zenith : new Vector3()
 	}
+    };
+    this.init = function(state) {
+	// executed after state has been created but before any data is loaded...
     };
     this.createStarfield = function(dir){
 	var ret={};
@@ -387,7 +395,7 @@ function Planets() {
 	    }
 	}
     };
-    this.baseURL	= process.env.PUBLIC_URL+'/media/';             // from http://planetpixelemporium.com/
+    this.baseURL	= process.env.PUBLIC_URL+'/media/planets/';             // from http://planetpixelemporium.com/
     this.createSunMesh	= function(){
 	var material	= this.Material({map:this.baseURL+this.bodies.sun.map});
 	var geometry	= new THREE.SphereGeometry(this.bodies.sun.radius, 32, 32)
@@ -583,14 +591,6 @@ function Planets() {
 	mesh.receiveShadow = true;
 	return mesh	
     };
-    this.createStarfieldMesh	= function(){
-	var material    = this.Material({map:this.baseURL+this.bodies.stars.map,
-					 side:THREE.BackSide});
-	var geometry	= new THREE.SphereGeometry(this.bodies.stars.radius, 32, 32)
-	var mesh	= new THREE.Mesh(geometry, material)
-	mesh.name       = "stars";
-	return mesh	
-    };
     this.createLight    = function() {
 	var light   = new THREE.DirectionalLight( 0xffffff, 1, 100 )
 	light.position.set(0.5*this.bodies.sun.radius,
@@ -693,7 +693,6 @@ function Planets() {
     //////////////////////////////////////////////////////////////////////////////////
     //		comment								//
     //////////////////////////////////////////////////////////////////////////////////
-
     /**
      * change the original from three.js because i needed different UV
      * 
@@ -994,7 +993,6 @@ function Planets() {
 	    console.log( 'Disp: An error happened '+dispMap );
 	});
     };	
-
     this.setPosition=function(scene,body,x,y,z) {
 	var bdy=scene.getObjectByName(body);
 	if (bdy !== undefined) {
@@ -1004,7 +1002,7 @@ function Planets() {
 	};
 	return bdy;
     }
-};
+ };
 
 
 // var loader = new THREE.TextureLoader();

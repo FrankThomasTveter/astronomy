@@ -4,83 +4,6 @@ import * as TWEEN from 'es6-tween';
 import * as THREE from 'three'
 import { PointOfViewControls } from './PointOfViewControls'
 //import { DragControls } from 'three/examples/jsm/controls/DragControls'
-
-
-// import {
-// //    MeshStandardMaterial,
-// //    Object3D,
-//     AmbientLight,
-//     DirectionalLight,
-//     PointLight,
-//     BackSide,
-//     BoxGeometry,
-//     SphereGeometry,
-//     Color,
-//     Group,
-//     Mesh,
-//     MeshBasicMaterial,
-//     MeshLambertMaterial,
-//     MeshPhongMaterial,
-//     PerspectiveCamera,
-//     Scene,
-//     TextureLoader,
-//     Vector3,
-//     WebGLRenderer,
-// } from 'three';
-// import { createGlowMesh } from 'three-glow-mesh';
-// //import PointOfViewControls from 'three-pointOfViewcontrols';
-// //import { Interaction } from 'three.interaction';
-
-// import {
-//     BACKGROUND_RADIUS_SCALE,
-//     CAMERA_DAMPING_FACTOR,
-//     CAMERA_FAR,
-//     CAMERA_FOV,
-//     CAMERA_MIN_DISTANCE_RADIUS_SCALE,
-//     CAMERA_NEAR,
-//     CLOUDS_RADIUS_OFFSET,
-//     defaultCameraOptions,
-//     defaultFocusOptions,
-//     defaultModelOptions,
-//     defaultLightOptions,
-//     defaultMarkerOptions,
-//     MODEL_SEGMENTS,
-//     INITIAL_COORDINATES,
-//     MARKER_ACTIVE_ANIMATION_DURATION,
-//     MARKER_ACTIVE_ANIMATION_EASING_FUNCTION,
-//     MARKER_DEFAULT_COLOR,
-//     MARKER_SEGMENTS,
-//     MARKER_UNIT_RADIUS_SCALE,
-//     RADIUS,
-// } from './defaults';
-// import {
-//     //Animation,
-//     //Callbacks,
-//     //CameraOptions,
-//     //Coordinates,
-//     //FocusOptions,
-//     //ModelOptions,
-//     //InteractableObject3D,
-//     //InteractableScene,
-//     //InteractionEvent,
-//     //LightOptions,
-//     //Marker,
-//     //MarkerOptions,
-//     MarkerType,
-//     ObjectName,
-//     //Optional,
-//     //Options,
-//     //Position,
-//     //Size,
-// } from './types';
-// import {
-//     // coordinatesToPosition,
-//     getMarkerCoordinatesKey,
-//     maxValue,
-//     minValue,
-//     tween,
-// } from './utils';
-
 const ObjectName={
     "Camera" : "CAMERA",
     "CameraAmbientLight" : "CAMERA_AMBIENT_LIGHT",
@@ -235,7 +158,7 @@ export default class Model {
 				  20000*state.Planets.SCALE,
 				  state.Planets.bodies.saturn.radius*1.01,
 				  10000*state.Planets.SCALE);//
-	//this.scene.add(state.Planets.createLight());
+	this.scene.add(state.Milkyway.createStarsMesh());
 
 	//Create a plane that receives shadows (but does not cast them)
 	const planeGeometry = new THREE.PlaneGeometry( 2*state.Planets.bodies.sun.radius, 
@@ -611,7 +534,7 @@ export default class Model {
 	    //this.camera.position.set(x, y, z);
 	    this.initialCoordinates = initialCoordinates;
 	};
-	this.camera.far = this.state.Planets.bodies.stars.radius;
+	this.camera.far = 100000;
 	this.camera.fov = 45;
 	this.camera.near = 1;
 	this.controls.autoRotate = enableAutoRotate;
@@ -1048,3 +971,80 @@ window.requestAnimFrame = (function(){
             window.setTimeout(callback, 1000 / 30);
         };
 })();
+
+
+// import {
+// //    MeshStandardMaterial,
+// //    Object3D,
+//     AmbientLight,
+//     DirectionalLight,
+//     PointLight,
+//     BackSide,
+//     BoxGeometry,
+//     SphereGeometry,
+//     Color,
+//     Group,
+//     Mesh,
+//     MeshBasicMaterial,
+//     MeshLambertMaterial,
+//     MeshPhongMaterial,
+//     PerspectiveCamera,
+//     Scene,
+//     TextureLoader,
+//     Vector3,
+//     WebGLRenderer,
+// } from 'three';
+// import { createGlowMesh } from 'three-glow-mesh';
+// //import PointOfViewControls from 'three-pointOfViewcontrols';
+// //import { Interaction } from 'three.interaction';
+
+// import {
+//     BACKGROUND_RADIUS_SCALE,
+//     CAMERA_DAMPING_FACTOR,
+//     CAMERA_FAR,
+//     CAMERA_FOV,
+//     CAMERA_MIN_DISTANCE_RADIUS_SCALE,
+//     CAMERA_NEAR,
+//     CLOUDS_RADIUS_OFFSET,
+//     defaultCameraOptions,
+//     defaultFocusOptions,
+//     defaultModelOptions,
+//     defaultLightOptions,
+//     defaultMarkerOptions,
+//     MODEL_SEGMENTS,
+//     INITIAL_COORDINATES,
+//     MARKER_ACTIVE_ANIMATION_DURATION,
+//     MARKER_ACTIVE_ANIMATION_EASING_FUNCTION,
+//     MARKER_DEFAULT_COLOR,
+//     MARKER_SEGMENTS,
+//     MARKER_UNIT_RADIUS_SCALE,
+//     RADIUS,
+// } from './defaults';
+// import {
+//     //Animation,
+//     //Callbacks,
+//     //CameraOptions,
+//     //Coordinates,
+//     //FocusOptions,
+//     //ModelOptions,
+//     //InteractableObject3D,
+//     //InteractableScene,
+//     //InteractionEvent,
+//     //LightOptions,
+//     //Marker,
+//     //MarkerOptions,
+//     MarkerType,
+//     ObjectName,
+//     //Optional,
+//     //Options,
+//     //Position,
+//     //Size,
+// } from './types';
+// import {
+//     // coordinatesToPosition,
+//     getMarkerCoordinatesKey,
+//     maxValue,
+//     minValue,
+//     tween,
+// } from './utils';
+

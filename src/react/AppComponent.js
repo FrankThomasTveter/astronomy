@@ -219,6 +219,8 @@ class App extends Component {
 	state.Default.init(state);
 	state.Events.init(state);
         state.Settings.init(state);
+        state.Planets.init(state);
+        state.Milkyway.init(state);
 	state.Default.loadUrl(state,"",
 				  [state.Default.mergeState,
 				   state.Default.checkState,
