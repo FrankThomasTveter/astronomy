@@ -38,7 +38,8 @@ function Milkyway() {
 	0xebd3da,
 	0xe7dbf3
     ];
-    this.sprites=["star_white01.png","star_white02.png","star_white03.png","star_white04.png"];
+    //this.sprites=["flare.png"];
+    this.sprites=["flare.png"];
     this.baseURL=process.env.PUBLIC_URL+"/media/stars/";
     this.constellations=[];
     this.stars = {
@@ -105,6 +106,7 @@ function Milkyway() {
 	'7320'            : ['tauSag','7336'],
 	'theta1Sag'       : ['7336']
     };
+    this.defaultSize = 0.1 * Math.tan( ( Math.PI / 180 ) * 45.0 / 2 );;
     this.descriptions=undefined;
     this.starsJson = 'data/stars.json';
     this.constJson = 'data/const.json';
@@ -141,6 +143,10 @@ function Milkyway() {
     this.oh=undefined;
     this.period=5000.0;
     this.first=undefined;
+    this.setFlareSize=function(scene,camera) {
+	var points=scene.getObjectByName("stars");
+	points.material.size = this.defaultSize / Math.tan( ( Math.PI / 180 ) * camera.fov / 2 );
+    };
     this.addTextureMap=function(material,map) {
 	if (map !== undefined) {
 	    const textureLoader=new THREE.TextureLoader();
@@ -149,8 +155,11 @@ function Milkyway() {
 		function(mapTexture) {
 		    mapTexture.name=map;
 		    mapTexture.center.setScalar(0.5);
-		    mapTexture.rotation= -Math.PI * 0.5;
+		    //mapTexture.rotation= -Math.PI * 0.5;
 		    material.map=mapTexture;
+		    material.size=2.0;
+		    material.color.setHex(0xffffff);
+		    material.sizeAttenuation=true;
 		    material.needsUpdate=true;
 		},
 		function ( xhr ) {
@@ -163,13 +172,7 @@ function Milkyway() {
 	};
 	return material;
     };
-    this.createStarsMesh	= function(){
-	//https://jsfiddle.net/prisoner849/z3yfw208/
-	var material = new THREE.PointsMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.5});
-
-
-	//this.addTextureMap(material,this.baseURL + "ball.png");
-	this.addTextureMap(material,this.baseURL + this.sprites[0]);
+    this.modifyShaders=function(geometry,material, sizes) {
 	material.onBeforeCompile = shader => {
 	    shader.vertexShader = `
     attribute float sizes;
@@ -187,6 +190,19 @@ function Milkyway() {
 		`gl_PointSize = size * sizes;`
 	    )
 	};
+
+	var sumDisplacement =  [0, 0, 0, 0, 0, 0, 0, 0, 0];
+	const sumDisp = new Float32Array(sumDisplacement);
+	geometry.setAttribute( 'sizes', new THREE.BufferAttribute( sizes, 1 ) );
+	geometry.setAttribute('offset', new THREE.InstancedBufferAttribute(sumDisp, 3 ));
+    };
+    this.createStarsMesh	= function(){
+	//https://jsfiddle.net/prisoner849/z3yfw208/
+	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true }); //   alphaTest: 0.99
+	//var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
+	//this.addTextureMap(material,this.baseURL + "ball.png");
+	this.addTextureMap(material,this.baseURL + this.sprites[0]);
+	var geometry = new THREE.InstancedBufferGeometry();
 	//var geometry = new THREE.BufferGeometry();
 	var positions = new Float32Array(30000);
 	var colors = new Float32Array(30000);
@@ -200,24 +216,37 @@ function Milkyway() {
             positions[i * 3 + 1] = y;
             positions[i * 3 + 2] = z;
             
-            colors[i * 3 + 0] = Math.random();
-            colors[i * 3 + 1] = Math.random();
-            colors[i * 3 + 2] = Math.random();
+            colors[i * 3 + 0] = 0.5+0.5*Math.random();
+            colors[i * 3 + 1] = 0.5+0.5*Math.random();
+            colors[i * 3 + 2] = 0.5+0.5*Math.random();
             
-            sizes[i] = (Math.random() * 90) + 10;
+            sizes[i] = 0*(Math.random() * 90) + 90;
             //alphas[i] = 1;
 	}
-	var sumDisplacement =  [0, 0, 0, 0, 0, 0, 0, 0, 0];
-	var geometry = new THREE.InstancedBufferGeometry();
+	this.modifyShaders(geometry,material, sizes);
 	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
 	geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
-	geometry.setAttribute( 'sizes', new THREE.BufferAttribute( sizes, 1 ) );
 	//geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
-	const sumDisp = new Float32Array(sumDisplacement);
-	geometry.setAttribute('offset', new THREE.InstancedBufferAttribute(sumDisp, 3 ));
 	var mesh = new THREE.Points( geometry, material );
+	//var mesh = new THREE.Sprite( geometry, material );
 	mesh.name       = "stars";
 	return mesh	
+    };
+    this.createCirleMesh=function() {
+	var geometry = new THREE.BufferGeometry();
+	var positions = new Float32Array(30);
+	for (let i = 0; i < 10; i++) {
+            let x = 2000 * Math.random() - 1000;
+            let y = 2000 * Math.random() - 1000;
+            let z = 2000 * Math.random() - 1000;
+            positions[i * 3 + 0] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+	};
+	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+	var material = new THREE.LineDashedMaterial( { color: 0xffffff, dashSize: 1000, gapSize: 500 } );
+	var mesh = new THREE.Line( geometry, material );
+	return mesh
     };
     this.lightenDarkenColor = function (hex, amount) {
 	var col = [hex >> 16, (hex >> 8) & 0x00FF,  hex & 0x0000FF];

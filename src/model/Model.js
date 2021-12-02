@@ -143,10 +143,10 @@ export default class Model {
 	//this.scene=state.Planets.createSunScene(this.camera);
 	//this.scene=state.Planets.createMercuryScene(this.camera);
 	//this.scene=state.Planets.createVenusScene(this.camera);
-	this.scene=state.Planets.createEarthScene(this.camera);
+	//this.scene=state.Planets.createEarthScene(this.camera);
 	//this.scene=state.Planets.createMarsScene(this.camera);
 	//this.scene=state.Planets.createJupiterScene(this.camera);
-	//this.scene=state.Planets.createSaturnScene(this.camera);
+	this.scene=state.Planets.createSaturnScene(this.camera);
 	//this.scene=state.Planets.createUranusScene(this.camera);
 	//this.scene=state.Planets.createNeptuneScene(this.camera);
 	//this.scene=state.Planets.createPlutoScene(this.camera);
@@ -159,6 +159,7 @@ export default class Model {
 				  state.Planets.bodies.saturn.radius*1.01,
 				  10000*state.Planets.SCALE);//
 	this.scene.add(state.Milkyway.createStarsMesh());
+	this.scene.add(state.Milkyway.createCirleMesh());
 
 	//Create a plane that receives shadows (but does not cast them)
 	const planeGeometry = new THREE.PlaneGeometry( 2*state.Planets.bodies.sun.radius, 
@@ -428,6 +429,7 @@ export default class Model {
     render() {
 	//console.log("Rendering...");
 	this.renderer.sortObjects = false;
+	this.state.Milkyway.setFlareSize(this.scene,this.camera);
 	this.renderer.render(this.scene, this.camera);
 
 	//console.log("texture:",this.scene);
