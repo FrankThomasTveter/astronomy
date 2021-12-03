@@ -198,7 +198,7 @@ function Milkyway() {
     };
     this.createStarsMesh	= function(){
 	//https://jsfiddle.net/prisoner849/z3yfw208/
-	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true }); //   alphaTest: 0.99
+	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true, alphaTest:0.01 }); //   alphaTest: 0.99
 	//var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
 	//this.addTextureMap(material,this.fullStarsURL + "ball.png");
 	this.addTextureMap(material,this.fullStarsURL + this.sprites[0]);
