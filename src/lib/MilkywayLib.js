@@ -274,9 +274,12 @@ function Milkyway() {
 	var processStars=function(state,response,callbacks){this.generateStars(state,response,callbacks)}.bind(this);
 	var processDescr=function(state,response,callbacks){this.generateDescr(state,response,callbacks)}.bind(this);
 	var processConst=function(state,response,callbacks){this.generateConst(state,response,callbacks)}.bind(this);
-	var loadStars=function(state,response,callbacks) {state.File.load(state,this.starsJson,callbacks)}.bind(this);
-	var loadDescr=function(state,response,callbacks) {state.File.load(state,this.descrJson,callbacks)}.bind(this);
-	var loadConst=function(state,response,callbacks) {state.File.load(state,this.constJson,callbacks)}.bind(this);
+	var loadStars=function(state,response,callbacks) {
+	    state.File.load(state,this.baseURL+this.starsJson,callbacks)}.bind(this);
+	var loadDescr=function(state,response,callbacks) {
+	    state.File.load(state,this.baseURL+this.descrJson,callbacks)}.bind(this);
+	var loadConst=function(state,response,callbacks) {
+	    state.File.load(state,this.baseURL+this.constJson,callbacks)}.bind(this);
 	state.File.next(state,"",[loadStars,processStars,
 				  loadDescr,processDescr,
 				  loadConst,processConst,
@@ -285,7 +288,13 @@ function Milkyway() {
 				  }]);
     };
     this.generateStars = function(state,json,callbacks) {
-	var stars=JSON.parse(json);
+	var stars=[];
+        try {
+            var stars = JSON.parse(json);
+        } catch (e) {
+            console.log("Stars response:",json);
+            alert("Stars '"+this.baseURL+this.starsJson+"' contains Invalid stars:"+e.name+":"+e.message);
+        };
 	var star;
 	//var starVect;
 	var mag;
@@ -340,7 +349,13 @@ function Milkyway() {
 	state.File.next(state,"",callbacks);
     }.bind(this);
     this.generateConst = function(state,json,callbacks) {
-	var consts=JSON.parse(json);
+	var consts=[];
+        try {
+            consts = JSON.parse(json);
+        } catch (e) {
+            console.log("Const response:",json);
+            alert("Consts '"+this.baseURL+this.constJson+"' contains Invalid stars:"+e.name+":"+e.message);
+        };
 	for (var con in consts) {
 	    var spos=new Vector3();
 	    var xpos=new Vector3();
@@ -378,7 +393,13 @@ function Milkyway() {
 	state.File.next(state,"",callbacks);
     }.bind(this);
     this.generateDescr = function(state,json,callbacks) {
-	var descr=JSON.parse(json);
+	var descr=[];
+        try {
+            descr = JSON.parse(json);
+        } catch (e) {
+            console.log("Const response:",json);
+            alert("Descr '"+this.baseURL+this.descrJson+"' contains Invalid stars:"+e.name+":"+e.message);
+        };
 	this.descriptions=descr;
 	console.log("Adding descriptions.");
 	state.File.next(state,"",callbacks);
