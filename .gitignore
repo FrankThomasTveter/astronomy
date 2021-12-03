@@ -3,9 +3,5 @@ node_modules/
 build.tar
 test
 build
-public/data
-public/summary*
-public/def/old
-public/def/jnk
-public/simplified
+public/cgi-bin
 
