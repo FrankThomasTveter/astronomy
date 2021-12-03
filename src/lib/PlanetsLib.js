@@ -730,7 +730,7 @@ function Planets() {
 	    //console.log("RingGeometry:",i,uu,vv,rr,rmin,rdel);
 	    let u =geometry.attributes.uv.getX(i);  // original U coordinate
 	    let v =geometry.attributes.uv.getY(i);  // original V coordinate
-	    console.log("RingGeometry:",i,v3,uu,vv," org:",u,v);
+	    //console.log("RingGeometry:",i,v3,uu,vv," org:",u,v);
 	    if (flip) {
 		geometry.attributes.uv.setXY(i, Math.max(0,Math.min(1,vv)), Math.max(0,Math.min(1,uu))); // assign new coordinates
 	    } else {
@@ -906,7 +906,7 @@ function Planets() {
 		material.map=new THREE.Texture(canvasResult);
 		material.map.needsUpdate=true;
 		material.needsUpdate=true;
-		console.log( "Created trans:",map,transMap,material.map );
+		//console.log( "Created trans:",map,transMap,material.map );
 
 	    },function ( xhr ) {
 		console.log( "Trans:", (xhr.loaded / xhr.total * 100) + '% loaded' );

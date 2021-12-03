@@ -40,7 +40,8 @@ function Milkyway() {
     ];
     //this.sprites=["flare.png"];
     this.sprites=["flare.png"];
-    this.baseURL=process.env.PUBLIC_URL+"/media/stars/";
+    this.starsURL=process.env.PUBLIC_URL+"/media/stars/";
+    this.dataURL=process.env.PUBLIC_URL+"/data/";
     this.constellations=[];
     this.stars = {
 	'ZubenElschemali' : ['ZubenElgenubi','Brachium','gLibra'],
@@ -108,9 +109,9 @@ function Milkyway() {
     };
     this.defaultSize = 0.1 * Math.tan( ( Math.PI / 180 ) * 45.0 / 2 );;
     this.descriptions=undefined;
-    this.starsJson = 'data/stars.json';
-    this.constJson = 'data/const.json';
-    this.descrJson = 'data/descr.json';
+    this.starsJson = 'stars.json';
+    this.constJson = 'const.json';
+    this.descrJson = 'descr.json';
     this.pxRatio = (window.devicePixelRatio || 1);
     //keys of the loaded array
     this.namedStars = {};
@@ -178,7 +179,7 @@ function Milkyway() {
     attribute float sizes;
     attribute vec3 offset;
     ` + shader.vertexShader;
-	    console.log(shader.vertexShader);
+	    //console.log(shader.vertexShader);
 	    shader.vertexShader = shader.vertexShader.replace(
   		`#include <begin_vertex>`,
 		`#include <begin_vertex>
@@ -200,8 +201,8 @@ function Milkyway() {
 	//https://jsfiddle.net/prisoner849/z3yfw208/
 	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true }); //   alphaTest: 0.99
 	//var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
-	//this.addTextureMap(material,this.baseURL + "ball.png");
-	this.addTextureMap(material,this.baseURL + this.sprites[0]);
+	//this.addTextureMap(material,this.starsURL + "ball.png");
+	this.addTextureMap(material,this.starsURL + this.sprites[0]);
 	var geometry = new THREE.InstancedBufferGeometry();
 	//var geometry = new THREE.BufferGeometry();
 	var positions = new Float32Array(30000);
@@ -275,11 +276,11 @@ function Milkyway() {
 	var processDescr=function(state,response,callbacks){this.generateDescr(state,response,callbacks)}.bind(this);
 	var processConst=function(state,response,callbacks){this.generateConst(state,response,callbacks)}.bind(this);
 	var loadStars=function(state,response,callbacks) {
-	    state.File.load(state,this.baseURL+this.starsJson,callbacks)}.bind(this);
+	    state.File.load(state,this.dataURL+this.starsJson,callbacks)}.bind(this);
 	var loadDescr=function(state,response,callbacks) {
-	    state.File.load(state,this.baseURL+this.descrJson,callbacks)}.bind(this);
+	    state.File.load(state,this.dataURL+this.descrJson,callbacks)}.bind(this);
 	var loadConst=function(state,response,callbacks) {
-	    state.File.load(state,this.baseURL+this.constJson,callbacks)}.bind(this);
+	    state.File.load(state,this.dataURL+this.constJson,callbacks)}.bind(this);
 	state.File.next(state,"",[loadStars,processStars,
 				  loadDescr,processDescr,
 				  loadConst,processConst,
@@ -292,8 +293,8 @@ function Milkyway() {
         try {
             var stars = JSON.parse(json);
         } catch (e) {
-            console.log("Stars response:",json);
-            alert("Stars '"+this.baseURL+this.starsJson+"' contains Invalid stars:"+e.name+":"+e.message);
+            //console.log("Stars response:",json);
+            alert("Stars '"+this.dataURL+this.starsJson+"' contains Invalid stars:"+e.name+":"+e.message);
         };
 	var star;
 	//var starVect;
@@ -354,7 +355,7 @@ function Milkyway() {
             consts = JSON.parse(json);
         } catch (e) {
             console.log("Const response:",json);
-            alert("Consts '"+this.baseURL+this.constJson+"' contains Invalid stars:"+e.name+":"+e.message);
+            alert("Consts '"+this.dataURL+this.constJson+"' contains Invalid stars:"+e.name+":"+e.message);
         };
 	for (var con in consts) {
 	    var spos=new Vector3();
@@ -398,7 +399,7 @@ function Milkyway() {
             descr = JSON.parse(json);
         } catch (e) {
             console.log("Const response:",json);
-            alert("Descr '"+this.baseURL+this.descrJson+"' contains Invalid stars:"+e.name+":"+e.message);
+            alert("Descr '"+this.dataURL+this.descrJson+"' contains Invalid stars:"+e.name+":"+e.message);
         };
 	this.descriptions=descr;
 	console.log("Adding descriptions.");
