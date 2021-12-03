@@ -158,8 +158,10 @@ export default class Model {
 				  20000*state.Planets.SCALE,
 				  state.Planets.bodies.saturn.radius*1.01,
 				  10000*state.Planets.SCALE);//
-	this.scene.add(state.Milkyway.createStarsMesh());
-	this.scene.add(state.Milkyway.createCirleMesh());
+	this.scene.add(state.Milkyway.createStarsMesh());	
+	//this.scene.add(state.Milkyway.createCircleMesh());
+	this.scene.add(state.Milkyway.createNavigationMesh());
+	//this.scene.add(state.Milkyway.createNavigationMesh());
 
 	//Create a plane that receives shadows (but does not cast them)
 	const planeGeometry = new THREE.PlaneGeometry( 2*state.Planets.bodies.sun.radius, 

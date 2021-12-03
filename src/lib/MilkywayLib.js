@@ -40,8 +40,7 @@ function Milkyway() {
     ];
     //this.sprites=["flare.png"];
     this.sprites=["flare.png"];
-    this.starsURL=process.env.PUBLIC_URL+"/media/stars/";
-    this.dataURL=process.env.PUBLIC_URL+"/data/";
+    this.fullStarsURL=process.env.PUBLIC_URL+"/media/stars/";
     this.constellations=[];
     this.stars = {
 	'ZubenElschemali' : ['ZubenElgenubi','Brachium','gLibra'],
@@ -109,9 +108,9 @@ function Milkyway() {
     };
     this.defaultSize = 0.1 * Math.tan( ( Math.PI / 180 ) * 45.0 / 2 );;
     this.descriptions=undefined;
-    this.starsJson = 'stars.json';
-    this.constJson = 'const.json';
-    this.descrJson = 'descr.json';
+    this.starsJson = 'data/stars.json'; // state.File.load will append full URL
+    this.constJson = 'data/const.json';
+    this.descrJson = 'data/descr.json';
     this.pxRatio = (window.devicePixelRatio || 1);
     //keys of the loaded array
     this.namedStars = {};
@@ -201,8 +200,8 @@ function Milkyway() {
 	//https://jsfiddle.net/prisoner849/z3yfw208/
 	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true }); //   alphaTest: 0.99
 	//var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
-	//this.addTextureMap(material,this.starsURL + "ball.png");
-	this.addTextureMap(material,this.starsURL + this.sprites[0]);
+	//this.addTextureMap(material,this.fullStarsURL + "ball.png");
+	this.addTextureMap(material,this.fullStarsURL + this.sprites[0]);
 	var geometry = new THREE.InstancedBufferGeometry();
 	//var geometry = new THREE.BufferGeometry();
 	var positions = new Float32Array(30000);
@@ -233,7 +232,67 @@ function Milkyway() {
 	mesh.name       = "stars";
 	return mesh	
     };
-    this.createCirleMesh=function() {
+    this.createNavigationMesh=function() {
+	var group=new THREE.Group();
+	group.name="lines";
+	var radius=1000.0;
+	var dlat=10;
+	var dlon=10;
+	var look=new THREE.Vector3(0,0,1);
+	var offset=new THREE.Vector3(0,0,0);
+	for (let ilat=-80;ilat<=80;ilat+=dlat) {
+	    let hgt=radius * Math.sin(ilat*Math.PI/180.0);
+	    offset=new THREE.Vector3(0,0,hgt);
+	    if (ilat === 0.0) {
+		group.add(this.createCircleMesh(radius*Math.cos(ilat*Math.PI/180),look,offset,0x333399));
+	    } else {
+		group.add(this.createCircleMesh(radius*Math.cos(ilat*Math.PI/180),look,offset));
+	    }
+	};
+	offset=new THREE.Vector3();
+	for (let ilon=-90;ilon<=80;ilon+=dlon) {
+	    look=new THREE.Vector3(Math.cos(ilon*Math.PI/180),Math.sin(ilon*Math.PI/180),0,0);
+	    group.add(this.createCircleMesh(radius,look,offset));
+	};
+	//return this.createCircleMesh(1000.0,new THREE.Vector3(0,0,1))
+	return group;
+    }
+    this.createCircleMesh=function(radius,look,offset,color) {
+	if (radius===undefined) {radius=1000;};
+	if (color===undefined) {color=0x333333;};
+	var geometry=this.circleGeometry(radius,120);
+	var material = new THREE.LineDashedMaterial( {color: color,
+						      linewidth:3,
+//						      dashSize: radius*0.009,
+//						      gapSize: radius*0.001
+						     } );
+	var mesh = new THREE.LineLoop( geometry, material );
+	if (offset !== undefined) {
+	    mesh.position.set(offset.x,offset.y,offset.z);
+	};
+	if (look !== undefined) {
+	    mesh.lookAt(look);
+	};
+//	mesh.computeLineDistances();
+	return mesh
+    };
+    this.circleGeometry=function(radius,nn) {
+	var geometry = new THREE.BufferGeometry();
+	var positions = new Float32Array(3*nn);
+	var dangle=(2*Math.PI/(nn-1));
+	for (let i = 0; i < nn; i++) {
+	    let angle=i*dangle;
+            let x = radius*Math.sin(angle);
+            let y = radius*Math.cos(angle);
+            let z = 0.0;
+            positions[i * 3 + 0] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+	};
+	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+	return geometry;
+    };
+    this.createCircleMesh2=function() {
 	var geometry = new THREE.BufferGeometry();
 	var positions = new Float32Array(30);
 	for (let i = 0; i < 10; i++) {
@@ -245,8 +304,9 @@ function Milkyway() {
             positions[i * 3 + 2] = z;
 	};
 	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-	var material = new THREE.LineDashedMaterial( { color: 0xffffff, dashSize: 1000, gapSize: 500 } );
+	var material = new THREE.LineDashedMaterial( { color: 0xffffff, linewidth:3, dashSize: 10, gapSize: 5 } );
 	var mesh = new THREE.Line( geometry, material );
+	mesh.computeLineDistances();
 	return mesh
     };
     this.lightenDarkenColor = function (hex, amount) {
@@ -276,11 +336,11 @@ function Milkyway() {
 	var processDescr=function(state,response,callbacks){this.generateDescr(state,response,callbacks)}.bind(this);
 	var processConst=function(state,response,callbacks){this.generateConst(state,response,callbacks)}.bind(this);
 	var loadStars=function(state,response,callbacks) {
-	    state.File.load(state,this.dataURL+this.starsJson,callbacks)}.bind(this);
+	    state.File.load(state,this.starsJson,callbacks)}.bind(this);
 	var loadDescr=function(state,response,callbacks) {
-	    state.File.load(state,this.dataURL+this.descrJson,callbacks)}.bind(this);
+	    state.File.load(state,this.descrJson,callbacks)}.bind(this);
 	var loadConst=function(state,response,callbacks) {
-	    state.File.load(state,this.dataURL+this.constJson,callbacks)}.bind(this);
+	    state.File.load(state,this.constJson,callbacks)}.bind(this);
 	state.File.next(state,"",[loadStars,processStars,
 				  loadDescr,processDescr,
 				  loadConst,processConst,
@@ -294,6 +354,7 @@ function Milkyway() {
             var stars = JSON.parse(json);
         } catch (e) {
             //console.log("Stars response:",json);
+            console.log("Invalid response:",this.dataURL+this.starsJson,json);
             alert("Stars '"+this.dataURL+this.starsJson+"' contains Invalid stars:"+e.name+":"+e.message);
         };
 	var star;
@@ -354,7 +415,7 @@ function Milkyway() {
         try {
             consts = JSON.parse(json);
         } catch (e) {
-            console.log("Const response:",json);
+            console.log("Invalid response:",this.dataURL+this.constJson,json);
             alert("Consts '"+this.dataURL+this.constJson+"' contains Invalid stars:"+e.name+":"+e.message);
         };
 	for (var con in consts) {
@@ -398,7 +459,8 @@ function Milkyway() {
         try {
             descr = JSON.parse(json);
         } catch (e) {
-            console.log("Const response:",json);
+            //console.log("Const response:",json);
+            console.log("Invalid response:",this.dataURL+this.descrJson,json);
             alert("Descr '"+this.dataURL+this.descrJson+"' contains Invalid stars:"+e.name+":"+e.message);
         };
 	this.descriptions=descr;
