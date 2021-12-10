@@ -51,8 +51,8 @@ class Location extends Component {
     };
     onClick(event) {
         const { state } = this.props; // , classes, layout
-	const { lat, lng } = event.latlng;
-	this.setState({lat:lat, lon:lng});
+	const { lat, lon } = event.latlon;
+	this.setState({lat:lat, lon:lon});
 	state.Events.setLat(state,this.state.lat);
 	state.Events.setLon(state,this.state.lon);
 	console.log("Click:",this.state);

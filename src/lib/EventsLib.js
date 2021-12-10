@@ -10,7 +10,7 @@ function Events() {
     //this.end_dt=undefined;
     //
     this.lat=60.0;             // latitude
-    this.lng=10.0;             // longitude
+    this.lon=10.0;             // longitude
     this.lastLat=999;
     this.lastLon=999;
     this.updateCheck=false;    // auto load data
@@ -26,7 +26,7 @@ function Events() {
     this.dtime=1;
     this.documentLog = this.log;
     this.documentPos = this.pos;
-    this.initialise=true;
+    this.initialised=false;
     this.positionIsSet=false;
     this.totalCost=0.00;
     this.window3D=undefined;
@@ -178,7 +178,28 @@ function Events() {
 	this.beep3s = new Audio(baseURL+"beep3s.mp3");
 	this.beep10s= new Audio(baseURL+"beep10s.mp3");
 	this.beep1m = new Audio(baseURL+"beep1m.mp3");
+	this.launchModel(state);
 	//state.Utils.init("Database",this);
+	this.initialised=true;
+    };
+    this.launchModel=function(state,dtg) {
+	if (dtg === undefined) {
+            if (this.targetSet) {
+		dtg=new Date(this.targetTime).toISOString();
+            } else {
+		dtg = new Date().toISOString();
+            }
+	}
+	var hrs;
+	var lat=this.lat;
+	var lon=this.lon;
+	var label = "Now";
+	var target = this.getTarget(this.targetId);
+	var fov = this.getFov(this.targetId);
+	var dir;   // direction
+	var con=0; // show contellations?
+	var speed; // speed of model, undefined => no speed
+	state.Model.launch(state,lat,lon,dtg,hrs,label,target,fov,dir,con,speed);
     };
     this.updateLoop = function(state) {
 	if (this.bdeb) {console.log("Updating Event...");}
@@ -197,50 +218,51 @@ function Events() {
 	},state.Events.delay);
     }.bind(this);
     this.countdown = function(state) {
-	if (this.initialise) {this.init();this.initialise=false;}
 	var active=false;
-	var now=new moment().valueOf();
-	if (Math.abs(state.Events.targetTime-state.Events.eventTime) < 65*1000) {
-	    active=true;
-	    //console.log("We are in a countdown...",state.Events.eventTime);
-	    // load new data if we just passed countdown...
-	    if (state.Events.getUpdate(state) && // should we update automatically?
-		(now-state.Events.lastUpdate) > 10000*state.Events.lastCnt && // wait for previous retry
-		state.Events.lastCnt < 10) {  // retry 10 times
-		state.Events.lastCnt++;
-		state.Events.loadEvents(state,"",[state.Show.showAll]);
-		console.log("Updating...");
-	    } else {
-		if (state.Events.targetTime - state.Events.lastTime > 1000)  { // code suspended during event 
-		} else if (state.Events.eventTime-999 > state.Events.lastTime && 
-			   state.Events.eventTime-999 < state.Events.targetTime) {       // T   0s
+	if (this.initialised) {
+	    var now=new moment().valueOf();
+	    if (Math.abs(state.Events.targetTime-state.Events.eventTime) < 65*1000) {
+		active=true;
+		//console.log("We are in a countdown...",state.Events.eventTime);
+		// load new data if we just passed countdown...
+		if (state.Events.getUpdate(state) && // should we update automatically?
+		    (now-state.Events.lastUpdate) > 10000*state.Events.lastCnt && // wait for previous retry
+		    state.Events.lastCnt < 10) {  // retry 10 times
+		    state.Events.lastCnt++;
+		    state.Events.sendRequest(state,"",[state.Show.showAll]);
+		    console.log("Updating...");
+		} else {
+		    if (state.Events.targetTime - state.Events.lastTime > 1000)  { // code suspended during event 
+		    } else if (state.Events.eventTime-999 > state.Events.lastTime && 
+			       state.Events.eventTime-999 < state.Events.targetTime) {       // T   0s
 			state.Events.playAudio(state,state.Events.beep0s);
-		} else if (state.Events.eventTime-1999 > state.Events.lastTime &&
-			   state.Events.eventTime-1999 < state.Events.targetTime) {	  // T -1s
+		    } else if (state.Events.eventTime-1999 > state.Events.lastTime &&
+			       state.Events.eventTime-1999 < state.Events.targetTime) {	  // T -1s
 			state.Events.playAudio(state,state.Events.beep1s);
-		} else if (state.Events.eventTime-2999 > state.Events.lastTime &&
-			   state.Events.eventTime-2999 < state.Events.targetTime) {	  // T -2s
+		    } else if (state.Events.eventTime-2999 > state.Events.lastTime &&
+			       state.Events.eventTime-2999 < state.Events.targetTime) {	  // T -2s
 			state.Events.playAudio(state,state.Events.beep2s);
-		} else if (state.Events.eventTime-3999 > state.Events.lastTime &&
-			   state.Events.eventTime-3999 < state.Events.targetTime) {	  // T -3s
+		    } else if (state.Events.eventTime-3999 > state.Events.lastTime &&
+			       state.Events.eventTime-3999 < state.Events.targetTime) {	  // T -3s
 			state.Events.playAudio(state,state.Events.beep3s);
-		} else if (state.Events.eventTime-10999 > state.Events.lastTime &&
-			   state.Events.eventTime-10999 < state.Events.targetTime) {	  // T -10s
+		    } else if (state.Events.eventTime-10999 > state.Events.lastTime &&
+			       state.Events.eventTime-10999 < state.Events.targetTime) {	  // T -10s
 			state.Events.playAudio(state,state.Events.beep10s);
-		} else if (state.Events.eventTime-60999 > state.Events.lastTime &&
-			   state.Events.eventTime-60999 < state.Events.targetTime) {	  // T -60s
+		    } else if (state.Events.eventTime-60999 > state.Events.lastTime &&
+			       state.Events.eventTime-60999 < state.Events.targetTime) {	  // T -60s
 			state.Events.playAudio(state,state.Events.beep1m);
+		    }
+		    state.Events.lastTime=state.Events.targetTime;
 		}
-		state.Events.lastTime=state.Events.targetTime;
-	    }
-	} else {
-	    //console.log("Not in a countdown...",state.Events.targetTime,state.Events.eventTime);
+	    } else {
+		//console.log("Not in a countdown...",state.Events.targetTime,state.Events.eventTime);
+	    };
 	};
 	return active;
     }
-    this.loadEvents = function(state, response, callbacks) {
-	if (this.bdeb) {console.log("Loading events.");};
-	var req=this.getRequest(state);
+    this.sendRequest = function(state, response, callbacks) {
+	if (this.bdeb) {console.log("Sending event request.");};
+	var req=this.getRequestPar(state);
 	if (req !==undefined) {
 	    var url="cgi-bin/event.pl";
 	    var sequence = Promise.resolve();
@@ -254,7 +276,7 @@ function Events() {
 		}
 	    ).catch(
 		function(err) {
-		    //console.log("Unable to load:"+name," ("+err.message+")");
+		    console.log("Unable to load event. ("+err.message+")");
 		}
 	    );
 	    sequence.then(function() {
@@ -281,22 +303,27 @@ function Events() {
 	    //var regex=/(.*)/mg;
 	    var regex=/(<astrodata[\s\S]*\/astrodata>)/mg;
 	    var match=result.match(regex);
-	    if (match.length > 0) {
+	    if (match !== null && match.length > 0) {
 		//console.log("Matches:",match[0]);
-		if (window.DOMParser)
-		{
+		if (window.DOMParser) {
 		    var parser = new DOMParser();
 		    xmlDoc = parser.parseFromString(result, "text/xml");
+		    try {
+			this.rawData=this.dataToArray(state,xmlDoc);
+			console.log("Loaded event data:",JSON.stringify(this.rawData));
+		    } catch (err) {
+			console.log(err);
+		    };
+		} else {
+		    console.log("No DOM parser for XML available.");
 		};
+	    } else {
+		console.log("Error while loading event.");
 	    };
+	} else {
+	    console.log("Invalid event result.");
 	};
 	//console.log("XML:",xmlDoc);
-	try {
-	    this.rawData=this.dataToArray(state,xmlDoc);
-	} catch (err) {
-	    console.log(err);
-	};
-	console.log("Loaded data:",JSON.stringify(this.rawData));
     };
     this.show = function(state,type) {
 	if (this.visible[type] === undefined) { this.visible[type]=false;}
@@ -477,7 +504,7 @@ function Events() {
     // 	state.Show.
     // };
     
-    this.getRequest = function(state) {
+    this.getRequestPar = function(state) {
 	//console.log("Updating data.");
 	var now=new moment().valueOf();
 	var req=new this.request();
@@ -485,7 +512,7 @@ function Events() {
 	var replace=true;
 	if (this.targetSet) {replace=false;requestTime=this.targetTime;};
 	req.addDebug();
-	req.addPosition("",state.Events.lat,state.Events.lng,0)
+	req.addPosition("",state.Events.lat,state.Events.lon,0)
 	if(this.getPrev(state)) {
 	    if (this.getNext(state)) {
 		if (replace) {
@@ -548,7 +575,7 @@ function Events() {
 	    };
 	}.bind(this));
 	this.setCookie("latitudeCheck",this.lat,10)
-	this.setCookie("longitudeCheck",this.lng,10)
+	this.setCookie("longitudeCheck",this.lon,10)
 	return id-1;
     }.bind(this);
     this.processData = function(data) {
@@ -653,10 +680,10 @@ function Events() {
 	state.Events.lat=lat;
     };
     this.getLon = function(state) {
-	return state.Events.lng;
+	return state.Events.lon;
     };
     this.setLon = function(state,lon) {
-	state.Events.lng=lon;
+	state.Events.lon=lon;
     };
     this.setTargetDateOld = function(target) {
 	var tzoffset = (new moment(target)).getTimezoneOffset() * 60000; //offset in milliseconds
@@ -733,7 +760,7 @@ function Events() {
     // 		//documentCells[4].innerHTML=dataReport[0];
     // 		if (this.drawAll) {
     // 		    //documentCells[3].innerHTML="<button class=\"launch\" onclick=\"setTargetId("+
-    // 			//(t*1)+","+(repid)+");launch3D();\">"+dataReport[5].substring(20)+"</button>";
+    // 			//(t*1)+","+(repid)+");launch();\">"+dataReport[5].substring(20)+"</button>";
     // 		    //documentCells[3].innerHTML=dataReport[5].substring(20);
     // 		}
     // 		if (Math.abs(dt) < 1100) {
@@ -911,8 +938,10 @@ function Events() {
 	return ret;	
     };
     this.request = function() {
-	this.wipe             = function () {var obj=Object.keys(this);for (var ii=0; ii<obj.length;ii++) 
-					      {if (! obj[ii].match(/^event/g) && ! obj[ii].match(/^debug/g)) {delete this[obj[ii]];}}}
+	this.wipe = function () {var obj=Object.keys(this);for (var ii=0; ii<obj.length;ii++) 
+				 {if (typeof this[obj[ii]] === 'function' || typeof this[obj[ii]] === 'object') {delete this[obj[ii]];}}}
+	//this.wipe             = function () {var obj=Object.keys(this);for (var ii=0; ii<obj.length;ii++) 
+	//				      {if (! obj[ii].match(/^event/g) && ! obj[ii].match(/^debug/g)) {delete this[obj[ii]];}}}
 	this.addDebug          = function(id,val) {this["debug"]=1;};
 	this.addSearch         = function(id,val) {this["event"+id+"Search"]=val;};
 	this.addStartTime      = function(id,val) {this["event"+id+"Start"]=val;};
@@ -1038,8 +1067,8 @@ function Events() {
 	// //console.log("Initialising map.");
 	// //The center location of our map.
 	// var lat= +(this.lat);
-	// var lng= +(this.lng);
-	// var centerOfMap = new google.maps.LatLng(lat,lng);
+	// var lon= +(this.lon);
+	// var centerOfMap = new google.maps.LatLon(lat,lon);
 	
 	// //Map options.
 	// var options = {
@@ -1066,9 +1095,9 @@ function Events() {
 	// this.map.mapTypes.set("Dummy Style", mapType);
 	// this.map.setMapTypeId("Dummy Style");
 
-	// var latlng = new google.maps.LatLng(lat,lng);
+	// var latlon = new google.maps.LatLon(lat,lon);
 	// this.marker = new google.maps.marker({
-	//     position: latlng,
+	//     position: latlon,
 	//     draggable: true //make it draggable
 	// });
 	// this.marker.setMap(this.map);
@@ -1077,7 +1106,7 @@ function Events() {
 	// //Listen for any clicks on the map.
 	// google.maps.event.addListener(this.map, 'click', function(event) {                
         //     //Get the location that the user clicked.
-        //     var clickedLocation = event.latLng;
+        //     var clickedLocation = event.latLon;
         //     //If the marker hasn't been added.
         //     if(this.marker === undefined){
 	// 	//Create the marker.
@@ -1106,9 +1135,9 @@ function Events() {
     this.markerLocation = function(){
 	//Get location.
 	var currentLocation = this.marker.getPosition();
-	//Add lat and lng values to a field that we can save.
+	//Add lat and lon values to a field that we can save.
 	document.getElementById('lat').value = currentLocation.lat(); //latitude
-	document.getElementById('lng').value = currentLocation.lng(); //longitude
+	document.getElementById('lon').value = currentLocation.lon(); //longitude
     }
     this.geoloc = function(latitude, longitude)
     {
@@ -1117,11 +1146,11 @@ function Events() {
     this.setMapPosition = function() {
 	if (this.mapReady) {
 	    // var lat= +(this.lat);
-	    // var lng= +(this.lng);
-	    // if (lat !== undefined && lng !== undefined) {
-	    // 	var latlng = new google.maps.LatLng(lat,lng);
-	    // 	this.marker.setPosition(latlng);
-	    // 	this.map.setCenter(latlng);   
+	    // var lon= +(this.lon);
+	    // if (lat !== undefined && lon !== undefined) {
+	    // 	var latlon = new google.maps.LatLon(lat,lon);
+	    // 	this.marker.setPosition(latlon);
+	    // 	this.map.setCenter(latlon);   
 	    // }
 	}
     }
@@ -1203,7 +1232,7 @@ function Events() {
 	var now=d.valueOf();
 	this.eventTime=now-1000;
 	//var pos = new geoloc(this.lat, 
-	//		     this.lng); 
+	//		     this.lon); 
 	var pos = undefined;
 	this.setPositionData(state,pos);
     }
@@ -1215,7 +1244,7 @@ function Events() {
 	//     function(results, status) {
 	// 	if (status === google.maps.GeocoderStatus.OK) {
 	// 	    var loc=results[0].geometry.location;
-	// 	    var pos = new geoloc(loc.lat(),loc.lng()); 
+	// 	    var pos = new geoloc(loc.lat(),loc.lon()); 
 	// 	    this.setPosition( pos );
 	// 	}
 	//     }
@@ -1229,7 +1258,7 @@ function Events() {
     }
     this.setPosition = function(state,position) {
 	this.lat=position.coords.latitude;
-	this.lng=position.coords.longitude;
+	this.lon=position.coords.longitude;
 	this.positionIsSet=true;
 	this.setMapPosition();
     }
@@ -1252,38 +1281,6 @@ function Events() {
 	    //$("#end_dt").fadeOut();
 	}
     }
-    this.launch3D = function(dtg) {
-	if (dtg === undefined) {
-	    if (this.targetSet) {
-		dtg=new moment(this.targetTime).toISOString();
-	    } else {
-		dtg = new moment().toISOString();
-	    }
-	}
-	var hrs;
-	var lat=this.lat;
-	var lon=this.lng;
-	var label = "Now";
-	var target = this.getTarget(this.targetId);
-	var fov = this.getFov(this.targetId);
-	var dir;
-	var con=0;
-	var play;
-	var url="sky.html?lat="+lat+"&lon="+lon+"&dtg="+dtg+"&label="+label+"&target="+target+"&fov="+fov+"&con="+con;
-	if (this.window3D !== undefined) {
-	    try {
-		console.log("Updating:",url);
-		this.window3D.Request.launch(lat,lon,dtg,hrs,label,target,fov,dir,con,play);
-		this.window3D.focus()
-	    } catch (err) { // window doesnt contain sky.html any more...
-		this.window3D=undefined;
-	    }
-	};
-	if (this.window3D === undefined) {
-	    console.log("Launching:",url);
-	    this.window3D=window.open(url);
-	}
-    };
     this.getTarget = function(id) {
 	var ret;
 	if ((id >= 200 && id <= 299)||
@@ -1344,10 +1341,10 @@ function Events() {
 		}
 	    });
 	    var lat=this.getCookie("latitudeCheck");
-	    var lng=this.getCookie("longitudeCheck");
-	    if (lat !== "" && lng !== "") {
+	    var lon=this.getCookie("longitudeCheck");
+	    if (lat !== "" && lon !== "") {
 		this.lat=lat;
-		this.lng=lng;
+		this.lon=lon;
 		this.positionIsSet=true;
 	    }
 	    this.updateCost(0);

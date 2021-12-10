@@ -1,10 +1,11 @@
-import Vector3 from './Vector3Lib';
+//import Vector3 from './Vector3Lib';
 //import Vector2 from './Vector2Lib';
 import * as THREE from 'three';
 
-console.log("Loading Milkyway");
+console.log("Loading Backdrop");
 
-function Milkyway() { 
+function Backdrop() { 
+    this.debug=false;
     this.SCALE = 1.0e-15;
     this.X =          0;
     this.Y =          1;
@@ -143,9 +144,304 @@ function Milkyway() {
     this.oh=undefined;
     this.period=5000.0;
     this.first=undefined;
-    this.setFlareSize=function(scene,camera) {
+    //
+    this.prepareForRender=function(scene,camera) {
 	var points=scene.getObjectByName("stars");
-	points.material.size = this.defaultSize / Math.tan( ( Math.PI / 180 ) * camera.fov / 2 );
+	if (points !== undefined) {
+	    points.material.size = this.defaultSize / Math.tan( ( Math.PI / 180 ) * camera.fov / 2 );
+	};
+    };
+
+    this.createStarsScene	= function(){
+	var scene = new THREE.Scene();
+	var stars=this.createStarsBackdrop();
+	scene.add(stars);
+	return scene;
+    };
+    this.createNavigationScene	= function(){
+	var scene = new THREE.Scene();
+	var nav=this.createNavigationBackdrop();
+	scene.add(nav);
+	return scene;
+    };
+    this.createStarsBackdrop	= function(){
+	//https://jsfiddle.net/prisoner849/z3yfw208/
+	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true, alphaTest:0.01 }); //   alphaTest: 0.99
+	//var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
+	//this.addTextureMap(material,this.fullStarsURL + "ball.png");
+	this.addTextureMap(material,this.fullStarsURL + this.sprites[0]);
+	var geometry = new THREE.InstancedBufferGeometry();
+	//var geometry = new THREE.BufferGeometry();
+	var positions = new Float32Array(30000);
+	var colors = new Float32Array(30000);
+	var sizes = new Float32Array(10000);
+	var alphas = new Float32Array(10000);
+	for (let i = 0; i < 10000; i++) {
+            let x = 2000 * Math.random() - 1000;
+            let y = 2000 * Math.random() - 1000;
+            let z = 2000 * Math.random() - 1000;
+            positions[i * 3 + 0] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+            
+            colors[i * 3 + 0] = 0.5+0.5*Math.random();
+            colors[i * 3 + 1] = 0.5+0.5*Math.random();
+            colors[i * 3 + 2] = 0.5+0.5*Math.random();
+            
+            sizes[i] = 0*(Math.random() * 90) + 90;
+            //alphas[i] = 1;
+	}
+	this.modifyShaders(geometry,material,sizes);
+	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+	geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
+	//geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
+	var sprites = new THREE.Points( geometry, material );
+	//var sprites = new THREE.Sprite( geometry, material );
+	sprites.name       = "stars";
+	return sprites	
+    };
+    this.createNavigationBackdrop=function() {
+	var group=new THREE.Group();
+	group.name="lines";
+	var radius=1000.0;
+	var dlat=10;
+	var dlon=10;
+	var look=new THREE.Vector3(0,0,1);
+	var offset=new THREE.Vector3(0,0,0);
+	let size=radius*0.05;
+	let colorMinor=0x222222; let colorMinoh="#222222";
+	let colorMajor=0x222266; let colorMajoh="#222266";
+	let width=2;
+	for (let ilat=-80;ilat<=80;ilat+=dlat) {
+	    let hgt=radius * Math.sin(ilat*Math.PI/180.0);
+	    offset=new THREE.Vector3(0,0,hgt);
+	    let color=colorMinor;
+	    let colorh=colorMinoh;
+	    if (ilat === 0.0) {color=colorMajor;colorh=colorMajoh}
+	    group.add(this.createCircleMesh(radius*Math.cos(ilat*Math.PI/180),look,offset,color,width));
+	    //if (ilat%30 === 0.0) {
+		let x=radius*Math.cos(ilat*Math.PI/180);
+		let y=0;
+		group.add(this.createTextSprite(""+ilat,{
+		    font:'48px Arial',
+		    //floating:true,
+		    fillStyle:colorh,
+		    size:size,
+		    cx:1,cy:0,
+		    x:x,y:y,z:offset.z,
+		    //border:true,
+		}));
+		group.add(this.createTextSprite(""+ilat,{
+		    font:'48px Arial',
+		    //floating:true,
+		    fillStyle:colorh,
+		    size:size,
+		    cx:1,cy:0,
+		    x:-x,y:y,z:offset.z,
+		    //border:true,
+		}));
+		group.add(this.createTextSprite(""+ilat,{
+		    font:'48px Arial',
+		    //floating:true,
+		    fillStyle:colorh,
+		    size:size,
+		    cx:1,cy:0,
+		    x:0,y:-x,z:offset.z,
+		    //border:true,
+		}));
+		group.add(this.createTextSprite(""+ilat,{
+		    font:'48px Arial',
+		    //floating:true,
+		    fillStyle:colorh,
+		    size:size,
+		    cx:1,cy:0,
+		    x:0,y:x,z:offset.z,
+		    //border:true,
+		}));
+	    //};
+	};
+	offset=new THREE.Vector3();
+	for (let ilon=-90;ilon<=80;ilon+=dlon) {
+	    look=new THREE.Vector3(Math.cos(ilon*Math.PI/180),Math.sin(ilon*Math.PI/180),0,0);
+	    let color=colorMinor;
+	    let colorh=colorMinoh;
+	    if (ilon === -90.0 || ilon === 0.0) {color=colorMajor;colorh=colorMajoh}
+	    group.add(this.createCircleMesh(radius,look,offset,color,width));
+	    let x=radius*Math.cos(ilon*Math.PI/180);
+	    let y=radius*Math.sin(ilon*Math.PI/180);
+	    group.add(this.createTextSprite(""+(360+180-ilon)%360,{
+		font:'48px Arial',
+		//floating:true,
+		fillStyle:colorh,
+		size:size,
+		cx:0,cy:0,
+		x:x,y:y,z:0,
+		//border:true,
+	    }));
+	    group.add(this.createTextSprite(""+(360-ilon)%360,{
+		font:'48px Arial',
+		//floating:true,
+		fillStyle:colorh,
+		size:size,
+		cx:0,cy:0,
+		x:-x,y:-y,z:0,
+		//border:true,
+	    }));
+	};
+	return group;
+    }
+    this.createCircleMesh=function(radius,look,offset,color,width) {
+	if (radius===undefined) {radius=1000;};
+	if (color===undefined) {color=0x222222;};
+	if (width===undefined) {width=3;};
+	var geometry=this.circleGeometry(radius,120);
+	var material = new THREE.LineDashedMaterial( {color: color,
+						      linewidth:width,
+//						      dashSize: radius*0.009,
+//						      gapSize: radius*0.001
+						     } );
+	var mesh = new THREE.LineLoop( geometry, material );
+	if (offset !== undefined) {
+	    mesh.position.set(offset.x,offset.y,offset.z);
+	};
+	if (look !== undefined) {
+	    mesh.lookAt(look);
+	};
+//	mesh.computeLineDistances();
+	return mesh
+    };
+    this.circleGeometry=function(radius,nn) {
+	var geometry = new THREE.BufferGeometry();
+	var positions = new Float32Array(3*nn);
+	var dangle=(2*Math.PI/(nn-1));
+	for (let i = 0; i < nn; i++) {
+	    let angle=i*dangle;
+            let x = radius*Math.sin(angle);
+            let y = radius*Math.cos(angle);
+            let z = 0.0;
+            positions[i * 3 + 0] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+	};
+	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+	return geometry;
+    };
+    this.getTextCanvas=function(text,opts) {
+	var lines=text.split('\n');
+	var longest = text.split('\n').sort(
+	    function (a, b) {
+		return b.length - a.length;
+	    }
+	)[0];
+	var canvas = document.createElement('canvas');
+	if (opts.width !== undefined) {canvas.width=opts.width;}
+	if (opts.height !== undefined) {canvas.height=opts.height;}
+	var context = canvas.getContext('2d');
+	context.font         = opts.font         || "bold 48px Serif";
+	context.fontSize     = opts.fontSize     || 48;
+	context.textAlign    = opts.textAlign    || "left";
+	context.textBaseline = opts.textBaseline || "top";//"top,hanging,middle,alphabetic,ideographic,bottom
+	const metrics = context.measureText(longest);
+	// this will reset the canvas...
+	var width=Math.ceil(metrics.actualBoundingBoxRight - metrics.actualBoundingBoxLeft+1+1);
+	var lheight=Math.ceil(metrics.actualBoundingBoxDescent - metrics.actualBoundingBoxAscent+1);
+	var height=lheight * lines.length;
+	canvas.width=width;
+	canvas.height=height;
+	var dx=0,dy=0;
+	if (opts.floating) {
+	    var twidth=width;
+	    var theight=height;
+	    if (opts.cx !== undefined) {
+		twidth=(width*2);
+	    };
+	    if (opts.cy !== undefined) {
+		theight=(height*2);
+	    };
+	    var block=Math.max(theight,twidth);
+	    canvas.height=block;
+	    canvas.width=block;
+	    if (opts.cx !== undefined) {
+		dx=(canvas.width*0.5)-width;
+	    };
+	    if (opts.cy !== undefined) {
+		dy=(canvas.height*0.5)-height;
+	    };
+	    opts.scale=canvas.height/lheight
+	};
+	//console.log( canvas.width, canvas.height );
+	// final draw...
+	if (opts.border) {
+	    context.strokeStyle  = "#9999ff";
+	    context.strokeRect(1, 1, canvas.width-2, canvas.height-2);
+	};
+	context.font         = opts.font         || "bold 48px Serif";
+	context.fontSize     = opts.fontSize     || 48;
+	context.textAlign    = opts.textAlign    || "left";
+	context.textBaseline = opts.textBaseline || "top";
+	context.fillStyle    = opts.fillStyle    || "#ff4444";
+	var ox=0,oy=0;
+	if (opts.cy !== undefined) {
+	    oy=(canvas.height - height - 2*dy)*(opts.cy);
+	    //console.log("Dy",dy,oy,height,canvas.height);
+	};
+	if (opts.cx !== undefined) {
+	    ox=(canvas.width - width - 2*dx)*(1-opts.cx);
+	}
+	lines.forEach((ll,i) => {context.fillText(ll,ox+dx,oy+dy+i*lheight);});
+	//context.fillText(text, 0, 0);
+	return canvas;
+    };
+    this.createTextSprite=function(text,opts) {
+	var canvas=this.getTextCanvas(text,opts);
+	var texture=new THREE.Texture(canvas);
+	texture.needsUpdate = true;
+	var size=opts.size||10;
+	var sprite;
+	if (opts.floating) {
+	    var color=new THREE.Color(opts.color || 0x0000ff);
+	    //console.log( texture.image.width, texture.image.height );
+	    var material = new THREE.PointsMaterial({
+		map: texture,
+		vertexColors: THREE.VertexColors,
+		size:size*(opts.scale||1),
+		transparent:true,
+		//alphaTest:0.01,
+		//useScreenCoordinates: false,
+	    });
+	    var geometry = new THREE.BufferGeometry();
+	    geometry.setAttribute('position',new THREE.Float32BufferAttribute(
+		new THREE.Vector3(opts.x,opts.y,opts.z).toArray(),3));
+	    geometry.setAttribute('color',new THREE.Float32BufferAttribute([1,1,1],3));
+	    geometry.setAttribute('alpha',new THREE.Float32BufferAttribute([1],1));
+	    var sizes = new Float32Array(1);
+	    sizes[0]=1;
+	    this.modifyShaders(geometry,material, sizes);
+	    sprite = new THREE.Points(geometry, material);
+	} else {
+	    var material = new THREE.SpriteMaterial({
+		map: texture,
+		//needsUpdate:true,
+		//useScreenCoordinates: false,
+		sizeAttenuation:opts.sizeAttenuation||true,
+		transparent: true,
+	    });
+	    sprite = new THREE.Sprite(material);
+	    if (opts.size !== undefined) {
+		sprite.scale.set(canvas.width*size/100,canvas.height*size/100,canvas.height*size/100);
+	    };
+	    if (opts.cx !== undefined && opts.cy !== undefined) {
+		sprite.center.set(opts.cx,opts.cy);
+	    };
+	}
+	if (sprite !== undefined) {
+	    if (opts.x !== undefined && opts.y !== undefined && opts.z !== undefined) {
+		sprite.position.set(opts.x,opts.y,opts.z);
+	    };
+	    sprite.name="text";
+	};
+	//this.scene.add(sprite)
+	return sprite;
     };
     this.addTextureMap=function(material,map) {
 	if (map !== undefined) {
@@ -196,119 +492,6 @@ function Milkyway() {
 	geometry.setAttribute( 'sizes', new THREE.BufferAttribute( sizes, 1 ) );
 	geometry.setAttribute('offset', new THREE.InstancedBufferAttribute(sumDisp, 3 ));
     };
-    this.createStarsMesh	= function(){
-	//https://jsfiddle.net/prisoner849/z3yfw208/
-	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true, alphaTest:0.01 }); //   alphaTest: 0.99
-	//var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
-	//this.addTextureMap(material,this.fullStarsURL + "ball.png");
-	this.addTextureMap(material,this.fullStarsURL + this.sprites[0]);
-	var geometry = new THREE.InstancedBufferGeometry();
-	//var geometry = new THREE.BufferGeometry();
-	var positions = new Float32Array(30000);
-	var colors = new Float32Array(30000);
-	var sizes = new Float32Array(10000);
-	var alphas = new Float32Array(10000);
-	for (let i = 0; i < 10000; i++) {
-            let x = 2000 * Math.random() - 1000;
-            let y = 2000 * Math.random() - 1000;
-            let z = 2000 * Math.random() - 1000;
-            positions[i * 3 + 0] = x;
-            positions[i * 3 + 1] = y;
-            positions[i * 3 + 2] = z;
-            
-            colors[i * 3 + 0] = 0.5+0.5*Math.random();
-            colors[i * 3 + 1] = 0.5+0.5*Math.random();
-            colors[i * 3 + 2] = 0.5+0.5*Math.random();
-            
-            sizes[i] = 0*(Math.random() * 90) + 90;
-            //alphas[i] = 1;
-	}
-	this.modifyShaders(geometry,material, sizes);
-	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-	geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
-	//geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
-	var mesh = new THREE.Points( geometry, material );
-	//var mesh = new THREE.Sprite( geometry, material );
-	mesh.name       = "stars";
-	return mesh	
-    };
-    this.createNavigationMesh=function() {
-	var group=new THREE.Group();
-	group.name="lines";
-	var radius=1000.0;
-	var dlat=10;
-	var dlon=10;
-	var look=new THREE.Vector3(0,0,1);
-	var offset=new THREE.Vector3(0,0,0);
-	for (let ilat=-80;ilat<=80;ilat+=dlat) {
-	    let hgt=radius * Math.sin(ilat*Math.PI/180.0);
-	    offset=new THREE.Vector3(0,0,hgt);
-	    if (ilat === 0.0) {
-		group.add(this.createCircleMesh(radius*Math.cos(ilat*Math.PI/180),look,offset,0x333399));
-	    } else {
-		group.add(this.createCircleMesh(radius*Math.cos(ilat*Math.PI/180),look,offset));
-	    }
-	};
-	offset=new THREE.Vector3();
-	for (let ilon=-90;ilon<=80;ilon+=dlon) {
-	    look=new THREE.Vector3(Math.cos(ilon*Math.PI/180),Math.sin(ilon*Math.PI/180),0,0);
-	    group.add(this.createCircleMesh(radius,look,offset));
-	};
-	//return this.createCircleMesh(1000.0,new THREE.Vector3(0,0,1))
-	return group;
-    }
-    this.createCircleMesh=function(radius,look,offset,color) {
-	if (radius===undefined) {radius=1000;};
-	if (color===undefined) {color=0x333333;};
-	var geometry=this.circleGeometry(radius,120);
-	var material = new THREE.LineDashedMaterial( {color: color,
-						      linewidth:3,
-//						      dashSize: radius*0.009,
-//						      gapSize: radius*0.001
-						     } );
-	var mesh = new THREE.LineLoop( geometry, material );
-	if (offset !== undefined) {
-	    mesh.position.set(offset.x,offset.y,offset.z);
-	};
-	if (look !== undefined) {
-	    mesh.lookAt(look);
-	};
-//	mesh.computeLineDistances();
-	return mesh
-    };
-    this.circleGeometry=function(radius,nn) {
-	var geometry = new THREE.BufferGeometry();
-	var positions = new Float32Array(3*nn);
-	var dangle=(2*Math.PI/(nn-1));
-	for (let i = 0; i < nn; i++) {
-	    let angle=i*dangle;
-            let x = radius*Math.sin(angle);
-            let y = radius*Math.cos(angle);
-            let z = 0.0;
-            positions[i * 3 + 0] = x;
-            positions[i * 3 + 1] = y;
-            positions[i * 3 + 2] = z;
-	};
-	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-	return geometry;
-    };
-    this.createCircleMesh2=function() {
-	var geometry = new THREE.BufferGeometry();
-	var positions = new Float32Array(30);
-	for (let i = 0; i < 10; i++) {
-            let x = 2000 * Math.random() - 1000;
-            let y = 2000 * Math.random() - 1000;
-            let z = 2000 * Math.random() - 1000;
-            positions[i * 3 + 0] = x;
-            positions[i * 3 + 1] = y;
-            positions[i * 3 + 2] = z;
-	};
-	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-	var material = new THREE.LineDashedMaterial( { color: 0xffffff, linewidth:3, dashSize: 10, gapSize: 5 } );
-	var mesh = new THREE.Line( geometry, material );
-	mesh.computeLineDistances();
-	return mesh
-    };
     this.lightenDarkenColor = function (hex, amount) {
 	var col = [hex >> 16, (hex >> 8) & 0x00FF,  hex & 0x0000FF];
 	var mc=Math.max(1,Math.max(col[0],col[1],col[2]));
@@ -345,8 +528,31 @@ function Milkyway() {
 				  loadDescr,processDescr,
 				  loadConst,processConst,
 				  function(state,response,callbacks) {
-				      console.log("Done loading milkyway data...")
-				  }]);
+				      if (this.debug) {console.log("Done loading milkyway data...");}
+				  }.bind(this)]);
+    };
+    this.cartesian2Spherical=function(vector,axis) {
+	if (axis !== undefined) {
+	    var xm = vector.x*axis.i.x + vector.y*axis.i.y + vector.z*axis.i.z;
+	    var ym = vector.x*axis.j.x + vector.y*axis.j.y + vector.z*axis.j.z;
+	    var zm = vector.x*axis.k.x + vector.y*axis.k.y + vector.z*axis.k.z;
+   	    vector.r = Math.max(Math.sqrt(xm*xm+ym*ym+zm*zm),1e-10);
+	    vector.lat = Math.asin(zm/vector.r);
+	    if (Math.abs(xm) < 1e-7 && Math.abs(ym) < 1e-7) { 
+		vector.lon = 0.0; 
+	    } else { 
+	        vector.lon = Math.atan2(ym,xm);
+	    }
+	} else {
+   	    vector.r = Math.max(Math.sqrt(vector.x*vector.x+vector.y*vector.y+vector.z*vector.z),1e-10);
+	    vector.lat = Math.asin(vector.z/vector.r);
+	    if (Math.abs(vector.x) < 1e-7 && Math.abs(vector.y) < 1e-7) { 
+		vector.lon = 0.0;
+	    } else {
+	        vector.lon = Math.atan2(vector.y,vector.x);
+	    }
+	    return vector;
+	};
     };
     this.generateStars = function(state,json,callbacks) {
 	var stars=[];
@@ -365,13 +571,13 @@ function Milkyway() {
 	var starColor;
 	var cnt=0;
 	var count = stars.length;
-	console.log("Adding stars:",count);
+	if (this.debug) {console.log("Adding stars:",count);};
 	for( var i=0; i<count; i++ ){
 	    //if (i > 1000) {continue;};
 	    star = stars[i];
 	    //console.log("Looping:",i,star);
-	    this.position = new Vector3(star[this.X], star[this.Y], star[this.Z]);
-	    this.position.cartesian2Spherical();
+	    this.position = new THREE.Vector3(star[this.X], star[this.Y], star[this.Z]);
+	    this.cartesian2Spherical(this.position);
 	    //console.log("Looping:",i,star,this.position);
 	    if(this.position.x === 0 && this.position.y === 0 && this.position.z === 0) continue;//dont add the sun
 	    //this.position.multiplyScalar(9.4605284e9);//normalize().
@@ -406,7 +612,7 @@ function Milkyway() {
 	    var list = this.starList[this.position.imag][this.position.ilat][this.position.ilon];
 	    list.push( this.position );
 	};
-	console.log("Stars with name:",cnt);
+	if (this.debug) {console.log("Stars with name:",cnt);};
 	this.initialised=true;
 	state.File.next(state,"",callbacks);
     }.bind(this);
@@ -419,8 +625,8 @@ function Milkyway() {
             alert("Consts '"+this.dataURL+this.constJson+"' contains Invalid stars:"+e.name+":"+e.message);
         };
 	for (var con in consts) {
-	    var spos=new Vector3();
-	    var xpos=new Vector3();
+	    var spos=new THREE.Vector3();
+	    var xpos=new THREE.Vector3();
 	    var scnt=0;
 	    var smg=20;
 	    var strokes=[];
@@ -431,13 +637,13 @@ function Milkyway() {
 		var stroke=[];
 		var lenjj=stk.length;
 		for( var jj=0; jj<lenjj; jj++ ){
-		    var pos=new Vector3(stk[jj][0],stk[jj][1],stk[jj][2]);
+		    var pos=new THREE.Vector3(stk[jj][0],stk[jj][1],stk[jj][2]);
 		    xpos.copy(pos).normalize();
 		    var mg=stk[jj][3];
 		    pos.brt=stk[jj][4];
 		    pos.lev=stk[jj][5];
 		    smg=Math.min(mg,smg);
-		    pos.cartesian2Spherical();
+		    this.cartesian2Spherical(pos);
 		    pos.multiplyScalar(this.parsec);// parsecs...
 		    spos.add(xpos);
 		    scnt++;
@@ -451,7 +657,7 @@ function Milkyway() {
 				       this.getConstellation(con),
 				       this.getConstellationD(con)]);
 	}
-	console.log("Adding constellations.");
+	if (this.debug){console.log("Adding constellations.");};
 	state.File.next(state,"",callbacks);
     }.bind(this);
     this.generateDescr = function(state,json,callbacks) {
@@ -464,7 +670,7 @@ function Milkyway() {
             alert("Descr '"+this.dataURL+this.descrJson+"' contains Invalid stars:"+e.name+":"+e.message);
         };
 	this.descriptions=descr;
-	console.log("Adding descriptions.");
+	if (this.debug) {console.log("Adding descriptions.");};
 	state.File.next(state,"",callbacks);
     }.bind(this);
     this.componentToHex= function (c) {var hex = c.toString(16);return hex.length === 1 ? "0" + hex : hex;};
@@ -493,9 +699,9 @@ function Milkyway() {
 	    this.cnt=0;
 	    this.mag=0;
 	    this.col=255;
-	    var pos = new Vector3();
+	    var pos = new THREE.Vector3();
 	    var observer=scene.observer;
-	    var axis={i:new Vector3(),j:new Vector3(),k:new Vector3()};
+	    var axis={i:new THREE.Vector3(),j:new THREE.Vector3(),k:new THREE.Vector3()};
 	    axis.k.copy(observer.zenith);
 	    axis.j.crossVectors(axis.k,observer.k);
 	    axis.j.normalize();
@@ -602,7 +808,7 @@ function Milkyway() {
 	    };
 	    if (dd > 50  && scene.defined){
 		pos.subVectors(this.position,camera.position);
-		pos.cartesian2Spherical(axis);
+		this.cartesian2Spherical(pos,axis);
 		var dist=pos.length();
 		var dparsec=this.numberWithCommas(Math.round(dist/this.parsec));
 		var dlightyear=this.numberWithCommas(Math.round(dist/this.lightyear));
@@ -758,7 +964,7 @@ function Milkyway() {
 		    context.font=nfont;
 		    context.textAlign="center";
 		    // print name
-		    //context.strokeStyle="#000033";
+		    //context.strokeStyle="#000022";
 		    if (ii === iimin) {
 			context.globalAlpha=Math.min(1,alpha+0.1);
 			context.fillText(name,this.iw,this.ih);
@@ -825,7 +1031,76 @@ function Milkyway() {
     };
     this.getClass = function (cls) {
 	return this.descriptions["class"][cls]||cls;
-    }
-    
+    }    
 };
-export default Milkyway;
+export default Backdrop;
+    // this.createCircleMesh2=function() {
+    // 	var geometry = new THREE.BufferGeometry();
+    // 	var positions = new Float32Array(30);
+    // 	for (let i = 0; i < 10; i++) {
+    //         let x = 2000 * Math.random() - 1000;
+    //         let y = 2000 * Math.random() - 1000;
+    //         let z = 2000 * Math.random() - 1000;
+    //         positions[i * 3 + 0] = x;
+    //         positions[i * 3 + 1] = y;
+    //         positions[i * 3 + 2] = z;
+    // 	};
+    // 	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+    // 	var material = new THREE.LineDashedMaterial( { color: 0xffffff, linewidth:3, dashSize: 10, gapSize: 5 } );
+    // 	var mesh = new THREE.Line( geometry, material );
+    // 	mesh.computeLineDistances();
+    // 	return mesh
+    // };
+
+
+
+// function makeTextSprite( message, parameters )
+//     {
+//         if ( parameters === undefined ) parameters = {};
+//         var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Arial";
+//         var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 18;
+//         var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 4;
+//         var borderColor = parameters.hasOwnProperty("borderColor") ?parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
+//         var backgroundColor = parameters.hasOwnProperty("backgroundColor") ?parameters["backgroundColor"] : { r:255, g:255, b:255, a:1.0 };
+//         var textColor = parameters.hasOwnProperty("textColor") ?parameters["textColor"] : { r:0, g:0, b:0, a:1.0 };
+
+//         var canvas = document.createElement('canvas');
+//         var context = canvas.getContext('2d');
+//         context.font = "Bold " + fontsize + "px " + fontface;
+//         var metrics = context.measureText( message );
+//         var textWidth = metrics.width;
+
+//         context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + "," + backgroundColor.b + "," + backgroundColor.a + ")";
+//         context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + "," + borderColor.b + "," + borderColor.a + ")";
+
+//         context.lineWidth = borderThickness;
+//         roundRect(context, borderThickness/2, borderThickness/2, (textWidth + borderThickness) * 1.1, fontsize * 1.4 + borderThickness, 8);
+
+//         context.fillStyle = "rgba("+textColor.r+", "+textColor.g+", "+textColor.b+", 1.0)";
+//         context.fillText( message, borderThickness, fontsize + borderThickness);
+
+//         var texture = new THREE.Texture(canvas) 
+//         texture.needsUpdate = true;
+
+//         var spriteMaterial = new THREE.SpriteMaterial( { map: texture, useScreenCoordinates: false } );
+//         var sprite = new THREE.Sprite( spriteMaterial );
+//         sprite.scale.set(0.5 * fontsize, 0.25 * fontsize, 0.75 * fontsize);
+//         return sprite;  
+//     }
+
+
+
+
+    // createPlane() {
+    // 	//Create a plane that receives shadows (but does not cast them)
+    // 	const planeGeometry = new THREE.PlaneGeometry( 2*this.Bodies.setup.sun.radius, 
+    // 						       2*this.Bodies.setup.sun.radius, 
+    // 						       32, 
+    // 						       32);
+    // 	const planeMaterial = new THREE.MeshStandardMaterial( { color: 0x555555 } )
+    // 	const plane = new THREE.Mesh( planeGeometry, planeMaterial );
+    // 	plane.position.set(0,-1*this.Bodies.setup.sun.radius,0);
+    // 	plane.lookAt(0,1,0);
+    // 	plane.receiveShadow = true;
+    // 	return plane;
+    // }

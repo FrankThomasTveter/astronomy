@@ -3,8 +3,8 @@
 // The "run" subroutine calls sub-processes for
 //  * input,
 //  * server-requests, 
-//  * stack-update, 
-//  * 3D-stackling and 
+//  * config-update, 
+//  * 3D-configling and 
 //  * display. 
 // The "run" subroutine finally re-calls itself.
 // Some chain - elements are called every time the
@@ -20,9 +20,18 @@ import * as THREE from 'three';
 console.log("Loading ModelLib");
 
 function Model() { 
+    // This object maintains the state while drawing is done in state.React.Model,
+    // use the following flags to communicate changes in state...
+    this.initialised=false;
+    this.redraw={backdrop:false,
+		 bodies:false,
+		 model:false,
+		 controls:false,
+		 config:false};
+    // other data...
     this.modelRedraw=false; 
     this.controlsRedraw=false; 
-    this.stackRedraw=false; 
+    this.configRedraw=false; 
     this.redraw = true;
     // update 3D model of the solar system...
     this.model={};
@@ -39,7 +48,7 @@ function Model() {
                                        longitude: 10.0,
                                        height   : 0.0},
 			   play : { event : 0,
-				    speed : 0.0,       // stackEpoch = (epoch-e0) * speed + m0
+				    speed : 0.0,       // configEpoch = (epoch-e0) * speed + m0
 				    e0 : 0.0,
 				    m0 : 0.0 },
 			   events : [{ reqId : 1,
@@ -54,23 +63,32 @@ function Model() {
                       1 : {},
                       current : 0
 		    };
+    this.config = { reqId : -1,
+		   play : { },
+		   0 : {bodies:{},
+			observer:{}}, // first config state goes here
+		   1 : {bodies:{},
+			observer:{}}, // second config state goes here
+		   current : 1  // current state (0 or 1)?
+		 };
     this.hello=function () {
 	console.log("Hello world!");
     };
-    this.initRequest = function (state) {
-	var url=this.getUrlVars();
-	Request.launch(url["lat"],url["lon"],url["dtg"],url["hrs"],url["label"],url["target"],url["fov"],url["dir"],url["con"],url["play"]);
-    };
-    //this.fType = this.getUrlVars()["type"];
-    this.init = function (state,canvas) {
-	this.initCamera(state);
-	this.initRequest(state);
-	this.initRenderer(state,canvas);
-	this.initScene(state);
-	this.initControls(state);
+    this.init = function (state) {
+	for (var key in this.redraw) {
+	    if (this.redraw.hasOwnProperty(key)) {
+		this.redraw[key]=true;
+	    }
+	};
+	this.initialised=true;
     }
-    this.run = function (state) {
-	this.requestAnimFrame(this.run);
+    // this.initRequest = function (state) {
+    // 	var url=this.getUrlVars();
+    // 	this.launch(state,url["lat"],url["lon"],url["dtg"],url["hrs"],url["label"],url["target"],url["fov"],url["dir"],url["con"],url["speed"]);
+    // };
+    //this.fType = this.getUrlVars()["type"];
+    this.getCurrentConfig = function (state) {
+	//this.requestAnimFrame(this.update);
 	this.nowMsec=new Date().getTime();
 	if (this.lastMsec === undefined) {this.lastTimeMsec=this.nowMsec;};
 	//var deltaMsec   = Math.min(200, this.nowMsec - this.lastMsec)
@@ -84,22 +102,18 @@ function Model() {
 		this.redraw=true;
 	    };
 	}
-	if (this.requestUpdate()) { this.step=0;};
+	if (this.requestUpdate(state)) { this.step=0;};
 	if (this.processNewRequests()) { 
 	    this.offzoom(0.5);
 	    this.step=0;
 	};
 	if (this.step === 0) {
-	    this.stackUpdate();
-	    if (this.stackRedraw) {
+	    this.configUpdate();
+	    if (this.configRedraw) {
 		this.redraw=true;
-		this.stackRedraw=false;
+		this.configRedraw=false;
 	    };
-	    this.updateScene();
-	};
-	if (this.redraw) {
-	    this.updateCamera();
-	    this.redraw=false;
+	    //this.updateScene(state);
 	};
 	this.lastTimeMsec= this.nowMsec;
 	if (this.reqId !== -1 && this.speed > 0) {
@@ -107,67 +121,20 @@ function Model() {
 	} else {
 	    this.step=(this.step+1)%100;    
 	};
-	this.render( state );
-	//setTimeout(function(){ this.run();},10);
-
-    };
-    this.initRenderer = function (state,context) {
-	//renderer = new Renderer(context);
-	//renderer.setSize( window.innerWidth, window.innerHeight );
-	//document.body.appendChild( renderer.domElement );
-    };
-    this.render = function (state) {
-	//scene, camera...
+	if (this.reqId !== -1 && state.React !== undefined && state.React.Model !== undefined) {
+	    return this.config[this.config.current];
+	};
     };
     this.initScene = function (state) {
-	this.scenes["observer"]=state.Planets.observer; // hmmm....
-	this.scenes["sun"]=new this.scene().add(state.Planets.sun);
-	this.scenes["mercury"]=new this.scene().add(state.Planets.mercury);
-	this.scenes["venus"]=new this.scene().add(state.Planets.venus);
-	this.scenes["earth"]=new this.scene().add(state.Planets.earth,state.Planets.moon);
-	this.scenes["mars"]=new this.scene().add(state.Planets.mars);
-	this.scenes["jupiter"]=new this.scene().add(state.Planets.jupiter);
-	this.scenes["saturn"]=new this.scene().add(state.Planets.saturn);
-	this.scenes["uranus"]=new this.scene().add(state.Planets.uranus);
-	this.scenes["neptune"]=new this.scene().add(state.Planets.neptune);
-	this.scenes["pluto"]=new this.scene().add(state.Planets.pluto);
 	state.Scene.display=0;
 	state.Scene.axis=0;
 	state.Scene.position=0;
 	state.Milkyway.init(state,'sky/data/stars.json','sky/data/const.json','sky/data/descr.json');
     };
-    this.initCamera = function (state) {
-	//this.camera = state.Camera;
-    };
-    this.initControls = function (state) { 
-	//this.controls = new Controls( this.camera );
-	//this.controls.addEventListener( 'change', function () { 
-	//renderer.render(scene,camera);
-	//} );
-	//this.offzoom(1.0);
-    };
-    this.offzoom = function (delta) {
-        //_zoomStart.y = _zoomStart.y + delta;
-        //console.log("OffZoom:",delta,this.object.getFovX());
-    };
     this.updateScene = function (state) {
 	// update position of all bodies
-	if (this.reqId !== -1) {
-	    var st=this.stack[this.stack.current];
-	    state.Planets.copyObserver( st.observer,        state.Planets.observer);
-	    state.Planets.copyBody(     st.bodies.sun,      state.Planets.sun);
-	    state.Planets.copyBody(     st.bodies.mercury,  state.Planets.mercury);
-	    state.Planets.copyBody(     st.bodies.sun,      state.Planets.sun);
-	    state.Planets.copyBody(     st.bodies.mercury,  state.Planets.mercury);
-	    state.Planets.copyBody(     st.bodies.venus,    state.Planets.venus);
-	    state.Planets.copyBody(     st.bodies.earth,    state.Planets.earth);
-	    state.Planets.copyBody(     st.bodies.moon,     state.Planets.moon);
-	    state.Planets.copyBody(     st.bodies.mars,     state.Planets.mars);
-	    state.Planets.copyBody(     st.bodies.jupiter,  state.Planets.jupiter);
-	    state.Planets.copyBody(     st.bodies.saturn,   state.Planets.saturn);
-	    state.Planets.copyBody(     st.bodies.uranus,   state.Planets.uranus);
-	    state.Planets.copyBody(     st.bodies.neptune,  state.Planets.neptune);
-	    state.Planets.copyBody(     st.bodies.pluto,    state.Planets.pluto);
+	if (this.reqId !== -1 && state.React !== undefined && state.React.Model !== undefined) {
+	    console.log("Update scene..");
 	    state.Scene.defined=true;
 	} else {
 	    state.Scene.defined=false;
@@ -181,7 +148,7 @@ function Model() {
 	}
     };
     this.play  = function (state) {
-	this.play();
+	//this.play();
     };
     this.pushUrl  = function (state) {
 	this.pushUrl();
@@ -250,7 +217,8 @@ function Model() {
 	    });
 	return vars;
     };
-    this.launch= function (state,lat, lon, dtg, hrs, label, target, fov, dir, con, play) {
+    this.launch= function (state,lat, lon, dtg, hrs, label, target, fov, dir, con, speed) {
+	console.log("*** launching model:",lat, lon, dtg, hrs, label, target, fov, dir, con, speed);
 	lat=(lat || 51.5);
 	lon=(lon || 0.0);
 	con=(con || 0);
@@ -296,9 +264,9 @@ function Model() {
 						 dtg : dtgs[tt] 
 						});
 	};
-	if (play !== undefined) {
+	if (speed !== undefined) {
 	    this.requests[newRequest]["play"]["event"] = 0;
-	    this.requests[newRequest]["play"]["speed"] = play;
+	    this.requests[newRequest]["play"]["speed"] = speed;
 	    this.requests[newRequest]["play"]["hrs"] = hrs;
 	    this.requests[newRequest]["play"]["m0"] = m0;
 	    
@@ -313,167 +281,214 @@ function Model() {
     };
     this.requestUpdate = function (state) {
 	var ret=false;
-	function urlrequest(state) {
-	    this.clean_ = function () {var obj=Object.keys(this);for (var ii=0; ii<obj.length;ii++) 
-				       {if (obj[ii].match(/_$/g)) {delete this[obj[ii]];}}}
-	    this.addLat_ = function(val) {this["lat"]=val;};
-	    this.addLon_ = function(val) {this["lon"]=val;};
-	    this.addHgt_ = function(val) {this["hgt"]=val;};
-	    this.addDtg_ = function(val) {this["dtg"]=val;};
-	}
 	var reqId=this.requests.current;
 	var req = this.requests[reqId]
 	if ( ! req.sent) { // we have a new target
-	    console.log("Sending new request.");
-	    // send server request for data
-	    var urlreq=new urlrequest();
-	    urlreq.addLat_(req.location.latitude);
-	    urlreq.addLon_(req.location.longitude);
-	    urlreq.addHgt_(req.location.height);
-	    var dtgs = [];
-	    for ( var tt = 0; tt < req["events"].length; tt++) {
-		dtgs.push(req["events"][tt]["dtg"]);
-	    };
-	    urlreq.addDtg_(dtgs);
-	    urlreq.clean_();
+	    console.log("Sending new request.",reqId);
+	    this.sendRequest(state,reqId,req,[]);
 	    req.sent= true;
-	    console.log("Sending state-request :",reqId,urlreq);
-	    console.warn("Call to state.pl not implemented...");
-	    //$.get("cgi-bin/state.pl",urlreq,function(data, status){Request.received(data,status,reqId);});
 	}
 	return ret;
     };
+    this.getRequestPar=function(state,request) {
+	// send server request for data
+	var req=new this.request();
+	req.addLat(request.location.latitude);
+	req.addLon(request.location.longitude);
+	req.addHgt(request.location.height);
+	var dtgs = [];
+	for ( var tt = 0; tt < request.events.length; tt++) {
+	    dtgs.push(request.events[tt]["dtg"]);
+	};
+	req.addDtg(dtgs);
+	req.wipe();
+	console.log("Sending state-request :",req);
+	return req;
+    };
+    this.sendRequest = function(state, reqId, request, callbacks) {
+	if (this.bdeb) {console.log("Loading state.");};
+	var req=this.getRequestPar(state,request);
+	if (req !==undefined) {
+	    var url="cgi-bin/state.pl";
+	    var sequence = Promise.resolve();
+	    sequence = sequence.then(
+		function() {
+		    return state.File.get(url,req);
+		}
+	    ).then(
+		function(result) {
+		    this.processState(state,result,reqId,request);
+		}.bind(this)
+	    ).catch(
+		function(err) {
+		    console.log("Unable to load state. ("+err.message+")");
+		}
+	    );
+	    sequence.then(function() {
+		//state.Model.changed=false;
+		//state.Model.lastUpdate=new moment().valueOf();
+		//state.Model.lastCnt=1;
+		//state.Model.setStateTime(state);
+		//console.log("Normal end...");
+	    }).catch(function(err) { // Catch any error that happened along the way
+		console.log("Error msg: " + err.message);
+	    }).then(function() { // always do this
+		//console.log("This is the end...",callbacks.length);
+		state.File.next(state,"",callbacks);
+	    })
+	} else {
+	    //no data requested, clean event-arrays...
+	};
+	//console.log("Polygons:",JSON.stringify(state.Polygon.names));
+    }.bind(this);
     this.setInfo = function (state,dtg,lat,lon) {
 	var info=document.getElementById("info");
-	info.innerHTML = dtg+" lat:"+parseFloat(lat).toFixed(2)+" lon:"+parseFloat(lon).toFixed(2);
+	//info.innerHTML = dtg+" lat:"+parseFloat(lat).toFixed(2)+" lon:"+parseFloat(lon).toFixed(2);
+	console.log(dtg+" lat:"+parseFloat(lat).toFixed(2)+" lon:"+parseFloat(lon).toFixed(2));
     };
-    this.received = function (state,data,status,reqId) {
-	//console.log("Received response '"+status+"' for request '",reqId,"'");
-	if (status === "success") {
-	    var req=this.requests[reqId];
-	    // update info
-	    this.setInfo(req.events[req.current].dtg,
-			 req.location.latitude,
-			 req.location.longitude);
-	    // update data
-	    //var d=new Date();
-	    //var tnow=d.getTime();
-	    console.log("data",data);
-	    var ss=data.getElementsByTagName("solarsystem")[0];
-	    var error=ss.getElementsByTagName("Error")[0];
-	    var bod,name;
-	    if (error === null) {
-		// store initial data
-		// var loc=ss.getElementsByTagName("location")[0];
-		// store initial data
-		var ini=ss.getElementsByTagName("initial")[0];
-		var inibod=ini.getElementsByTagName("body");
-		var inino=ini.getAttribute("no");
-		req["initial"]={};
-		var ii;
-		for (ii=0; ii<inino; ii++) {
-		    bod=inibod[ii];
-		    name=bod.getAttribute("name");
-		    req["initial"][name]={};
-		    req["initial"][name]["rotation"]={};
-		    req["initial"][name]["rotation"]["ra"]=+bod.getAttribute("ra");
-		    req["initial"][name]["rotation"]["dec"]=+bod.getAttribute("dec");
-		    req["initial"][name]["rotation"]["w"]=+bod.getAttribute("w")*Math.PI/180.0;
-		    req["initial"][name]["rotation"]["dwdt"]=+bod.getAttribute("dwdt")*Math.PI/180.0;
-		    req["initial"][name]["main"]=bod.getAttribute("main");
-		    req["initial"][name]["xmu"]=+bod.getAttribute("xmu");
-		}
-		// store time data
-		var tis=ss.getElementsByTagName("times")[0];
-		var tistim=tis.getElementsByTagName("time");
-		var tisno=tis.getAttribute("no");
-		//console.log("Times ",tisno);
-		for (var tt=0; tt<tisno; tt++) {
-		    var tim = tistim[tt];
-		    // store observer data
-		    var dtg  = tim.getAttribute("dtg");
-		    var dtg_ = req["events"][tt]["dtg"];
-		    if (dtg !== dtg_) { // check if dtg in reply matches dtg in request
-			console.log("Date mismatch: ",dtg," !== ",dtg_);
-		    } else {
-			var jd2000=tim.getAttribute("jd2000");
-			var obs=tim.getElementsByTagName("observer")[0];
-			var obsi=obs.getElementsByTagName("i")[0];
-			var obsj=obs.getElementsByTagName("j")[0];
-			var obsk=obs.getElementsByTagName("k")[0];
-			var obsloc=obs.getElementsByTagName("location")[0];
-			var obszen=obs.getElementsByTagName("zenith")[0];
-			req["events"][tt]["observer"]={};
-			req["events"][tt]["observer"]["i"]=new Vector3();
-			req["events"][tt]["observer"]["i"]["x"]=+obsi.getAttribute("x");
-			req["events"][tt]["observer"]["i"]["y"]=+obsi.getAttribute("y");
-			req["events"][tt]["observer"]["i"]["z"]=+obsi.getAttribute("z");
-			req["events"][tt]["observer"]["j"]=new Vector3();
-			req["events"][tt]["observer"]["j"]["x"]=+obsj.getAttribute("x");
-			req["events"][tt]["observer"]["j"]["y"]=+obsj.getAttribute("y");
-			req["events"][tt]["observer"]["j"]["z"]=+obsj.getAttribute("z");
-			req["events"][tt]["observer"]["k"]=new Vector3();
-			req["events"][tt]["observer"]["k"]["x"]=+obsk.getAttribute("x");
-			req["events"][tt]["observer"]["k"]["y"]=+obsk.getAttribute("y");
-			req["events"][tt]["observer"]["k"]["z"]=+obsk.getAttribute("z");
-			req["events"][tt]["observer"]["position"]=new Vector3();
-			req["events"][tt]["observer"]["position"]["x"]=+obsloc.getAttribute("x");
-			req["events"][tt]["observer"]["position"]["y"]=+obsloc.getAttribute("y");
-			req["events"][tt]["observer"]["position"]["z"]=+obsloc.getAttribute("z");
-			req["events"][tt]["observer"]["position"]["origo"]=obsloc.getAttribute("origo");
-			req["events"][tt]["observer"]["zenith"]=new Vector3();
-			req["events"][tt]["observer"]["zenith"]["x"]=+obszen.getAttribute("x");
-			req["events"][tt]["observer"]["zenith"]["y"]=+obszen.getAttribute("y");
-			req["events"][tt]["observer"]["zenith"]["z"]=+obszen.getAttribute("z");
-			var pointAt = req["events"][tt]["pointAt"];
-			req["events"][tt]["pointId"] = -1;
-			var sta=tim.getElementsByTagName("state")[0];
-			var stabod=sta.getElementsByTagName("body");
-			var stano=sta.getAttribute("no");
-			req["events"][tt]["state"]={};
-			for (ii=0; ii<stano; ii++) {
-			    bod=stabod[ii];
-			    name=bod.getAttribute("name");
-			    if (name === pointAt) {req["events"][tt]["pointId"] = ii;}
-			    //console.log("Added state for ",name," at ",dtg);
-			    req["events"][tt]["state"][name]={"position":new Vector3(),"rotation":new Vector3()};
-			    req["events"][tt]["state"][name]["position"]["x"]=+bod.getAttribute("x");
-			    req["events"][tt]["state"][name]["position"]["y"]=+bod.getAttribute("y");
-			    req["events"][tt]["state"][name]["position"]["z"]=+bod.getAttribute("z");
-			    req["events"][tt]["state"][name]["position"]["vx"]=+bod.getAttribute("vx");
-			    req["events"][tt]["state"][name]["position"]["vy"]=+bod.getAttribute("vy");
-			    req["events"][tt]["state"][name]["position"]["vz"]=+bod.getAttribute("vz");
-			    req["events"][tt]["state"][name]["rotation"]["ra"]=+req["initial"][name]["rotation"]["ra"]; 
-			    req["events"][tt]["state"][name]["rotation"]["dec"]=+req["initial"][name]["rotation"]["dec"]; 
-			    req["events"][tt]["state"][name]["rotation"]["w"]=+req["initial"][name]["rotation"]["w"]
-				+ req["initial"][name]["rotation"]["dwdt"] * jd2000;
-			    req["events"][tt]["state"][name]["name"]=name;
-			}
+    this.processState = function (state,result,reqId,req) {
+	//console.log("Received request '",reqId,"'");
+	var xmlDoc;
+	// update info
+	this.setInfo(state,
+		     req.events[req.current].dtg,
+		     req.location.latitude,
+		     req.location.longitude);
+	// update data
+	//var d=new Date();
+	//var tnow=d.getTime();
+	var regex=/(<solarsystem[\s\S]*\/solarsystem>)/mg;
+	var match=result.match(regex);
+	if (match !== null && match.length > 0) {
+	    if (window.DOMParser) {
+		var parser = new DOMParser();
+		xmlDoc = parser.parseFromString(result, "text/xml");
+		try {
+		    this.dataToArray(state,xmlDoc,req,reqId);
+		    console.log("Loaded state data:",result);
+		} catch (err) {
+		    console.log(err);
+		};
+	    } else {
+		console.log("No DOM parser for XML available.");
+	    };
+	} else {
+	    console.log("Error while loading state of solar system.");
+	};
+    };
+    this.dataToConfig=function(state,data,req,reqId) {
+	var ss=data.getElementsByTagName("solarsystem")[0];
+	var error=ss.getElementsByTagName("Error")[0];
+	var bod,name;
+	if (error === null) {
+	    // store initial data
+	    // var loc=ss.getElementsByTagName("location")[0];
+	    // store initial data
+	    var ini=ss.getElementsByTagName("initial")[0];
+	    var inibod=ini.getElementsByTagName("body");
+	    var inino=ini.getAttribute("no");
+	    req["initial"]={};
+	    var ii;
+	    for (ii=0; ii<inino; ii++) {
+		bod=inibod[ii];
+		name=bod.getAttribute("name");
+		req["initial"][name]={};
+		req["initial"][name]["rotation"]={};
+		req["initial"][name]["rotation"]["ra"]=+bod.getAttribute("ra");
+		req["initial"][name]["rotation"]["dec"]=+bod.getAttribute("dec");
+		req["initial"][name]["rotation"]["w"]=+bod.getAttribute("w")*Math.PI/180.0;
+		req["initial"][name]["rotation"]["dwdt"]=+bod.getAttribute("dwdt")*Math.PI/180.0;
+		req["initial"][name]["main"]=bod.getAttribute("main");
+		req["initial"][name]["xmu"]=+bod.getAttribute("xmu");
+	    }
+	    // store time data
+	    var tis=ss.getElementsByTagName("times")[0];
+	    var tistim=tis.getElementsByTagName("time");
+	    var tisno=tis.getAttribute("no");
+	    //console.log("Times ",tisno);
+	    for (var tt=0; tt<tisno; tt++) {
+		var tim = tistim[tt];
+		// store observer data
+		var dtg  = tim.getAttribute("dtg");
+		var dtg_ = req["events"][tt]["dtg"];
+		if (dtg !== dtg_) { // check if dtg in reply matches dtg in request
+		    console.log("Date mismatch: ",dtg," !== ",dtg_);
+		} else {
+		    var jd2000=tim.getAttribute("jd2000");
+		    var obs=tim.getElementsByTagName("observer")[0];
+		    var obsi=obs.getElementsByTagName("i")[0];
+		    var obsj=obs.getElementsByTagName("j")[0];
+		    var obsk=obs.getElementsByTagName("k")[0];
+		    var obsloc=obs.getElementsByTagName("location")[0];
+		    var obszen=obs.getElementsByTagName("zenith")[0];
+		    req["events"][tt]["observer"]={};
+		    req["events"][tt]["observer"]["i"]=new Vector3();
+		    req["events"][tt]["observer"]["i"]["x"]=+obsi.getAttribute("x");
+		    req["events"][tt]["observer"]["i"]["y"]=+obsi.getAttribute("y");
+		    req["events"][tt]["observer"]["i"]["z"]=+obsi.getAttribute("z");
+		    req["events"][tt]["observer"]["j"]=new Vector3();
+		    req["events"][tt]["observer"]["j"]["x"]=+obsj.getAttribute("x");
+		    req["events"][tt]["observer"]["j"]["y"]=+obsj.getAttribute("y");
+		    req["events"][tt]["observer"]["j"]["z"]=+obsj.getAttribute("z");
+		    req["events"][tt]["observer"]["k"]=new Vector3();
+		    req["events"][tt]["observer"]["k"]["x"]=+obsk.getAttribute("x");
+		    req["events"][tt]["observer"]["k"]["y"]=+obsk.getAttribute("y");
+		    req["events"][tt]["observer"]["k"]["z"]=+obsk.getAttribute("z");
+		    req["events"][tt]["observer"]["position"]=new Vector3();
+		    req["events"][tt]["observer"]["position"]["x"]=+obsloc.getAttribute("x");
+		    req["events"][tt]["observer"]["position"]["y"]=+obsloc.getAttribute("y");
+		    req["events"][tt]["observer"]["position"]["z"]=+obsloc.getAttribute("z");
+		    req["events"][tt]["observer"]["position"]["origo"]=obsloc.getAttribute("origo");
+		    req["events"][tt]["observer"]["zenith"]=new Vector3();
+		    req["events"][tt]["observer"]["zenith"]["x"]=+obszen.getAttribute("x");
+		    req["events"][tt]["observer"]["zenith"]["y"]=+obszen.getAttribute("y");
+		    req["events"][tt]["observer"]["zenith"]["z"]=+obszen.getAttribute("z");
+		    var pointAt = req["events"][tt]["pointAt"];
+		    req["events"][tt]["pointId"] = -1;
+		    var sta=tim.getElementsByTagName("state")[0];
+		    var stabod=sta.getElementsByTagName("body");
+		    var stano=sta.getAttribute("no");
+		    req["events"][tt]["state"]={};
+		    for (ii=0; ii<stano; ii++) {
+			bod=stabod[ii];
+			name=bod.getAttribute("name");
+			if (name === pointAt) {req["events"][tt]["pointId"] = ii;}
+			//console.log("Added state for ",name," at ",dtg);
+			req["events"][tt]["state"][name]={"position":new Vector3(),"rotation":new Vector3()};
+			req["events"][tt]["state"][name]["position"]["x"]=+bod.getAttribute("x");
+			req["events"][tt]["state"][name]["position"]["y"]=+bod.getAttribute("y");
+			req["events"][tt]["state"][name]["position"]["z"]=+bod.getAttribute("z");
+			req["events"][tt]["state"][name]["position"]["vx"]=+bod.getAttribute("vx");
+			req["events"][tt]["state"][name]["position"]["vy"]=+bod.getAttribute("vy");
+			req["events"][tt]["state"][name]["position"]["vz"]=+bod.getAttribute("vz");
+			req["events"][tt]["state"][name]["rotation"]["ra"]=+req["initial"][name]["rotation"]["ra"]; 
+			req["events"][tt]["state"][name]["rotation"]["dec"]=+req["initial"][name]["rotation"]["dec"]; 
+			req["events"][tt]["state"][name]["rotation"]["w"]=+req["initial"][name]["rotation"]["w"]
+			    + req["initial"][name]["rotation"]["dwdt"] * jd2000;
+			req["events"][tt]["state"][name]["name"]=name;
 		    }
 		}
-		req.received= true;
-	    } else {
-		// we never receive data, stop processing here...
 	    }
-	    //console.log("Requests:",JSON.stringify(this.requests));
+	    req.received= true;
 	} else {
-	    //console.log("Request failed.");
+	    // we never receive data, stop processing here...
 	}
+	//console.log("Requests:",JSON.stringify(this.requests));
     };
     this.pushUrl = function (state) {
 	var reqId=this.requests.current;
 	var req = this.requests[reqId]
 	if ( req.elements) { // we have a target
 	    var reqLocation=this.requests[reqId]["location"];
-	    if (reqLocation !== undefined && this.stack.state[this.stack.current] !== undefined) {
+	    if (reqLocation !== undefined && this.config.state[this.config.current] !== undefined) {
 		var lat=reqLocation.latitude;
 		var lon=reqLocation.longitude;
-		var dtg=this.stack.state[this.stack.current].dtg;
+		var dtg=this.config.state[this.config.current].dtg;
 		var dir=this.camera.getDir();
 		var fov=this.camera.getFovX();
 		var con=this.consReq;
-		var play=(this.stack.play.speed||0);
-		var hrs=(this.stack.play.hrs||1);
+		var speed=(this.config.play.speed||0);
+		var hrs=(this.config.play.hrs||1);
 		//var lab="";
 		var url="sky.html";
 		var first=true;
@@ -503,9 +518,9 @@ function Model() {
 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
 		    url=url + "hrs=" + hrs;
 		}
-		if (play !== undefined) {
+		if (speed !== undefined) {
 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-		    url=url + "play=" + play;
+		    url=url + "speed=" + speed;
 		}
 		if (con !== undefined) {
 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
@@ -517,21 +532,21 @@ function Model() {
 	}
     };
     this.play = function (state) {
-	if (this.stack.play !== undefined) {
+	if (this.config.play !== undefined) {
 	    var tnow=(new Date()).getTime();
-	    if (this.stack.play.speed === undefined) { // start simulation first time
-		this.stack.play.speed = 1.0;
-		this.stack.play.e0 = tnow;
-		this.stack.play.m0 = (new Date(this.stack.state[this.stack.current].epoch)).getTime();
-	    } else if (this.stack.play.halt === undefined){ // stop running simulation, store time
-		this.stack.play.m0 = this.stack.play.m0 + (tnow-this.stack.play.e0)*this.stack.play.speed;
-		this.stack.play.e0 = tnow;
-		this.stack.play.halt = this.stack.play.speed;
-		this.stack.play.speed = 0.0;
+	    if (this.config.play.speed === undefined) { // start simulation first time
+		this.config.play.speed = 1.0;
+		this.config.play.e0 = tnow;
+		this.config.play.m0 = (new Date(this.config.state[this.config.current].epoch)).getTime();
+	    } else if (this.config.play.halt === undefined){ // stop running simulation, store time
+		this.config.play.m0 = this.config.play.m0 + (tnow-this.config.play.e0)*this.config.play.speed;
+		this.config.play.e0 = tnow;
+		this.config.play.halt = this.config.play.speed;
+		this.config.play.speed = 0.0;
 	    } else  { // start stopped simulation
-		this.stack.play.e0 = tnow;
-		this.stack.play.speed = this.stack.play.halt;
-		this.stack.play.halt=undefined;
+		this.config.play.e0 = tnow;
+		this.config.play.speed = this.config.play.halt;
+		this.config.play.halt=undefined;
 	    }
 	}
     };
@@ -571,56 +586,56 @@ function Model() {
 	}
 	return ret;
     };
-    // update 3D stack of the solar system...
-    this.stackUpdate = function (state) {
+    // update 3D config of the solar system...
+    this.configUpdate = function (state) {
 	var ret = false;
 	var reqId = this.requests.current;
 	var req = this.requests[reqId]
-	if (req.elements & this.stack.reqId !== reqId ) { // process new request
-	    //console.log("Constructing stack from orbital elements.");
+	if (req.elements & this.config.reqId !== reqId ) { // process new request
+	    //console.log("Constructing config from orbital elements.");
 	    // get times
-	    this.stack.epochs = [];
+	    this.config.epochs = [];
 	    for ( var tt = 0; tt < req["events"].length; tt++) {
-		this.stack.epochs[tt]=req["events"][tt]["epoch"];
+		this.config.epochs[tt]=req["events"][tt]["epoch"];
 	    };
-	    this.stack.play={};
+	    this.config.play={};
 	    if (req.play.event !== undefined) {
-		this.stack.play.event=req.play.event;
+		this.config.play.event=req.play.event;
 	    };
 	    if (req.play.speed !== undefined) {
 		var tnow=(new Date()).getTime();
-		this.stack.play.speed=req.play.speed;
+		this.config.play.speed=req.play.speed;
 		if (req.play.m0 !== undefined) {
-		    this.stack.play.m0=req.play.m0;
+		    this.config.play.m0=req.play.m0;
 		} else {
-		    this.stack.play.m0=tnow;
+		    this.config.play.m0=tnow;
 		};
-		this.stack.play.e0=tnow;
-		if (this.stack.play.speed > 0 ) {
-		    this.stack.play.halt=undefined;
+		this.config.play.e0=tnow;
+		if (this.config.play.speed > 0 ) {
+		    this.config.play.halt=undefined;
 		} else {
-		    this.stack.play.halt=1.0;
+		    this.config.play.halt=1.0;
 		};
 	    }
-	    this.stack.young=(this.stack.current+1)%2;
-	    if (this.getState(state,req,this.stack.state[this.stack.young])) {
-		this.stack.old=this.stack.current;
-		this.stack.current=this.stack.young;
-		if (this.stack.state[this.stack.old]["bodies"] !== undefined) {
-		    // "tween" stack from oldState to newState
+	    this.config.young=(this.config.current+1)%2;
+	    if (this.getState(state,req,this.config.state[this.config.young])) {
+		this.config.old=this.config.current;
+		this.config.current=this.config.young;
+		if (this.config.state[this.config.old]["bodies"] !== undefined) {
+		    // "tween" config from oldState to newState
 		};
 		//  point camera
 		if (req.play.event !== undefined) {
-		    this.stack.state[this.stack.current].dtg = new Date(this.requests[reqId]["events"][req.play.event]["dtg"]).toISOString();
-		    this.camera.position.copy(this.stack.state[this.stack.current].observer.position);
-		    this.camera.setUp(this.stack.state[this.stack.current].observer.zenith); // up is always towards observer zenith...
+		    this.config.state[this.config.current].dtg = new Date(this.requests[reqId]["events"][req.play.event]["dtg"]).toISOString();
+		    this.camera.position.copy(this.config.state[this.config.current].observer.position);
+		    this.camera.setUp(this.config.state[this.config.current].observer.zenith); // up is always towards observer zenith...
 		    var target = this.requests[reqId]["events"][req.play.event]["target"]; // target could be mis-spelled...
 		    var dir = this.requests[reqId]["events"][req.play.event]["dir"];
 		    var fov = this.requests[reqId]["events"][req.play.event]["fov"];
 		    var con = this.requests[reqId]["events"][req.play.event]["con"];
-		    var stackBodies=this.stack.state[this.stack.current].bodies;
-		    if (target !== undefined && stackBodies[target] !== undefined) {
-			this.camera.pointAt(stackBodies[target].position);
+		    var configBodies=this.config.state[this.config.current].bodies;
+		    if (target !== undefined && configBodies[target] !== undefined) {
+			this.camera.pointAt(configBodies[target].position);
 		    } else if (dir !== undefined) {
 			this.camera.pointDir(dir);
 		    };
@@ -639,184 +654,184 @@ function Model() {
 		// delete old requests
 		for (var key in this.requests) {
 		    if (this.requests.hasOwnProperty(key)) {
-			if (key !== this.stack.old & this.requests[key]["events"] !== undefined) {
+			if (key !== this.config.old & this.requests[key]["events"] !== undefined) {
 			}
 		    }
 		}
 		this.reqId=reqId;
 	    };
 	    req.orbit = false;
-            this.setInfo(this.stack.state[this.stack.current].dtg,
-				  this.stack.state[this.stack.current].lat,
-				  this.stack.state[this.stack.current].lon);
-	    this.stackRedraw=true;
-	} else if (req.elements & this.stack.play.speed!==undefined) { // time lapse...
-	    //console.log("Time lapse.",stack.play.speed);
-	    this.stack.young=(this.stack.current+1)%2;
-	    if (this.getState(state,req, this.stack.state[this.stack.young])) {
-		Request.setInfo(this.stack.state[this.stack.current].dtg,
-				this.stack.state[this.stack.current].lat,
-				this.stack.state[this.stack.current].lon);
-		this.stack.old=this.stack.current;
-		this.stack.current=this.stack.young;
-		this.stackRedraw=true;
+            this.setInfo(this.config.state[this.config.current].dtg,
+				  this.config.state[this.config.current].lat,
+				  this.config.state[this.config.current].lon);
+	    this.configRedraw=true;
+	} else if (req.elements & this.config.play.speed!==undefined) { // time lapse...
+	    //console.log("Time lapse.",config.play.speed);
+	    this.config.young=(this.config.current+1)%2;
+	    if (this.getState(state,req, this.config.state[this.config.young])) {
+		Request.setInfo(this.config.state[this.config.current].dtg,
+				this.config.state[this.config.current].lat,
+				this.config.state[this.config.current].lon);
+		this.config.old=this.config.current;
+		this.config.current=this.config.young;
+		this.configRedraw=true;
 	    }
 	    //    } else {
-	    //	console.log("Nothing to do:",req.elements,stack.play.speed);
+	    //	console.log("Nothing to do:",req.elements,config.play.speed);
 	}
 	return ret;
     };
-    this.getState = function (state,req, newstack){
+    this.getState = function (state,req, newconfig){
 	var ret=true;
 	var tnow=(new Date()).getTime();
-	if (this.stack.play.speed !== undefined) { // propagate state to right epoch using elliptical orbits
-	    var ttrg = (tnow-this.stack.play.e0) * this.stack.play.speed + this.stack.play.m0;
-	    newstack.lat=req.location.latitude;
-	    newstack.lon=req.location.longitude;
-	    this.stack.play.prev=-1;
-	    this.stack.play.next=-1;
-	    this.stack.play.prevEpoch=0;
-	    this.stack.play.nextEpoch=0;
+	if (this.config.play.speed !== undefined) { // propagate state to right epoch using elliptical orbits
+	    var ttrg = (tnow-this.config.play.e0) * this.config.play.speed + this.config.play.m0;
+	    newconfig.lat=req.location.latitude;
+	    newconfig.lon=req.location.longitude;
+	    this.config.play.prev=-1;
+	    this.config.play.next=-1;
+	    this.config.play.prevEpoch=0;
+	    this.config.play.nextEpoch=0;
 	    // find correct epoch
 	    for ( var tt = 0; tt < req["events"].length; tt++) {
 		if (req["events"][tt]["epoch"] <= ttrg &  
-		    (this.stack.play.prev < 0 || req["events"][tt]["epoch"] >=  this.stack.play.prevEpoch)) {
-		    this.stack.play.prev=tt;
-		    this.stack.play.prevEpoch=req["events"][this.stack.play.prev]["epoch"];
+		    (this.config.play.prev < 0 || req["events"][tt]["epoch"] >=  this.config.play.prevEpoch)) {
+		    this.config.play.prev=tt;
+		    this.config.play.prevEpoch=req["events"][this.config.play.prev]["epoch"];
 		};
 		if (req["events"][tt]["epoch"] >= ttrg &  
-		    (this.stack.play.next < 0 || req["events"][tt]["epoch"] <=  this.stack.play.nextEpoch)) {
-		    this.stack.play.next=tt;
-		    this.stack.play.nextEpoch=req["events"][this.stack.play.next]["epoch"];
+		    (this.config.play.next < 0 || req["events"][tt]["epoch"] <=  this.config.play.nextEpoch)) {
+		    this.config.play.next=tt;
+		    this.config.play.nextEpoch=req["events"][this.config.play.next]["epoch"];
 		};
 	    };
-	    if (this.stack.play.prev !== -1 & this.stack.play.next !== -1) { // success!
-		var dt = ttrg-this.stack.play.prevEpoch;
-		var dt0 = this.stack.play.nextEpoch - this.stack.play.prevEpoch;
+	    if (this.config.play.prev !== -1 & this.config.play.next !== -1) { // success!
+		var dt = ttrg-this.config.play.prevEpoch;
+		var dt0 = this.config.play.nextEpoch - this.config.play.prevEpoch;
 		var f = dt/Math.max(1e-10,dt0);
-		this.interpolateBodies(req["events"][this.stack.play.prev],req["events"][this.stack.play.next],dt,f,newstack.bodies);
-		this.interpolateObserver(req["events"][this.stack.play.prev],req["events"][this.stack.play.next],dt,f,newstack.observer,newstack.bodies);
-		newstack.epoch = ttrg;
-		newstack.dtg=new Date(newstack.epoch).toISOString();
-	    } else if (this.stack.play.prev !== -1 ) {  // found epoch before, but not after
-		this.getBodies(req["events"][this.stack.play.prev],newstack.bodies);
-		this.getObserver(req["events"][this.stack.play.prev],newstack.observer,newstack.bodies);
-		newstack.epoch = req["events"][this.stack.play.prev].epoch;
-		newstack.dtg=new Date(newstack.epoch).toISOString();
-	    } else if (this.stack.play.next !== -1) {  // found epoch before, but not after
-		this.getBodies(req["events"][this.stack.play.next],newstack.bodies);
-		this.getObserver(req["events"][this.stack.play.next],newstack.observer,newstack.bodies);
-		newstack.epoch = req["events"][this.stack.play.next].epoch;
-		newstack.dtg=new Date(newstack.epoch).toISOString();
+		this.interpolateBodies(req["events"][this.config.play.prev],req["events"][this.config.play.next],dt,f,newconfig.bodies);
+		this.interpolateObserver(req["events"][this.config.play.prev],req["events"][this.config.play.next],dt,f,newconfig.observer,newconfig.bodies);
+		newconfig.epoch = ttrg;
+		newconfig.dtg=new Date(newconfig.epoch).toISOString();
+	    } else if (this.config.play.prev !== -1 ) {  // found epoch before, but not after
+		this.getBodies(req["events"][this.config.play.prev],newconfig.bodies);
+		this.getObserver(req["events"][this.config.play.prev],newconfig.observer,newconfig.bodies);
+		newconfig.epoch = req["events"][this.config.play.prev].epoch;
+		newconfig.dtg=new Date(newconfig.epoch).toISOString();
+	    } else if (this.config.play.next !== -1) {  // found epoch before, but not after
+		this.getBodies(req["events"][this.config.play.next],newconfig.bodies);
+		this.getObserver(req["events"][this.config.play.next],newconfig.observer,newconfig.bodies);
+		newconfig.epoch = req["events"][this.config.play.next].epoch;
+		newconfig.dtg=new Date(newconfig.epoch).toISOString();
 	    } else {
-		//console.log("Times:",+ttrg,"|",+this.stack.play.e0 ,"|",+this.stack.play.speed, "|",+this.stack.play.m0);
+		//console.log("Times:",+ttrg,"|",+this.config.play.e0 ,"|",+this.config.play.speed, "|",+this.config.play.m0);
 		console.log("Unable to find interval:",+ttrg,req["events"]);
 		ret=false;
 	    }
-	    //console.log("Pos:",+ttrg,req["events"][0]," REQ:",this.stack.play.prev,this.stack.play.next," DTG:",newstack.dtg,this.stack.play.prev,this.stack.play.next);
+	    //console.log("Pos:",+ttrg,req["events"][0]," REQ:",this.config.play.prev,this.config.play.next," DTG:",newconfig.dtg,this.config.play.prev,this.config.play.next);
 	} else {
-	    //console.log("******************getState fixed: ",newStack);
-	    this.getBodies(req["events"][this.stack.play.event],newstack.bodies);
-	    this.getObserver(req["events"][this.stack.play.event],newstack.observer,newstack.bodies);
-	    newstack.epoch = req["events"][this.stack.play.event].epoch;
-	    newstack.dtg=new Date(newstack.epoch).toISOString();
-	    newstack.lat=req.location.latitude;
-	    newstack.lon=req.location.longitude;
+	    //console.log("******************getState fixed: ",newConfig);
+	    this.getBodies(req["events"][this.config.play.event],newconfig.bodies);
+	    this.getObserver(req["events"][this.config.play.event],newconfig.observer,newconfig.bodies);
+	    newconfig.epoch = req["events"][this.config.play.event].epoch;
+	    newconfig.dtg=new Date(newconfig.epoch).toISOString();
+	    newconfig.lat=req.location.latitude;
+	    newconfig.lon=req.location.longitude;
 	}
-	//console.log("******************getState: ",newStack);
+	//console.log("******************getState: ",newConfig);
 	return ret;
     };
-    this.getBodies = function (state,reqState,stackBodies) {
+    this.getBodies = function (state,reqState,configBodies) {
 	for (var name in reqState["state"]) {
 	    var reqBody = reqState["state"][name];
-	    if (stackBodies[name] === undefined) {
-		stackBodies[name]={position:new Vector3(),rotation:new Vector3()};
+	    if (configBodies[name] === undefined) {
+		configBodies[name]={position:new Vector3(),rotation:new Vector3()};
 	    };
-	    //console.log("getStackBodies State:",state,s,name);
-	    stackBodies[name].position.copy(reqBody.position);
-	    stackBodies[name].position.vx = +reqBody.position.vx;
-	    stackBodies[name].position.vy = +reqBody.position.vy;
-	    stackBodies[name].position.vz = +reqBody.position.vz;
-	    stackBodies[name].rotation.ra = +reqBody.rotation.ra;
-	    stackBodies[name].rotation.dec = +reqBody.rotation.dec;
-	    stackBodies[name].rotation.w = +reqBody.rotation.w;
-	    stackBodies[name].rotation.lon = stackBodies[name].rotation.ra;
-	    stackBodies[name].rotation.lat = stackBodies[name].rotation.dec;
-	    stackBodies[name].rotation.r = 1.0;
-	    stackBodies[name].rotation.spherical2cartesian();
-	    stackBodies[name].name=name;
+	    //console.log("getConfigBodies State:",state,s,name);
+	    configBodies[name].position.copy(reqBody.position);
+	    configBodies[name].position.vx = +reqBody.position.vx;
+	    configBodies[name].position.vy = +reqBody.position.vy;
+	    configBodies[name].position.vz = +reqBody.position.vz;
+	    configBodies[name].rotation.ra = +reqBody.rotation.ra;
+	    configBodies[name].rotation.dec = +reqBody.rotation.dec;
+	    configBodies[name].rotation.w = +reqBody.rotation.w;
+	    configBodies[name].rotation.lon = configBodies[name].rotation.ra;
+	    configBodies[name].rotation.lat = configBodies[name].rotation.dec;
+	    configBodies[name].rotation.r = 1.0;
+	    configBodies[name].rotation.spherical2cartesian();
+	    configBodies[name].name=name;
 	} 
     }
-    this.interpolateBodies = function (state,reqStatePrev,reqStateNext,dt,f,stackBodies) {
+    this.interpolateBodies = function (state,reqStatePrev,reqStateNext,dt,f,configBodies) {
 	for (var name in reqStatePrev["state"]) {
 	    var reqPrev = reqStatePrev["state"][name];
 	    var reqNext = reqStateNext["state"][name];
-	    if (stackBodies[name] === undefined) {
-		stackBodies[name]={position:new Vector3(),rotation:new Vector3()};
+	    if (configBodies[name] === undefined) {
+		configBodies[name]={position:new Vector3(),rotation:new Vector3()};
 	    };
-	    stackBodies[name].position.interpolate(reqPrev.position,reqNext.position,f);
-	    stackBodies[name].position.vx =  this.intlin(reqPrev.position.vx,reqNext.position.vx,f);
-	    stackBodies[name].position.vy =  this.intlin(reqPrev.position.vy,reqNext.position.vy,f);
-	    stackBodies[name].position.vz =  this.intlin(reqPrev.position.vz,reqNext.position.vz,f);
-	    stackBodies[name].rotation.ra =  this.intlin(reqPrev.rotation.ra,reqNext.rotation.ra,f);
-	    stackBodies[name].rotation.dec = this.intlin(reqPrev.rotation.dec,reqNext.rotation.dec,f);
-	    stackBodies[name].rotation.w =   this.intlin(reqPrev.rotation.w,reqNext.rotation.w,f);
-	    stackBodies[name].rotation.lon = stackBodies[name].rotation.ra;
-	    stackBodies[name].rotation.lat = stackBodies[name].rotation.dec;
-	    stackBodies[name].rotation.r = 1.0;
-	    stackBodies[name].rotation.spherical2cartesian();
-	    stackBodies[name].name=name;
+	    configBodies[name].position.interpolate(reqPrev.position,reqNext.position,f);
+	    configBodies[name].position.vx =  this.intlin(reqPrev.position.vx,reqNext.position.vx,f);
+	    configBodies[name].position.vy =  this.intlin(reqPrev.position.vy,reqNext.position.vy,f);
+	    configBodies[name].position.vz =  this.intlin(reqPrev.position.vz,reqNext.position.vz,f);
+	    configBodies[name].rotation.ra =  this.intlin(reqPrev.rotation.ra,reqNext.rotation.ra,f);
+	    configBodies[name].rotation.dec = this.intlin(reqPrev.rotation.dec,reqNext.rotation.dec,f);
+	    configBodies[name].rotation.w =   this.intlin(reqPrev.rotation.w,reqNext.rotation.w,f);
+	    configBodies[name].rotation.lon = configBodies[name].rotation.ra;
+	    configBodies[name].rotation.lat = configBodies[name].rotation.dec;
+	    configBodies[name].rotation.r = 1.0;
+	    configBodies[name].rotation.spherical2cartesian();
+	    configBodies[name].name=name;
 	} 
     };
     // get observer position and EF-coordinate system...
-    this.getObserver = function (state,reqState,stackObserver,stackBodies) { 
-	if (stackObserver.position === undefined) stackObserver.position=new Vector3(); 
-	if (stackObserver.i === undefined) stackObserver.i=new Vector3(); 
-	if (stackObserver.j === undefined) stackObserver.j=new Vector3(); 
-	if (stackObserver.k === undefined) stackObserver.k=new Vector3(); 
-	if (stackObserver.zenith === undefined) stackObserver.zenith=new Vector3(); 
+    this.getObserver = function (state,reqState,configObserver,configBodies) { 
+	if (configObserver.position === undefined) configObserver.position=new Vector3(); 
+	if (configObserver.i === undefined) configObserver.i=new Vector3(); 
+	if (configObserver.j === undefined) configObserver.j=new Vector3(); 
+	if (configObserver.k === undefined) configObserver.k=new Vector3(); 
+	if (configObserver.zenith === undefined) configObserver.zenith=new Vector3(); 
 	var reqObserver=reqState["observer"];
 	var reqOrigo=reqObserver.position.origo;
-	if (stackBodies[reqOrigo] === undefined ) {
-	    stackObserver.position.copy(reqObserver.position);
+	if (configBodies[reqOrigo] === undefined ) {
+	    configObserver.position.copy(reqObserver.position);
 	} else {
-	    stackObserver.position.origo=reqOrigo;
-	    stackObserver.position.copy(reqObserver.position).add(stackBodies[reqOrigo].position);
+	    configObserver.position.origo=reqOrigo;
+	    configObserver.position.copy(reqObserver.position).add(configBodies[reqOrigo].position);
 	}
-	stackObserver.zenith.copy(reqObserver.zenith);
-	stackObserver.zenith.normalize();
-	stackObserver.i.copy(reqObserver.i);
-	stackObserver.j.copy(reqObserver.j);
-	stackObserver.k.copy(reqObserver.k);
+	configObserver.zenith.copy(reqObserver.zenith);
+	configObserver.zenith.normalize();
+	configObserver.i.copy(reqObserver.i);
+	configObserver.j.copy(reqObserver.j);
+	configObserver.k.copy(reqObserver.k);
 
-	//console.log("setting axis:", stackObserver.i.x,stackObserver.i.y,stackObserver.i.z);
+	//console.log("setting axis:", configObserver.i.x,configObserver.i.y,configObserver.i.z);
     };
     // get observer position and EF-coordinate system...
-    this.interpolateObserver = function (state,reqStatePrev,reqStateNext,dt,f,stackObserver,stackBodies) { 
-	if (stackObserver.position === undefined) stackObserver.position=new Vector3(); 
-	if (stackObserver.i === undefined) stackObserver.i=new Vector3(); 
-	if (stackObserver.j === undefined) stackObserver.j=new Vector3(); 
-	if (stackObserver.k === undefined) stackObserver.k=new Vector3(); 
-	if (stackObserver.zenith === undefined) stackObserver.zenith=new Vector3();
+    this.interpolateObserver = function (state,reqStatePrev,reqStateNext,dt,f,configObserver,configBodies) { 
+	if (configObserver.position === undefined) configObserver.position=new Vector3(); 
+	if (configObserver.i === undefined) configObserver.i=new Vector3(); 
+	if (configObserver.j === undefined) configObserver.j=new Vector3(); 
+	if (configObserver.k === undefined) configObserver.k=new Vector3(); 
+	if (configObserver.zenith === undefined) configObserver.zenith=new Vector3();
 	var reqPrev = reqStatePrev["observer"];
 	var reqNext = reqStateNext["observer"];
 	var reqOrigo=reqPrev.position.origo;
-	if (stackBodies[reqOrigo] === undefined ) {
-	    stackObserver.position.interpolate(reqPrev.position, reqNext.position, f);
+	if (configBodies[reqOrigo] === undefined ) {
+	    configObserver.position.interpolate(reqPrev.position, reqNext.position, f);
 	} else {
-	    stackObserver.position.origo=reqOrigo;
-	    stackObserver.position.interpolate(reqPrev.position, reqNext.position, f);
-	    stackObserver.position.add(stackBodies[reqOrigo].position);
+	    configObserver.position.origo=reqOrigo;
+	    configObserver.position.interpolate(reqPrev.position, reqNext.position, f);
+	    configObserver.position.add(configBodies[reqOrigo].position);
 	}
-	stackObserver.zenith.interpolate(reqPrev.zenith,reqNext.zenith,f);
-	stackObserver.zenith.normalize();
-	stackObserver.i.interpolate(reqPrev.i,reqNext.i,f);
-	stackObserver.j.interpolate(reqPrev.j,reqNext.j,f);
-	stackObserver.k.interpolate(reqPrev.k,reqNext.k,f);
+	configObserver.zenith.interpolate(reqPrev.zenith,reqNext.zenith,f);
+	configObserver.zenith.normalize();
+	configObserver.i.interpolate(reqPrev.i,reqNext.i,f);
+	configObserver.j.interpolate(reqPrev.j,reqNext.j,f);
+	configObserver.k.interpolate(reqPrev.k,reqNext.k,f);
 
-	//console.log("setting axis:", stackObserver.i.x,stackObserver.i.y,stackObserver.i.z);
+	//console.log("setting axis:", configObserver.i.x,configObserver.i.y,configObserver.i.z);
     };
-    this.interpolateBodies2 = function(req,dt,f,stackBodies) {
+    this.interpolateBodies2 = function(req,dt,f,configBodies) {
 	// interpolate body positions between times
 	//console.log(">>> interpolating body positions.")
 	var reqStatePrev = req["events"][req.play.prev]["state"];
@@ -827,7 +842,7 @@ function Model() {
 	};
 	for (var name in req["events"][req.play.next]["state"]) {
 	    //var name_ = reqStatePrev[name].name;
-	    stackBodies[name]={position:new Vector3(),
+	    configBodies[name]={position:new Vector3(),
 			       rotation:new Vector3()};
 	    var main =  req["initial"][name]["main"];
 	    if (main !== "") { // use orbit to interpolate position
@@ -845,40 +860,40 @@ function Model() {
 		// get state
 		this.anomalies2elements(el);
 		
-		var r=stackBodies[main];
+		var r=configBodies[main];
 		var xmu=req["initial"][main]["xmu"];
-		this.elements2state(stackBodies[name], el, r, xmu);
+		this.elements2state(configBodies[name], el, r, xmu);
 		//console.log("Prev elements:",ep);
 		//console.log("Next elements:",en);
 		//console.log("Intp elements:",el);
 		//console.log("State main:",r,xmu);
-		//console.log("State elements:",stackBodies[name]);
+		//console.log("State elements:",configBodies[name]);
 	    } else { // no orbit available, interpolate state directly
-		stackBodies[name].position.set( this.intlin(reqStatePrev[name].position.x,reqStateNext[name].position.x,f),
+		configBodies[name].position.set( this.intlin(reqStatePrev[name].position.x,reqStateNext[name].position.x,f),
 						this.intlin(reqStatePrev[name].position.y,reqStateNext[name].position.y,f),
 						this.intlin(reqStatePrev[name].position.z,reqStateNext[name].position.z,f));
-		stackBodies[name].position.vx = this.intlin(reqStatePrev[name].position.vx,reqStateNext[name].position.vx,f);
-		stackBodies[name].position.vy = this.intlin(reqStatePrev[name].position.vy,reqStateNext[name].position.vy,f);
-		stackBodies[name].position.vz = this.intlin(reqStatePrev[name].position.vz,reqStateNext[name].position.vz,f);
-		//console.log("StackBodies fixed:",stackBodies[name].position);
+		configBodies[name].position.vx = this.intlin(reqStatePrev[name].position.vx,reqStateNext[name].position.vx,f);
+		configBodies[name].position.vy = this.intlin(reqStatePrev[name].position.vy,reqStateNext[name].position.vy,f);
+		configBodies[name].position.vz = this.intlin(reqStatePrev[name].position.vz,reqStateNext[name].position.vz,f);
+		//console.log("ConfigBodies fixed:",configBodies[name].position);
 	    };
-	    stackBodies[name].rotation.ra =    this.intlin(reqStatePrev[name].ra,reqStateNext[name].ra,f);
-	    stackBodies[name].rotation.dec =   this.intlin(reqStatePrev[name].dec,reqStateNext[name].dec,f);
-	    stackBodies[name].rotation.w =     this.intlin(reqStatePrev[name].w,reqStateNext[name].w,f);
-	    stackBodies[name].rotation.lon = stackBodies[name].rotation.ra;
-	    stackBodies[name].rotation.lat = stackBodies[name].rotation.dec;
-	    stackBodies[name].rotation.r = 1.0;
-	    stackBodies[name].rotation.spherical2cartesian();
-	    stackBodies[name].name=name;
+	    configBodies[name].rotation.ra =    this.intlin(reqStatePrev[name].ra,reqStateNext[name].ra,f);
+	    configBodies[name].rotation.dec =   this.intlin(reqStatePrev[name].dec,reqStateNext[name].dec,f);
+	    configBodies[name].rotation.w =     this.intlin(reqStatePrev[name].w,reqStateNext[name].w,f);
+	    configBodies[name].rotation.lon = configBodies[name].rotation.ra;
+	    configBodies[name].rotation.lat = configBodies[name].rotation.dec;
+	    configBodies[name].rotation.r = 1.0;
+	    configBodies[name].rotation.spherical2cartesian();
+	    configBodies[name].name=name;
 	}
     };
     // interpolate observer position and EF-coordinate system...
-    this.interpolateObserver2 = function(req,dt,f,stackObserver) {
-	if (stackObserver.position === undefined) stackObserver.position=new Vector3(); 
-	if (stackObserver.i === undefined) stackObserver.i=new Vector3(); 
-	if (stackObserver.j === undefined) stackObserver.j=new Vector3(); 
-	if (stackObserver.k === undefined) stackObserver.k=new Vector3(); 
-	if (stackObserver.zenith === undefined) stackObserver.zenith=new Vector3(); 
+    this.interpolateObserver2 = function(req,dt,f,configObserver) {
+	if (configObserver.position === undefined) configObserver.position=new Vector3(); 
+	if (configObserver.i === undefined) configObserver.i=new Vector3(); 
+	if (configObserver.j === undefined) configObserver.j=new Vector3(); 
+	if (configObserver.k === undefined) configObserver.k=new Vector3(); 
+	if (configObserver.zenith === undefined) configObserver.zenith=new Vector3(); 
 	var reqObsPrev=req["events"][req.play.prev]["observer"];
 	var reqObsNext=req["events"][req.play.next]["observer"];
 	var origo=reqObsPrev.position.origo;
@@ -924,27 +939,27 @@ function Model() {
 
 	//console.log("**** Body after:",reqObsPrev.position.x,reqObsPrevos.x,origo);
 
-	//console.log("*** stackObserver:",stackObserver);
+	//console.log("*** configObserver:",configObserver);
 
-	if (stackObserver[origo] === undefined ) {
-	    stackObserver.position.copy(pos);
+	if (configObserver[origo] === undefined ) {
+	    configObserver.position.copy(pos);
 	} else {
-	    stackObserver.position.copy(pos).add(stackObserver[origo].position);
-	    //console.log("**** Body origo:",reqObsPrev.position.x,reqObsPrevos.x,stackObserver[origo].x,origo);
+	    configObserver.position.copy(pos).add(configObserver[origo].position);
+	    //console.log("**** Body origo:",reqObsPrev.position.x,reqObsPrevos.x,configObserver[origo].x,origo);
 	}
-	//console.log("**** Interpolating observer:",stackObserver.x,stackObserver.y,stackObserver.z);
-	if (stackObserver.i === undefined) stackObserver.i=new Vector3(); 
+	//console.log("**** Interpolating observer:",configObserver.x,configObserver.y,configObserver.z);
+	if (configObserver.i === undefined) configObserver.i=new Vector3(); 
 	pos.set(reqObsPrev.i.x,reqObsPrev.i.y,reqObsPrev.i.z);
 	pos.applyQuaternion(q);
-	stackObserver.i.copy(pos);
-	if (stackObserver.j === undefined) stackObserver.j=new Vector3(); 
+	configObserver.i.copy(pos);
+	if (configObserver.j === undefined) configObserver.j=new Vector3(); 
 	pos.set(reqObsPrev.j.x,reqObsPrev.j.y,reqObsPrev.j.z);
 	pos.applyQuaternion(q);
-	stackObserver.j.copy(pos);
-	if (stackObserver.k === undefined) stackObserver.k=new Vector3(); 
+	configObserver.j.copy(pos);
+	if (configObserver.k === undefined) configObserver.k=new Vector3(); 
 	pos.set(reqObsPrev.k.x,reqObsPrev.k.y,reqObsPrev.k.z);
 	pos.applyQuaternion(q);
-	stackObserver.k.copy(pos);
+	configObserver.k.copy(pos);
     };
     this.modelUpdate = function (state) {
 	var ret = false;
@@ -986,6 +1001,14 @@ function Model() {
 	    this.modelRedraw=true;
 	}
 	return ret;
+    };
+    this.request=function(state) {
+	this.wipe = function () {var obj=Object.keys(this);for (var ii=0; ii<obj.length;ii++) 
+				 {if (typeof this[obj[ii]] === 'function'  || typeof this[obj[ii]] === 'object') {delete this[obj[ii]];}}}
+	this.addLat = function(val) {this["lat"]=val;};
+	this.addLon = function(val) {this["lon"]=val;};
+	this.addHgt = function(val) {this["hgt"]=val;};
+	this.addDtg = function(val) {this["dtg"]=val;};
     };
     this.draw = function (state) {
     };

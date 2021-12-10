@@ -3,7 +3,6 @@ import TooltipWrapper from './TooltipWrapper';
 
 import {
   defaultCameraOptions,
-  defaultFocusOptions,
   defaultModelOptions,
   defaultLightOptions,
   defaultMarkerOptions,
@@ -16,33 +15,24 @@ export default function ReactModel({
     state,
     animations,
     cameraOptions,
-    focus,
-    focusOptions,
     modelOptions,
-    lightOptions,
     initialCoordinates,
-    markers,
-    markerOptions,
-    onClickMarker,
-    onDefocus,
-    onMouseOutMarker,
-    onMouseOverMarker,
     onGetModelInstance,
     onTextureLoaded,
     getTooltipContent,
     size: initialSize,
 }) {
-    const canvasRef = useRef();
+    const canvasRef        = useRef();
     const modelInstanceRef = useRef();
-    const mountRef = useRef();
-    const tooltipRef = useRef();
-    const size = useResize(mountRef, initialSize);
-    
+    const mountRef         = useRef();
+    const tooltipRef       = useRef();
+    const size             = useResize(mountRef, initialSize);
+    //const mouse = useRef([0, 0])
     // init
     useEffect(() => {
 	//console.log("State:",state);
 	const mount = mountRef.current;
-	const modelInstance = new Model(state, canvasRef.current, tooltipRef.current);
+	const modelInstance = new Model(state, canvasRef.current);//, mouse.current
 	mount.appendChild(modelInstance.renderer.domElement);
 	modelInstance.animate();
 	modelInstanceRef.current = modelInstance;
@@ -58,58 +48,35 @@ export default function ReactModel({
     // update callbacks
     useEffect(() => {
 	modelInstanceRef.current.updateCallbacks({
-	    onClickMarker,
-	    onDefocus,
-	    onMouseOutMarker,
-	    onMouseOverMarker,
 	    onTextureLoaded,
 	});
     }, [
-	onClickMarker,
-	onDefocus,
-	onMouseOutMarker,
-	onMouseOverMarker,
 	onTextureLoaded,
     ]);
 
     // update camera
     useEffect(() => {
-	modelInstanceRef.current.updateCamera(initialCoordinates, cameraOptions);
+	modelInstanceRef.current.reconfigCamera(initialCoordinates, cameraOptions);
     }, [cameraOptions, initialCoordinates]);
-
-    // update focus
-    useEffect(() => {
-	modelInstanceRef.current.updateFocus(focus, focusOptions);
-    }, [focus, focusOptions]);
 
     // update model
     useEffect(() => {
-	modelInstanceRef.current.updateModel(modelOptions);
+	modelInstanceRef.current.reconfigModel(modelOptions);
     }, [modelOptions]);
-
-    // update lights
-    useEffect(() => {
-	modelInstanceRef.current.updateLights(lightOptions);
-    }, [lightOptions]);
-
-    // update markers
-    useEffect(() => {
-	modelInstanceRef.current.updateMarkers(markers, markerOptions);
-    }, [markerOptions, markers]);
 
     // apply animations
     useEffect(() => {
 	return modelInstanceRef.current.applyAnimations(animations);
     }, [animations]);
-
+    
     // resize
     useEffect(() => {
-	modelInstanceRef.current.updateSize(size);
+	modelInstanceRef.current.reconfigSize(size);
     }, [size]);
 
     return (
 	    <div ref={mountRef} style={{ height: '100%', width: '100%' }}>
-	    <canvas ref={canvasRef} style={{ display: 'block' }} />
+	    <canvas ref={canvasRef} style={{ display: 'block' }}/>
 	    <TooltipWrapper ref={tooltipRef} getTooltipContent={getTooltipContent}/>
 	    </div>
     );
@@ -118,10 +85,10 @@ export default function ReactModel({
 ReactModel.defaultProps = {
     animations: [],
     cameraOptions: defaultCameraOptions,
-    focusOptions: defaultFocusOptions,
     modelOptions: defaultModelOptions,
-    lightOptions: defaultLightOptions,
     initialCoordinates: INITIAL_COORDINATES,
-    markers: [],
-    markerOptions: defaultMarkerOptions,
 };
+
+
+
+//   	onMouseMove={e => {let x=e.clientX;let y=e.clientY; mouse.current = [x, y]}}>

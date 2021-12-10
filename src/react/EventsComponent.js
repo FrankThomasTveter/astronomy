@@ -118,7 +118,7 @@ class Events extends Component {
 								 alignItems:'center'}} className="cancel">
 		<Button
 	          className={classes.button}
-            onClick={function() {state.Events.loadEvents(state,"",[state.Show.showAll]);}}
+            onClick={function() {state.Events.sendRequest(state,"",[state.Show.showAll]);}}
 	          title={"Reload events"}
 	          disabled={false}> <ReloadIcon/> </Button>
 		<input name="prev" type="checkbox" defaultChecked={! this.state.prev} onTouchEnd={togglePrev} onClick={togglePrev}/><label>Prev</label>

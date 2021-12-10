@@ -55,6 +55,9 @@ class Dataset extends Component {
 	this.onDragStart=this.onDragStart.bind(this);
 	this.state={progress:false,mode:0,width:0,height:0};
     };
+    show(state) {
+        this.forceUpdate();
+    };
     onDragStart(e,node) {
         const {state} = this.props;
 	//console.log("Drag:",node);

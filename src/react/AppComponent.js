@@ -13,22 +13,20 @@ import BackGroundImage from "../images/waves.png";
 //import {BrowserRouter, Switch, Route} from 'react-router-dom';
 
 //import Chain    from '../lib/ChainLib';
-import Milkyway from '../lib/MilkywayLib';
-import Model    from '../lib/ModelLib';
-import Orbit    from '../lib/OrbitLib';
-import Planets  from '../lib/PlanetsLib';
+import Model      from '../lib/ModelLib';
+import Orbit      from '../lib/OrbitLib';
 //import Request  from '../lib/RequestLib';
 //import Resource from '../lib/ResourceLib';
 //import Scene    from '../lib/SceneLib';
 //import Stack    from '../lib/StackLib';
 
 //import Colors   from '../lib/ColorsLib';
-import File     from '../lib/FileLib';
+import File       from '../lib/FileLib';
 //import Database from '../lib/DatabaseLib';
-import Default  from '../lib/DefaultLib';
-import Events   from '../lib/EventsLib';
-import Html     from '../lib/HtmlLib';
-import Layout   from '../lib/LayoutLib';
+import Default    from '../lib/DefaultLib';
+import Events     from '../lib/EventsLib';
+import Html       from '../lib/HtmlLib';
+import Layout     from '../lib/LayoutLib';
 //import Custom   from '../lib/CustomLib';
 //import Grid     from '../lib/GridLib';
 //import Matrix   from '../lib/MatrixLib';
@@ -36,7 +34,7 @@ import Layout   from '../lib/LayoutLib';
 //import Path     from '../lib/PathLib';
 //import Polygon  from '../lib/PolygonLib';
 //import Auto     from '../lib/AutoLib';
-import Show     from '../lib/ShowLib';
+import Show       from '../lib/ShowLib';
 //import Svg      from '../lib/SvgLib';
 //import Cell     from '../lib/CellLib';
 //import Threshold from '../lib/ThresholdLib';
@@ -166,10 +164,8 @@ class App extends Component {
 	super(props);
 	this.libs={
 //	    Chain:     new Chain(),
-	    Milkyway:  new Milkyway(),
 	    Model:     new Model(),
 	    Orbit:     new Orbit(),
-	    Planets:   new Planets(),
 //	    Request:   new Request(),
 //	    Resource:  new Resource(),
 //	    Scene:     new Scene(),
@@ -217,16 +213,15 @@ class App extends Component {
     componentDidMount() {
 	var state=this.libs;
 	state.Default.init(state);
-	state.Events.init(state);
         state.Settings.init(state);
-        state.Planets.init(state);
-        state.Milkyway.init(state);
+        state.Model.init(state);
+	state.Events.init(state);
 	state.Default.loadUrl(state,"",
-				  [state.Default.mergeState,
-				   state.Default.checkState,
-				   state.Default.storeHomeState,
-				   state.Events.updateLoop]
-				 );
+			      [state.Default.mergeState,
+			       state.Default.checkState,
+			       state.Default.storeHomeState,
+			       state.Events.updateLoop]
+			     );
     };
     componentWillUnmount() {
 	clearInterval(this.intervalID);
