@@ -1,1 +1,0 @@
-/astro/astro-api/cgi-bin/astro/event.pl
