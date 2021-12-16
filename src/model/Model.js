@@ -102,13 +102,22 @@ export default class Model {
     };	
 
     initCamera(state) {
-	this.camera = new THREE.PerspectiveCamera();
-	this.camera.position.set(this.Bodies.config.sun.radius*2.0, 0, 0);
-	this.camera.up.set(0,0,1);
+	this.mainCamera = new THREE.PerspectiveCamera(45,undefined,1,10000000);
+	this.mainCamera.name="camera";
+	this.mainCamera.position.set(0,0,0);
+	this.mainCamera.up.set(0,0,1);
+	console.log("Camera--",this.mainCamera);
+	//this.mainCamera.target.set(0,0,1);
+	//this.mainCamera.updateMatrixWorld();//true
+	//this.mainCamera.updateProjectionMatrix();
+	//var vector = new THREE.Vector3(0, 0, -1);
+        //vector.applyEuler(this.mainCamera.rotation, this.mainCamera.eulerOrder);
+	//console.log("Camera posit:",this.mainCamera.position,this.mainCamera.target);
+	//console.log("Camera point:",vector,this.mainCamera.rotation,this.mainCamera.eulerOrder);
     };	
     
     initControls(state) {
-	this.controls = new PointOfViewControls(this.camera, this.renderer.domElement);
+	this.controls = new PointOfViewControls(this.mainCamera, this.renderer.domElement);
 	this.controls.rotateSpeed = 1.0;
 	this.controls.zoomSpeed = 2.5;
 	this.controls.panSpeed = 0.0;
@@ -117,6 +126,9 @@ export default class Model {
 	this.controls.staticMoving = true;
 	this.controls.dynamicDampingFactor = 0.3;
 	this.controls.keys = [ 65, 83, 68 ];
+	// set a target (different from default zero, which is the camera location)
+	this.controls.target.set(1,0,0);
+	this.controls.update();
     };
 
     initRaycaster(state) {
@@ -133,19 +145,19 @@ export default class Model {
 	this.scene = new THREE.Scene();
 	//this.scene.add(this.Backdrop.createStarsBackdrop());
 	//this.scene.add(this.Backdrop.createNavigationBackdrop());
-	this.scenes={backdrop:[],bodies:{}};
-	this.scenes.backdrop.push(     {scene: this.Backdrop.createNavigationScene(),       show:false  });
-	this.scenes.backdrop.push(     {scene: this.Backdrop.createStarsScene(),            show:true  });
-	this.scenes.bodies["sun"]=     {scene: this.Bodies.createSunScene(this.camera),     show:false, distance:20   };
-	this.scenes.bodies["mercury"]= {scene: this.Bodies.createMercuryScene(this.camera), show:false, distance:9    };
-	this.scenes.bodies["venus"]=   {scene: this.Bodies.createVenusScene(this.camera),   show:false, distance:8    };
-	this.scenes.bodies["earth"]=   {scene: this.Bodies.createEarthScene(this.camera),   show:false, distance:0    };
-	this.scenes.bodies["mars"]=    {scene: this.Bodies.createMarsScene(this.camera),    show:false, distance:10   };
-	this.scenes.bodies["jupiter"]= {scene: this.Bodies.createJupiterScene(this.camera), show:false, distance:12   };
-	this.scenes.bodies["saturn"]=  {scene: this.Bodies.createSaturnScene(this.camera),  show:false, distance:13   };
-	this.scenes.bodies["uranus"]=  {scene: this.Bodies.createUranusScene(this.camera),  show:false, distance:14   };
-	this.scenes.bodies["neptune"]= {scene: this.Bodies.createNeptuneScene(this.camera), show:true,  distance:15   };
-	this.scenes.bodies["pluto"]=   {scene: this.Bodies.createPlutoScene(this.camera),   show:false, distance:16   };
+	this.scenes={backdrop:[],bodies:{},order:["navigation","stars"]};
+	this.scenes.backdrop["navigation"]={scene: this.Backdrop.createNavigationScene(this.mainCamera),   show:true};
+	this.scenes.backdrop["stars"]=     {scene: this.Backdrop.createStarsScene(this.mainCamera),        show:false};
+	this.scenes.bodies["sun"]=     {scene: this.Bodies.createSunScene(this.mainCamera), distance:20,   show:true};
+	this.scenes.bodies["mercury"]= {scene: this.Bodies.createMercuryScene(this.mainCamera),distance:9, show:true};
+	this.scenes.bodies["venus"]=   {scene: this.Bodies.createVenusScene(this.mainCamera),distance:8,   show:true};
+	this.scenes.bodies["earth"]=   {scene: this.Bodies.createEarthScene(this.mainCamera),distance:0,   show:true};
+	this.scenes.bodies["mars"]=    {scene: this.Bodies.createMarsScene(this.mainCamera),distance:10,   show:false};
+	this.scenes.bodies["jupiter"]= {scene: this.Bodies.createJupiterScene(this.mainCamera),distance:12,show:false};
+	this.scenes.bodies["saturn"]=  {scene: this.Bodies.createSaturnScene(this.mainCamera),distance:13, show:false};
+	this.scenes.bodies["uranus"]=  {scene: this.Bodies.createUranusScene(this.mainCamera),distance:14, show:false};
+	this.scenes.bodies["neptune"]= {scene: this.Bodies.createNeptuneScene(this.mainCamera),distance:15,show:false};
+	this.scenes.bodies["pluto"]=   {scene: this.Bodies.createPlutoScene(this.mainCamera),distance:16,  show:false};
     //this.Bodies.setPosition(this.scene,"deathstar",
     //			  20000*this.Bodies.SCALE,
     //			  this.Bodies.config.saturn.radius*1.01,
@@ -168,33 +180,35 @@ export default class Model {
     render() {
 	//console.log("Rendering...");
 	this.renderer.sortObjects = false;
-	this.updateModel();
-	// render backdrop-scene
-	this.renderBackdrop();
-	// render bodies-scenes
-	this.renderScenes();
-	// process controls
+	// process controls (point camera)
 	this.controls.update();
-	TWEEN.update();
+	this.updateModel();
+	this.renderInitial();
+	this.renderBackdrop();
+	this.renderBodies();
+	//TWEEN.update();
     }
 
     updateModel() {
 	// update the information sprite...
-	this.updateRaycaster(this.state);
+	//this.updateRaycaster(this.state);
 
 	// update model config
 	var config=this.state.Model.getCurrentConfig(this.state);
-	this.updateConfig(config);
+	this.updateConfig(this.state,config);
 
-	// update scene distances...
+	//check if we have a new config...
+	//this.updateTarget(this.state,config);
 
-	// update observer position...
+	// update main camera position (to observer)...
+	this.updateMainCamera(this.state);
 
-	//this.updateCamera(this.state);
+	// update scenes
+	this.updateScenes(this.state,this.mainCamera);
     };
 
     updateRaycaster (state) {
-	this.raycaster.setFromCamera(this.mouse,this.camera);
+	this.raycaster.setFromCamera(this.mouse,this.mainCamera);
 	const intersects = this.raycaster.intersectObjects( this.scene.children );
 	var cnt=intersects.length;
 	for ( let i = 0; i < intersects.length; i ++ ) {
@@ -203,8 +217,8 @@ export default class Model {
 	};
     };
 
-    updateConfig (config) {
-	//console.log("Updating config");
+    updateConfig (state,config) {
+	//console.log("Updating config",config);
 	this.Bodies.copyObserver( config.observer,        this.Bodies.config.observer);
 	this.Bodies.copyBody(     config.bodies.sun,      this.Bodies.config.sun);
 	this.Bodies.copyBody(     config.bodies.mercury,  this.Bodies.config.mercury);
@@ -219,31 +233,97 @@ export default class Model {
 	this.Bodies.copyBody(     config.bodies.uranus,   this.Bodies.config.uranus);
 	this.Bodies.copyBody(     config.bodies.neptune,  this.Bodies.config.neptune);
 	this.Bodies.copyBody(     config.bodies.pluto,    this.Bodies.config.pluto);
+	//console.log("Updated config",this.Bodies.config);
+    };
+
+    updateScenes (state,camera) {
+	//console.log("UpdateScenes...");
+	// loop over Backdrop
+	var observer=this.Bodies.config.observer;
+	this.scenes.order.forEach( (key,i) => {
+	    var item=this.scenes.backdrop[key];
+	    this.Backdrop.updateScene(state,camera,observer,key,item.scene);
+	});
+	// loop over Bodies scenes
+	for (var key in this.scenes.bodies) {
+	    var item=this.scenes.bodies[key];
+	    if (item.scene !== undefined) {
+		if (item.show) {
+		    //console.log("Scene:",item.scene);
+		    this.Bodies.updateScene(state,camera,observer,key,item.scene);
+		};
+	    };
+	};
     };
     
-    updateCamera(state) {
-	this.camera.position.copy(this.Bodies.config.observer.position);
-	this.camera.up.set(this.Bodies.config.observer.zenith); // up is always towards observer zenith...
+    updateMainCamera(state) {
+	//console.log("Zenith:",this.Bodies.config.observer.zenith);
+	//this.mainCamera.position.copy(this.Bodies.config.observer.position);
+	//this.mainCamera.up.set(this.Bodies.config.observer.zenith); // up is always towards observer zenith...
+	//this.mainCamera.poinAt(new THREE.Vector3(0,1,0)); // up is always towards observer zenith...
+	//this.mainCamera.updateMatrixWorld(true);
+	//this.mainCamera.updateProjectionMatrix();
     }
 
-    renderBackdrop() {
+    updateTarget(state) {
+	// when we have a new target, update the camera point target
+	if (state.Model.config.newTarget) {
+	    state.Model.config.newTarget=false;
+	    var requests=state.Model.requests;
+	    var reqId = requests.current;
+	    var req = requests.state[reqId]
+	    if (false && req.play.event !== undefined) {
+		this.mainCamera.position.set(state.Model.config.state[state.Model.config.current].observer.position);
+		this.mainCamera.up.set(state.Model.config.state[state.Model.config.current].observer.zenith); // up is always towards observer zenith...
+		var target = requests.state[reqId]["events"][req.play.event]["target"]; // target could be mis-spelled...
+		var dir = requests.state[reqId]["events"][req.play.event]["dir"];
+		var fov = requests.state[reqId]["events"][req.play.event]["fov"];
+		var con = requests.state[reqId]["events"][req.play.event]["con"];
+		var configBodies=state.Model.config.state[state.Model.config.current].bodies;
+		if (target !== undefined && configBodies[target] !== undefined) {
+		    this.mainCamera.pointAt(configBodies[target].position);
+		} else if (dir !== undefined) {
+		    this.mainCamera.pointDir(dir);
+		};
+		if (fov !== undefined) {
+		    this.mainCamera.setFov(fov);
+		};
+		if (con !== undefined) {
+		    if (con === 0) { // no constellations
+			state.Model.consTime=new Date().getTime()-1000.0; // no fade
+		    } else {
+			state.Model.consTime=new Date().getTime()+2000.0; // fade inn
+		    };
+		    state.Model.consReq = con;
+		};
+	    }
+	};
+    };	
+
+    renderInitial() {
 	this.renderer.autoClear = true; // clear canvas completely
-	this.renderer.render(this.scene, this.camera);
+	this.renderer.render(this.scene, this.mainCamera);
 	this.renderer.autoClear = false; // draw on top of previous drawing
-	this.scenes.backdrop.forEach( (k,i)=>{
+	//console.log("Camera:",this.mainCamera);
+    };
+
+    renderBackdrop() {
+	this.scenes.order.forEach( (kk,i)=>{
+	    let k = this.scenes.backdrop[kk];
 	    let show=k.show;
 	    let scene=k.scene;
-	    //console.log("Rendering:",k,distance, show);
-	    if (show) {
-		this.Backdrop.prepareForRender(scene,this.camera);
-		this.renderer.render(scene, this.camera);
+	    let camera=this.Backdrop.getCamera(scene);
+	    //console.log("Rendering:", k, show, camera);
+	    if (show && camera !== undefined) {
+		this.Backdrop.prepareForRender(scene,this.mainCamera);
+		this.renderer.render(scene, camera);
 	    } else {
 		//console.log("Not rendering:",i);
 	    }
 	});	
     };
 
-    renderScenes() {
+    renderBodies() {
 	//this.renderer.autoClear = false;
 	// sort scenes by distance...
 	var keys = Object.keys(this.scenes.bodies);
@@ -252,9 +332,11 @@ export default class Model {
 	    let distance=this.scenes.bodies[k].distance||0;
 	    let show=this.scenes.bodies[k].show;
 	    let scene=this.scenes.bodies[k].scene;
-	    if (show) {
+	    let camera=this.Bodies.getCamera(scene);
+	    if (show && camera !== undefined) {
 		//console.log("Rendering:",k);
-		this.renderer.render(scene, this.camera);
+		this.Bodies.prepareForRender(scene,this.mainCamera);
+		this.renderer.render(scene, camera);
 	    } else {
 		//console.log("Not rendering:",k);
 	    }
@@ -312,12 +394,12 @@ export default class Model {
 	    // 	initialCoordinates,
 	    // 	RADIUS * distanceRadiusScale,
 	    // );
-	    //this.camera.position.set(x, y, z);
+	    //this.mainCamera.position.set(x, y, z);
 	    this.initialCoordinates = initialCoordinates;
 	};
-	 //this.camera.far = 100000;
-	 //this.camera.fov = 45;
-	 //this.camera.near = 1;
+	 //this.mainCamera.far = 100000;
+	 //this.mainCamera.fov = 45;
+	 //this.mainCamera.near = 1;
 	 //this.controls.autoRotate = enableAutoRotate;
 	 //this.controls.autoRotateSpeed = autoRotateSpeed;
 	 //this.controls.dampingFactor = 0.1;
@@ -379,9 +461,9 @@ export default class Model {
 	if (size) {
 	    const [width, height] = size;
 	    this.renderer.setSize(width, height);
-	    this.camera.aspect = width / height;
+	    this.mainCamera.aspect = width / height;
 	}
-	this.camera.updateProjectionMatrix();
+	this.mainCamera.updateProjectionMatrix();
     };
 
     destroy() {
@@ -405,10 +487,10 @@ export default class Model {
 	this.controls.dispose();
 	this.controls=null;
 	this.preFocusPosition = null;;
-	this.camera.children.forEach(object => {
-	    this.camera.remove(object);
+	this.mainCamera.children.forEach(object => {
+	    this.mainCamera.remove(object);
 	});
-	this.camera=null;
+	this.mainCamera=null;
     }
     
     updateCallbacks(callbacks = {}) {

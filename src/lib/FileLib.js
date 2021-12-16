@@ -121,7 +121,16 @@ function File() {
 	return "?" + Object
             .keys(params)
             .map(function(key){
-		return key+"="+encodeURIComponent(params[key])
+		if (Array.isArray(params[key])) {
+		    var kk="";
+		    params[key].forEach((x,i)=>{
+			if (kk !== "") { kk += "&";};
+			kk += key+"="+encodeURIComponent(x);
+		    });
+		    return kk;
+		} else {
+		    return key+"="+encodeURIComponent(params[key]);
+		};
             })
             .join("&")
     }

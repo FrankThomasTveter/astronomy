@@ -44,33 +44,34 @@ function Model() {
     this.reqId=undefined;
     this.speed = 0.0;
     this.step = 0;
-    this.requests = { 0 : {location : {latitude : 60.0,
-                                       longitude: 10.0,
-                                       height   : 0.0},
-			   play : { event : 0,
-				    speed : 0.0,       // configEpoch = (epoch-e0) * speed + m0
-				    e0 : 0.0,
-				    m0 : 0.0 },
-			   events : [{ reqId : 1,
-                                       label: "Sunrise", 
-                                       pointAt : "The Sun",
-                                       viewAngle : 25.0,
-                                       dtg : "2016-01-02T16:56:00Z"
-                                     }
-				    ],
-			   current : 0
-			  },
-                      1 : {},
-                      current : 0
-		    };
+    this.requests = { state:{0:{location : {latitude : 60.0,
+					  longitude: 10.0,
+					  height   : 0.0},
+			      play : { event : 0,
+				       speed : 0.0,       // configEpoch = (epoch-e0) * speed + m0
+				       e0 : 0.0,
+				       m0 : 0.0 },
+			      events : [{ reqId : 1,
+					  label: "Sunrise", 
+					  pointAt : "The Sun",
+					  viewAngle : 25.0,
+					  dtg : "2016-01-02T16:56:00Z"
+					}
+				       ],
+			      current : 0
+			     },
+			     1:{}},
+                      current : 0,
+		      };
     this.config = { reqId : -1,
-		   play : { },
-		   0 : {bodies:{},
-			observer:{}}, // first config state goes here
-		   1 : {bodies:{},
-			observer:{}}, // second config state goes here
-		   current : 1  // current state (0 or 1)?
-		 };
+		    play : { },
+		    state : {0:{bodies:{},
+				observer:{}}, // first config state goes here
+			     1:{bodies:{},
+				observer:{}}}, // second config state goes here
+		    current : 1,// current state (0 or 1)?
+		    newTarget : false,
+		  };
     this.hello=function () {
 	console.log("Hello world!");
     };
@@ -108,7 +109,7 @@ function Model() {
 	    this.step=0;
 	};
 	if (this.step === 0) {
-	    this.configUpdate();
+	    this.configUpdate(state);
 	    if (this.configRedraw) {
 		this.redraw=true;
 		this.configRedraw=false;
@@ -122,8 +123,12 @@ function Model() {
 	    this.step=(this.step+1)%100;    
 	};
 	if (this.reqId !== -1 && state.React !== undefined && state.React.Model !== undefined) {
-	    return this.config[this.config.current];
+	    return this.config.state[this.config.current];
 	};
+    };
+    this.offzoom = function (delta) {
+        //_zoomStart.y = _zoomStart.y + delta;
+        //console.log("OffZoom:",delta,this.object.getFovX());
     };
     this.initScene = function (state) {
 	state.Scene.display=0;
@@ -218,6 +223,8 @@ function Model() {
 	return vars;
     };
     this.launch= function (state,lat, lon, dtg, hrs, label, target, fov, dir, con, speed) {
+	if (hrs===undefined) {hrs=1.0;};
+	if (speed===undefined) {speed=this.speed;}
 	console.log("*** launching model:",lat, lon, dtg, hrs, label, target, fov, dir, con, speed);
 	lat=(lat || 51.5);
 	lon=(lon || 0.0);
@@ -247,7 +254,7 @@ function Model() {
 	    }
 	}
 	var newRequest=this.requests.current + 1;
-	this.requests[newRequest]={ location : {latitude : lat,
+	this.requests.state[newRequest]={ location : {latitude : lat,
 					   longitude : lon,
 					   height : 0.0},
 			       play : {  } ,
@@ -255,7 +262,7 @@ function Model() {
 			       current : 0
 			     };
 	for ( tt = 0; tt < dtgs.length; tt++) {
-	    this.requests[newRequest]["events"].push({reqId : tt+1,
+	    this.requests.state[newRequest]["events"].push({reqId : tt+1,
 						 label: label,
 						 target : target,
 						 dir : dir,
@@ -265,15 +272,15 @@ function Model() {
 						});
 	};
 	if (speed !== undefined) {
-	    this.requests[newRequest]["play"]["event"] = 0;
-	    this.requests[newRequest]["play"]["speed"] = speed;
-	    this.requests[newRequest]["play"]["hrs"] = hrs;
-	    this.requests[newRequest]["play"]["m0"] = m0;
+	    this.requests.state[newRequest]["play"]["event"] = 0;
+	    this.requests.state[newRequest]["play"]["speed"] = speed;
+	    this.requests.state[newRequest]["play"]["hrs"] = hrs;
+	    this.requests.state[newRequest]["play"]["m0"] = m0;
 	    
-	    console.log("New request:",this.requests[newRequest]);
+	    console.log("New request:",this.requests.state[newRequest]);
 
 	} else {
-	    this.requests[newRequest]["play"]["event"] = 0;
+	    this.requests.state[newRequest]["play"]["event"] = 0;
 	};
 	this.requests.current=newRequest;
     };
@@ -282,7 +289,7 @@ function Model() {
     this.requestUpdate = function (state) {
 	var ret=false;
 	var reqId=this.requests.current;
-	var req = this.requests[reqId]
+	var req = this.requests.state[reqId]
 	if ( ! req.sent) { // we have a new target
 	    console.log("Sending new request.",reqId);
 	    this.sendRequest(state,reqId,req,[]);
@@ -300,9 +307,13 @@ function Model() {
 	for ( var tt = 0; tt < request.events.length; tt++) {
 	    dtgs.push(request.events[tt]["dtg"]);
 	};
+	if (dtgs.length === 0) { // add "now"...
+	    var dtgdate=new Date();
+	    dtgs.push(dtgdate.toISOString());
+	};
 	req.addDtg(dtgs);
 	req.wipe();
-	console.log("Sending state-request :",req);
+	console.log("State-request :",req);
 	return req;
     };
     this.sendRequest = function(state, reqId, request, callbacks) {
@@ -342,7 +353,7 @@ function Model() {
 	//console.log("Polygons:",JSON.stringify(state.Polygon.names));
     }.bind(this);
     this.setInfo = function (state,dtg,lat,lon) {
-	var info=document.getElementById("info");
+	//var info=document.getElementById("info");
 	//info.innerHTML = dtg+" lat:"+parseFloat(lat).toFixed(2)+" lon:"+parseFloat(lon).toFixed(2);
 	console.log(dtg+" lat:"+parseFloat(lat).toFixed(2)+" lon:"+parseFloat(lon).toFixed(2));
     };
@@ -364,8 +375,8 @@ function Model() {
 		var parser = new DOMParser();
 		xmlDoc = parser.parseFromString(result, "text/xml");
 		try {
-		    this.dataToArray(state,xmlDoc,req,reqId);
-		    console.log("Loaded state data:",result);
+		    this.dataToRequest(state,xmlDoc,req,reqId);
+		    //console.log("Loaded state data:",result);
 		} catch (err) {
 		    console.log(err);
 		};
@@ -376,11 +387,10 @@ function Model() {
 	    console.log("Error while loading state of solar system.");
 	};
     };
-    this.dataToConfig=function(state,data,req,reqId) {
+    this.dataToRequest=function(state,data,req,reqId) {
 	var ss=data.getElementsByTagName("solarsystem")[0];
-	var error=ss.getElementsByTagName("Error")[0];
-	var bod,name;
-	if (error === null) {
+	var error=ss.getElementsByTagName("Error");
+	if (error.length === 0) {
 	    // store initial data
 	    // var loc=ss.getElementsByTagName("location")[0];
 	    // store initial data
@@ -390,8 +400,8 @@ function Model() {
 	    req["initial"]={};
 	    var ii;
 	    for (ii=0; ii<inino; ii++) {
-		bod=inibod[ii];
-		name=bod.getAttribute("name");
+		let bod=inibod[ii];
+		let name=bod.getAttribute("name");
 		req["initial"][name]={};
 		req["initial"][name]["rotation"]={};
 		req["initial"][name]["rotation"]["ra"]=+bod.getAttribute("ra");
@@ -405,7 +415,7 @@ function Model() {
 	    var tis=ss.getElementsByTagName("times")[0];
 	    var tistim=tis.getElementsByTagName("time");
 	    var tisno=tis.getAttribute("no");
-	    //console.log("Times ",tisno);
+	    console.log("Times ",tisno);
 	    for (var tt=0; tt<tisno; tt++) {
 		var tim = tistim[tt];
 		// store observer data
@@ -450,8 +460,8 @@ function Model() {
 		    var stano=sta.getAttribute("no");
 		    req["events"][tt]["state"]={};
 		    for (ii=0; ii<stano; ii++) {
-			bod=stabod[ii];
-			name=bod.getAttribute("name");
+			let bod=stabod[ii];
+			let name=bod.getAttribute("name");
 			if (name === pointAt) {req["events"][tt]["pointId"] = ii;}
 			//console.log("Added state for ",name," at ",dtg);
 			req["events"][tt]["state"][name]={"position":new Vector3(),"rotation":new Vector3()};
@@ -470,16 +480,18 @@ function Model() {
 		}
 	    }
 	    req.received= true;
+	    console.log("Received request:",req);
 	} else {
+	    console.log("Received error:",error);
 	    // we never receive data, stop processing here...
 	}
 	//console.log("Requests:",JSON.stringify(this.requests));
     };
     this.pushUrl = function (state) {
 	var reqId=this.requests.current;
-	var req = this.requests[reqId]
+	var req = this.requests.state[reqId]
 	if ( req.elements) { // we have a target
-	    var reqLocation=this.requests[reqId]["location"];
+	    var reqLocation=this.requests.state[reqId]["location"];
 	    if (reqLocation !== undefined && this.config.state[this.config.current] !== undefined) {
 		var lat=reqLocation.latitude;
 		var lon=reqLocation.longitude;
@@ -554,7 +566,7 @@ function Model() {
     this.processNewRequests = function (state) {
 	var ret=false;
 	var reqId=this.requests.current;
-	var req = this.requests[reqId]
+	var req = this.requests.state[reqId]
 	if ( req.received & ! req.elements) { // we have a new target
 	    //console.log("Calculating orbital elements:",req);
 	    // calculate osculating orbital elements
@@ -590,7 +602,7 @@ function Model() {
     this.configUpdate = function (state) {
 	var ret = false;
 	var reqId = this.requests.current;
-	var req = this.requests[reqId]
+	var req = this.requests.state[reqId]
 	if (req.elements & this.config.reqId !== reqId ) { // process new request
 	    //console.log("Constructing config from orbital elements.");
 	    // get times
@@ -626,52 +638,32 @@ function Model() {
 		};
 		//  point camera
 		if (req.play.event !== undefined) {
-		    this.config.state[this.config.current].dtg = new Date(this.requests[reqId]["events"][req.play.event]["dtg"]).toISOString();
-		    this.camera.position.copy(this.config.state[this.config.current].observer.position);
-		    this.camera.setUp(this.config.state[this.config.current].observer.zenith); // up is always towards observer zenith...
-		    var target = this.requests[reqId]["events"][req.play.event]["target"]; // target could be mis-spelled...
-		    var dir = this.requests[reqId]["events"][req.play.event]["dir"];
-		    var fov = this.requests[reqId]["events"][req.play.event]["fov"];
-		    var con = this.requests[reqId]["events"][req.play.event]["con"];
-		    var configBodies=this.config.state[this.config.current].bodies;
-		    if (target !== undefined && configBodies[target] !== undefined) {
-			this.camera.pointAt(configBodies[target].position);
-		    } else if (dir !== undefined) {
-			this.camera.pointDir(dir);
-		    };
-		    if (fov !== undefined) {
-			this.camera.setFovX(fov);
-		    };
-		    if (con !== undefined) {
-			if (con === 0) { // no constellations
-			    this.consTime=new Date().getTime()-1000.0; // no fade
-			} else {
-			    this.consTime=new Date().getTime()+2000.0; // fade inn
-			};
-			this.consReq = con;
-		    };
+		    this.config.state[this.config.current].dtg = new Date(
+			this.requests.state[reqId]["events"][req.play.event]["dtg"]).toISOString();
+		    this.config.newTarget=true;
 		}
 		// delete old requests
-		for (var key in this.requests) {
-		    if (this.requests.hasOwnProperty(key)) {
-			if (key !== this.config.old & this.requests[key]["events"] !== undefined) {
+		for (var key in this.requests.state) {
+		    if (this.requests.state.hasOwnProperty(key)) {
+			if (key !== this.config.old &&this.requests.state[key]["events"] !== undefined) {
+			    // delete this.requests.state[key];			    
 			}
 		    }
 		}
 		this.reqId=reqId;
 	    };
 	    req.orbit = false;
-            this.setInfo(this.config.state[this.config.current].dtg,
-				  this.config.state[this.config.current].lat,
-				  this.config.state[this.config.current].lon);
+            this.setInfo(state,this.config.state[this.config.current].dtg,
+			 this.config.state[this.config.current].lat,
+			 this.config.state[this.config.current].lon);
 	    this.configRedraw=true;
 	} else if (req.elements & this.config.play.speed!==undefined) { // time lapse...
 	    //console.log("Time lapse.",config.play.speed);
 	    this.config.young=(this.config.current+1)%2;
 	    if (this.getState(state,req, this.config.state[this.config.young])) {
-		Request.setInfo(this.config.state[this.config.current].dtg,
-				this.config.state[this.config.current].lat,
-				this.config.state[this.config.current].lon);
+		this.setInfo(state,this.config.state[this.config.current].dtg,
+			     this.config.state[this.config.current].lat,
+			     this.config.state[this.config.current].lon);
 		this.config.old=this.config.current;
 		this.config.current=this.config.young;
 		this.configRedraw=true;
@@ -709,8 +701,12 @@ function Model() {
 		var dt = ttrg-this.config.play.prevEpoch;
 		var dt0 = this.config.play.nextEpoch - this.config.play.prevEpoch;
 		var f = dt/Math.max(1e-10,dt0);
-		this.interpolateBodies(req["events"][this.config.play.prev],req["events"][this.config.play.next],dt,f,newconfig.bodies);
-		this.interpolateObserver(req["events"][this.config.play.prev],req["events"][this.config.play.next],dt,f,newconfig.observer,newconfig.bodies);
+		this.interpolateBodies(state,req["events"][this.config.play.prev],
+				       req["events"][this.config.play.next],
+				       dt,f,newconfig.bodies);
+		this.interpolateObserver(state,req["events"][this.config.play.prev],
+					 req["events"][this.config.play.next],
+					 dt,f,newconfig.observer,newconfig.bodies);
 		newconfig.epoch = ttrg;
 		newconfig.dtg=new Date(newconfig.epoch).toISOString();
 	    } else if (this.config.play.prev !== -1 ) {  // found epoch before, but not after
@@ -782,6 +778,15 @@ function Model() {
 	    configBodies[name].rotation.spherical2cartesian();
 	    configBodies[name].name=name;
 	} 
+    };
+    this.intlin = function (p,n,f) { // linear interpolation
+	return ( p + (n-p)*f );
+    };
+    this.int2pi = function (p,n,f,t) { // targetted cyclic interpolation
+	if (t === undefined) { t=0.0; };
+	var diff = (n-p)%(2.0*Math.PI);
+	var norb = Math.floor(0.5+(t -diff)/(2.0*Math.PI));
+	return ( p + (diff + norb*2.0*Math.PI)*f ); 
     };
     // get observer position and EF-coordinate system...
     this.getObserver = function (state,reqState,configObserver,configBodies) { 
@@ -964,7 +969,7 @@ function Model() {
     this.modelUpdate = function (state) {
 	var ret = false;
 	var reqId=this.requests.current;
-	var req = this.requests[reqId]
+	var req = this.requests.state[reqId]
 	if (req.elements & this.model.reqId !== reqId ) { // process new request
 	    console.log("Constructing model from orbital elements.");
 	    this.model.reqId=reqId;
@@ -987,7 +992,7 @@ function Model() {
 	    // delete old requests
 	    for (var key in this.requests) {
 		if (this.requests.hasOwnProperty(key)) {
-		    if (key !== this.model.old & this.requests[key]["events"] !== undefined) {
+		    if (key !== this.model.old & this.requests.state[key]["events"] !== undefined) {
 		    }
 		}
 	    }
@@ -1004,7 +1009,7 @@ function Model() {
     };
     this.request=function(state) {
 	this.wipe = function () {var obj=Object.keys(this);for (var ii=0; ii<obj.length;ii++) 
-				 {if (typeof this[obj[ii]] === 'function'  || typeof this[obj[ii]] === 'object') {delete this[obj[ii]];}}}
+				 {if (typeof this[obj[ii]] === 'function') {delete this[obj[ii]];}}}
 	this.addLat = function(val) {this["lat"]=val;};
 	this.addLon = function(val) {this["lon"]=val;};
 	this.addHgt = function(val) {this["hgt"]=val;};

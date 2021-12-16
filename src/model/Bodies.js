@@ -6,7 +6,6 @@ console.log("Loading BodiesLib");
 
 function Bodies() {
     this.debug=false;
-    this.SCALE = 0.00002;
     this.AU = 149597870;
     this.CIRCLE = 2 * Math.PI;
     this.KM = 1000;
@@ -43,12 +42,13 @@ function Bodies() {
     
     this.config={
 	sun  :  {
+	    scale : 0.00002,
 	    title : 'The Sun',
 	    mass : 1.9891e30,
-	    radius : 6.96342e5*this.SCALE,
+	    radius : 6.96342e5,
 	    color : '#ffff00',
 	    map : 'sunmap.jpg',
-	    bumpScale : 10.0*this.SCALE,
+	    bumpScale : 10.0,
 	    k : 0.01720209895, //gravitational constant (μ)
 	    type:   'sphere',
 	    material : {
@@ -60,13 +60,14 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	mercury : {
+	    scale : 0.00002,
 	    title : 'Mercury',
 	    mass : 3.3022e23,
-	    radius:2439*this.SCALE,
+	    radius: 2439*100,
 	    color : '#588a7b',
 	    map : 'mercurymap.jpg',
 	    bumpMap : 'mercurybump.jpg',
-	    bumpScale : 3.0*this.SCALE,
+	    bumpScale : 3.0,
 	    orbit : { 
 		base : {a : 0.38709927 * this.AU ,  e : 0.20563593, i: 7.00497902, l : 252.25032350, lp : 77.45779628, o : 48.33076593},
 		cy : {a : 0.00000037 * this.AU ,  e : 0.00001906, i: -0.00594749, l : 149472.67411175, lp : 0.16047689, o : -0.12534081}
@@ -79,13 +80,14 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	venus : {
+	    scale : 0.00002,
 	    title : 'Venus',
 	    mass : 4.868e24,
-	    radius : 6051*this.SCALE,
+	    radius : 6051*100,
 	    color : '#fda700',
 	    map : 'venusmap.jpg',
 	    bumpMap : 'venusbump.jpg',
-	    bumpScale : 6.0*this.SCALE,
+	    bumpScale : 6.0,
 	    orbit : {
 		base : {a : 0.72333566 * this.AU ,  e : 0.00677672, i: 3.39467605, l : 181.97909950, lp : 131.60246718, o : 76.67984255},
 		cy : {a : 0.00000390 * this.AU ,  e : -0.00004107, i: -0.00078890, l : 58517.81538729, lp : 0.00268329, o : -0.27769418}
@@ -98,16 +100,17 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	earth : {
+	    scale : 0.00002,
 	    title : 'The Earth',
 	    mass : 5.9736e24,
-	    radius : 6371.0088*this.SCALE,
+	    radius : 6371.0088*100,
 	    color : '#1F7CDA',
 	    map : 'earthmap1k.jpg',
 	    bumpMap : 'earthbump1k.jpg',
-	    bumpScale : 20.0*this.SCALE,
+	    bumpScale : 20.0,
 	    spec : 'earthspec1k.jpg',
 	    atmosphere : {
-		radius : 6381.0088*this.SCALE,
+		radius : 6381.0088,
 		trans : 'earthcloudmaptrans.jpg',
 		cloud : 'earthcloudmap.jpg',
 	    },
@@ -127,13 +130,14 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	mars : {
+	    scale : 0.00002,
 	    title : 'Mars',
 	    mass : 6.4185e23,
-	    radius : 3376*this.SCALE,
+	    radius : 3376,
 	    color : '#ff3300',
 	    map : 'marsmap1k.jpg',
 	    bumpMap : 'marsbump1k.jpg',
-	    bumpScale : 21.9*this.SCALE,
+	    bumpScale : 21.9,
 	    sideralDay : 1.025957 * this.DAY,
 	    orbit : {
 		base : {a : 1.52371034 * this.AU ,  e : 0.09339410, i: 1.84969142, l : -4.55343205, lp : -23.94362959, o : 49.55953891},
@@ -147,12 +151,13 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	jupiter : {
+	    scale : 0.00002,
 	    title : 'Jupiter',
 	    mass : 1.8986e27,
-	    radius : 71492*this.SCALE,
+	    radius : 71492,
 	    color : '#ff9932',
 	    map : 'jupitermap.jpg',
-	    bumpScale : 10.0*this.SCALE,
+	    bumpScale : 10.0,
 	    orbit : {
 		base : {a : 5.20288700 * this.AU ,  e : 0.04838624, i: 1.30439695, l : 34.39644051, lp : 14.72847983, o : 100.47390909},
 		cy : {a : -0.00011607 * this.AU ,  e : -0.00013253, i: -0.00183714, l : 3034.74612775, lp : 0.21252668, o : 0.20469106}
@@ -167,17 +172,18 @@ function Bodies() {
 	},
 	ash :{map : 'ash_uvgrid01.jpg'},
 	saturn : {
+	    scale : 0.00002,
 	    title : 'Saturn',
 	    mass : 5.6846e26,
-	    radius : 58232*this.SCALE,
+	    radius : 58232,
 	    color : '#ffcc99',
 	    map : 'saturnmap.jpg',
-	    bumpScale : 10.0*this.SCALE,
+	    bumpScale : 10.0,
 	    tilt : 26.7,
 	    ring : {
-		innerRadius : 74500*this.SCALE,
-		outerRadius : 117580*this.SCALE,
-		thickness : 1000*this.SCALE,
+		innerRadius : 74500,
+		outerRadius : 117580,
+		thickness : 1000,
 		map : 'saturnringcolor.jpg',
 		trans : 'saturnringpattern.gif',
 		density : 0.9,
@@ -195,16 +201,17 @@ function Bodies() {
 	    position : new THREE.Vector3(),
 	},
 	uranus : {
+	    scale : 0.00002,
 	    title : 'Uranus',
 	    mass : 8.6810e25,
-	    radius : 25559*this.SCALE,
+	    radius : 25559,
 	    color : '#99ccff',
 	    map : 'uranusmap.jpg',
-	    bumpScale : 10.0*this.SCALE,
+	    bumpScale : 10.0,
 	    ring : {
-		innerRadius : 54500*this.SCALE,
-		outerRadius : 57580*this.SCALE,
-		thickness : 1000*this.SCALE,
+		innerRadius : 54500,
+		outerRadius : 57580,
+		thickness : 1000,
 		trans : 'uranusringtrans.gif',
 		map : 'uranusringcolour.jpg',
 		density : 0.5,
@@ -222,12 +229,13 @@ function Bodies() {
 	    position : new THREE.Vector3(),
 	},
 	neptune : {
+	    scale : 0.00002,
 	    title : 'Neptune',
 	    mass : 1.0243e26,
-	    radius : 24764*this.SCALE,
+	    radius : 24764,
 	    color : '#3299ff',
 	    map : 'neptunemap.jpg',
-	    bumpScale : 10.0*this.SCALE,
+	    bumpScale : 10.0,
 	    orbit : {
 		base : {a : 30.06992276  * this.AU,  e : 0.00859048, i: 1.77004347, l : -55.12002969, lp : 44.96476227, o : 131.78422574},
 		cy : {a : 0.00026291  * this.AU,  e : 0.00005105, i: 0.00035372, l : 218.45945325, lp : -0.32241464, o : -0.00508664}
@@ -240,15 +248,16 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	pluto : {
+	    scale : 0.00002,
 	    title : 'Pluto',
 	    mass : 1.305e22+1.52e21,
-	    radius : 1153*this.SCALE,
+	    radius : 1153,
 	    color : '#aaaaaa',
 	    map : 'plutomap1k.jpg',
 	    bumpMap : 'plutobump1k.jpg',
-	    bumpScale : 5.5*this.SCALE,
+	    bumpScale : 5.5,
 	    dispMap : 'plutomap1k.jpg', //'plutodisplacement.jpg',
-	    dispScale : 50*this.SCALE,
+	    dispScale : 50,
 	    orbit : {
 		base : {a : 39.48211675 * this.AU ,  e : 0.24882730, i: 17.14001206, l : 238.92903833, lp : 224.06891629, o : 110.30393684},
 		cy : {a : -0.00031596 * this.AU ,  e : 0.00005170, i: 0.00004818, l : 145.20780515, lp : -0.04062942, o : -0.01183482}
@@ -262,13 +271,14 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	moon : {
+	    scale : 0.00002,
 	    title : 'The Moon',
 	    mass : 7.3477e22,
-	    radius : 1738.1*this.SCALE,
+	    radius : 1738.1,
 	    color : "#ffffff",
 	    map : 'moonmap1k.jpg',
 	    bumpMap : 'moonbump1k.jpg',
-	    bumpScale : 5.5*this.SCALE,
+	    bumpScale : 5.5,
 	    sideralDay : (27.3215782 * this.DAY) ,
 	    tilt : 1.5424,
 	    fov : 1,
@@ -323,13 +333,14 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	deathstar : {
+	    scale : 0.00002,
 	    title : 'Death Star',
 	    mass : 1.305e22,
-	    radius : 900*this.SCALE,
+	    radius : 900,
 	    color : '#aaaaaa',
 	    map : 'deathStarmap.png',
 	    bumpMap : 'deathStarbump.png',
-	    bumpScale : 9.0*this.SCALE,
+	    bumpScale : 9.0,
 	    orbit : {
 		base : {a : 49.48211675 * this.AU ,  e : 0.24882730, i: 17.14001206, l : 238.92903833, lp : 224.06891629, o : 110.30393684},
 		cy : {a : -0.00031596 * this.AU ,  e : 0.00005170, i: 0.00004818, l : 145.20780515, lp : -0.04062942, o : -0.01183482}
@@ -341,6 +352,7 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	observer : {
+	    scale : 0.00002,
 	    position : new THREE.Vector3(0,0,0),
 	    i : new THREE.Vector3(1,0,0),
 	    j : new THREE.Vector3(0,1,0),
@@ -359,6 +371,7 @@ function Bodies() {
 	return ret;	
     };
     this.copyObserver = function (src, trg) {
+	//console.log("Observer:",src,trg);
 	if (src !== undefined && src.position !== undefined && src.i !== undefined && src.zenith !== undefined) {
 	    trg.position.copy(src.position);
 	    trg.i.copy(src.i);
@@ -407,18 +420,20 @@ function Bodies() {
     };
     this.baseURL	= process.env.PUBLIC_URL+'/media/planets/';             // from http://planetpixelemporium.com/
     this.createSunMesh	= function(){
+	var scale=this.config.sun.scale;
 	var material	= this.Material({map:this.baseURL+this.config.sun.map});
-	var geometry	= new THREE.SphereGeometry(this.config.sun.radius, 32, 32)
+	var geometry	= new THREE.SphereGeometry(this.config.sun.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="sun";
 	mesh.rotation.x=Math.PI/2;
 	return mesh	
     };
     this.createMercuryMesh	= function(){
+	var scale=this.config.mercury.scale;
 	var material	= this.Material({map:this.baseURL+this.config.mercury.map,
 					 bumpMap:this.baseURL+this.config.mercury.bumpMap,
-					 bumpScale:this.config.mercury.bumpScale});
-	var geometry	= new THREE.SphereGeometry(this.config.mercury.radius, 32, 32)
+					 bumpScale:this.config.mercury.bumpScale*scale});
+	var geometry	= new THREE.SphereGeometry(this.config.mercury.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="mercury";
 	mesh.rotation.x=Math.PI/2;
@@ -427,10 +442,11 @@ function Bodies() {
 	return mesh	
     };
     this.createVenusMesh	= function(){
+	var scale=this.config.venus.scale;
 	var material	= this.Material({map:this.baseURL+this.config.venus.map,
 					 bumpMap:this.baseURL+this.config.venus.bumpMap,
-					 bumpScale: this.config.venus.bumpScale});
-	var geometry	= new THREE.SphereGeometry(this.config.venus.radius, 32, 32)
+					 bumpScale: this.config.venus.bumpScale*scale});
+	var geometry	= new THREE.SphereGeometry(this.config.venus.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="venus";
 	mesh.rotation.x=Math.PI/2;
@@ -439,12 +455,13 @@ function Bodies() {
 	return mesh	
     };
     this.createEarthMesh	= function(){
+	var scale=this.config.earth.scale;
 	var material	= this.Material({map:this.baseURL+this.config.earth.map,
 					 bumpMap:this.baseURL+this.config.earth.bumpMap,
-					 bumpScale:this.config.earth.bumpScale,
+					 bumpScale:this.config.earth.bumpScale*scale,
 					 specularMap:this.baseURL+this.config.earth.spec,
 					 specularColor: 'grey'});
-	var geometry	= new THREE.SphereGeometry(this.config.earth.radius, 32, 32)
+	var geometry	= new THREE.SphereGeometry(this.config.earth.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="earth";
 	mesh.rotation.x=Math.PI/2;
@@ -453,10 +470,11 @@ function Bodies() {
 	return mesh	
     };
     this.createMoonMesh	= function(){
+	var scale=this.config.earth.scale;
 	var material	= this.Material({map: this.baseURL+this.config.moon.map,
 					 bumpMap: this.baseURL+this.config.moon.bumpMap,
-					 bumpScale: this.config.moon.bumpScale});
-	var geometry	= new THREE.SphereGeometry(this.config.moon.radius, 32, 32)
+					 bumpScale: this.config.moon.bumpScale*scale});
+	var geometry	= new THREE.SphereGeometry(this.config.moon.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="moon";
 	mesh.rotation.x=Math.PI/2;
@@ -465,10 +483,11 @@ function Bodies() {
 	return mesh	
     };
     this.createMarsMesh	= function(){
+	var scale=this.config.mars.scale;
 	var material	= this.Material({map: this.baseURL+this.config.mars.map,
 					 bumpMap: this.baseURL+this.config.mars.bumpMap,
-					 bumpScale: this.config.mars.bumpScale});
-	var geometry	= new THREE.SphereGeometry(this.config.mars.radius, 32, 32)
+					 bumpScale: this.config.mars.bumpScale*scale});
+	var geometry	= new THREE.SphereGeometry(this.config.mars.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="mars";
 	mesh.rotation.x=Math.PI/2;
@@ -477,10 +496,11 @@ function Bodies() {
 	return mesh	
     };
     this.createJupiterMesh= function(){
+	var scale=this.config.jupiter.scale;
 	var material    = this.Material({map:this.baseURL+this.config.jupiter.map,
 					 bumpMap:this.baseURL+this.config.jupiter.map,
-					 bumpScale: this.config.jupiter.bumpScale});
-	var geometry	= new THREE.SphereGeometry(this.config.jupiter.radius, 32, 32)
+					 bumpScale: this.config.jupiter.bumpScale*scale});
+	var geometry	= new THREE.SphereGeometry(this.config.jupiter.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="jupiter";
 	mesh.rotation.x=Math.PI/2;
@@ -489,10 +509,11 @@ function Bodies() {
 	return mesh	
     };
     this.createSaturnMesh= function(){
+	var scale=this.config.saturn.scale;
 	var material	= this.Material({map:this.baseURL+this.config.saturn.map,
 					 bumpMap	: this.baseURL+this.config.saturn.map,
-					 bumpScale: this.config.saturn.bumpScale});
-	var geometry	= new THREE.SphereGeometry(this.config.saturn.radius, 32, 32);
+					 bumpScale: this.config.saturn.bumpScale*scale});
+	var geometry	= new THREE.SphereGeometry(this.config.saturn.radius*scale, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material);
 	mesh.name       = "saturn";
 	mesh.rotation.x = Math.PI/2;
@@ -501,6 +522,7 @@ function Bodies() {
 	return mesh	
     };
     this.createSaturnRingMesh	= function(side){
+	var scale=this.config.saturn.scale;
 	//THREE.DoubleSide,THREE.FrontSide,THREE.BackSide,
 	var material;
 	material    = this.Material({map:this.baseURL+this.config.saturn.ring.map,
@@ -509,7 +531,7 @@ function Bodies() {
 				     transparent:true,
 				     opacity:0.9,
 				    });
-	var geometry	= this.RingGeometry(this.config.saturn.ring.innerRadius, this.config.saturn.ring.outerRadius, 128);
+	var geometry	= this.RingGeometry(this.config.saturn.ring.innerRadius*scale, this.config.saturn.ring.outerRadius*scale, 128);
 	var mesh	= new THREE.Mesh(geometry, material);
 	var normal=new THREE.Vector3(1,0,5).normalize();
 	var offset;
@@ -528,10 +550,11 @@ function Bodies() {
 	return mesh	
     };
     this.createUranusMesh	= function(){
+	var scale=this.config.uranus.scale;
 	var material    = this.Material({ map:this.baseURL+this.config.uranus.map,
 					  bumpMap:this.baseURL+this.config.uranus.map,
-					  bumpScale:this.config.uranus.bumpScale});
-	var geometry	= new THREE.SphereGeometry(this.config.uranus.radius, 32, 32);
+					  bumpScale:this.config.uranus.bumpScale*scale});
+	var geometry	= new THREE.SphereGeometry(this.config.uranus.radius*scale, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material);
 	mesh.name="uranus";
 	mesh.castShadow = true;
@@ -539,6 +562,7 @@ function Bodies() {
 	return mesh	
     };
     this.createUranusRingMesh	= function(side){
+	var scale=this.config.uranus.scale;
 	var material;
 	material    = this.Material({map:this.baseURL+this.config.uranus.ring.map,
 					 transMap:this.baseURL+this.config.uranus.ring.trans,
@@ -546,7 +570,7 @@ function Bodies() {
 					 transparent:true,
 					 opacity:0.8,
 					});
-	var geometry	= this.RingGeometry(this.config.uranus.ring.innerRadius, this.config.uranus.ring.outerRadius, 128);
+	var geometry	= this.RingGeometry(this.config.uranus.ring.innerRadius*scale, this.config.uranus.ring.outerRadius*scale, 128);
 	var mesh	= new THREE.Mesh(geometry, material);
 	var normal=new THREE.Vector3(0.1,-0.3,1).normalize();
 	var offset;
@@ -564,10 +588,11 @@ function Bodies() {
 	return mesh	
     };
     this.createNeptuneMesh	= function(){
+	var scale=this.config.neptune.scale;
 	var material	= this.Material({map:this.baseURL+this.config.neptune.map,
 					 bumpMap:this.baseURL+this.config.neptune.map,
-					 bumpScale:this.config.neptune.bumpScale});
-	var geometry	= new THREE.SphereGeometry(this.config.neptune.radius, 32, 32);
+					 bumpScale:this.config.neptune.bumpScale*scale});
+	var geometry	= new THREE.SphereGeometry(this.config.neptune.radius*scale, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = "neptune";
 	mesh.rotation.x=Math.PI/2;
@@ -576,12 +601,13 @@ function Bodies() {
 	return mesh	
     };
     this.createPlutoMesh	= function(){
+	var scale=this.config.pluto.scale;
 	var material	= this.Material({map:this.baseURL+this.config.pluto.map,
 					 bumpMap:this.baseURL+this.config.pluto.bumpMap,
-					 bumpScale: this.config.pluto.bumpScale,
+					 bumpScale: this.config.pluto.bumpScale*scale,
 					 displacementMap:this.baseURL+this.config.pluto.dispMap,
-					 displacementScale: this.config.pluto.dispScale});
-	var geometry	= new THREE.SphereGeometry(this.config.pluto.radius, 32, 32)
+					 displacementScale: this.config.pluto.dispScale*scale});
+	var geometry	= new THREE.SphereGeometry(this.config.pluto.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = "pluto";
 	mesh.rotation.x=Math.PI/2;
@@ -589,11 +615,12 @@ function Bodies() {
 	mesh.receiveShadow = true;
 	return mesh	
     };
-    this.createDeathStarMesh	= function(){
+    this.createDeathStarMesh	= function(scale){
+	if (scale===undefined) {scale=this.config.saturn.scale;}
 	var material	= this.Material({map:this.baseURL+this.config.deathstar.map,
 					 bumpMap:this.baseURL+this.config.deathstar.bumpMap,
-					 bumpScale:this.config.deathstar.bumpScale});
-	var geometry	= new THREE.SphereGeometry(this.config.deathstar.radius, 32, 32)
+					 bumpScale:this.config.deathstar.bumpScale*scale});
+	var geometry	= new THREE.SphereGeometry(this.config.deathstar.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = "deathstar";
 	mesh.rotation.x=Math.PI/2;
@@ -601,116 +628,184 @@ function Bodies() {
 	mesh.receiveShadow = true;
 	return mesh	
     };
-    this.createLight    = function() {
+    this.createLight    = function(target) {
 	var light   = new THREE.DirectionalLight( 0xffffff, 1, 100 )
-	light.position.set(0.5*this.config.sun.radius,
-			   1.0*this.config.sun.radius,
-			   0.5*this.config.sun.radius)
+	light.position.set(0,0,0);
+	light.target                = target;
 	light.castShadow            = true;
 	light.shadow.mapSize.width  = 1024; // default
 	light.shadow.mapSize.height = 1024; // default
 	light.shadow.camera.near    = 0.0 * this.config.sun.radius;
 	light.shadow.camera.far     = 3.0 * this.config.sun.radius;
-	light.name                  ="sunlight";
+	light.name                  = "sunlight";
 	return light;
     };
     //
     //////////////////////////////////////////////////////////////////////////////////
     //
-    this.createScene = function () { // icamera
+    this.prepareForRender=function(scene,mainCamera) {
+    };
+
+    this.getCamera=function(scene) {
+	return scene.getObjectByName("camera");
+    };
+    
+    this.updateScene=function(state,mainCamera,observer,name,scene) {
+	let scale= this.config[name].scale;
+	//console.log("UpdateScene:",name,scale);
+	var camera=this.getCamera(scene);
+	if (camera !== undefined) {
+	    // update camera position
+	    camera.copy(mainCamera);
+	    var x=observer.position.x*scale;
+	    var y=observer.position.y*scale;
+	    var z=observer.position.z*scale;
+	    camera.position.set(x,y,z);
+	};
+	if (name === "sun") {
+	    //update sun positions (nothing to do)
+	} else if (name === "mercury" ||
+		   name === "venus" ||
+		   name === "earth" ||
+		   name === "mars" ||
+		   name === "jupiter" ||
+		   name === "saturn" ||
+		   name === "uranus" ||
+		   name === "neptune" ||
+		   name === "pluto"
+		  ) {
+	    let pos=   this.config[name].position;
+	    let body=  scene.getObjectByName(name);
+	    //body.position.x=pos.x*scale;
+	    //body.position.y=pos.y*scale;
+	    //body.position.z=pos.z*scale;
+	    body.position.set(pos.x*scale,pos.y*scale,pos.z*scale);
+	    //body.updateMatrix();
+	    //body.position.set(0,0,0);
+	    //body.matrixAutoUpdate=true;
+	    //body.updateMatrix();
+	    //body.updateMatrixWorld();
+	    //console.log("Bodies scene:",name,scene,body);
+	} else {
+	    console.log("Unknown name:",name);
+	};
+    };
+
+    this.createScene = function (mainCamera) { // 
 	var scene = new THREE.Scene();
-	//var camera=icamera.clone();
-	//camera.name="camera";
-	//scene.add(camera);
+	var camera=mainCamera.clone();
+	camera.name="camera";
+	scene.name="scene";
+	scene.add(camera);
 	return scene;
     };
-    this.createSunScene = function () {
-	var scene = this.createScene();
+    this.createSunScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
 	scene.add(this.createSunMesh());
 	scene.add(new THREE.AmbientLight('#ffff88',1000));
+	//scene.name="sun";
 	return scene;
     };
-    this.createMercuryScene = function () {
-	var scene = this.createScene();
-	scene.add(this.createMercuryMesh());
-	scene.add(this.createLight());
+    this.createMercuryScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createMercuryMesh()
+	scene.add(mesh);
+	scene.add(this.createLight(mesh));
+	//scene.name="mercury";
 	return scene;
     };
-    this.createVenusScene = function () {
-	var scene = this.createScene();
-	scene.add(this.createVenusMesh());
-	scene.add(this.createLight());
+    this.createVenusScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createVenusMesh()
+	scene.add(mesh);
+	scene.add(this.createLight(mesh));
+	//scene.name="venus";
 	return scene;
     };
-    this.createEarthScene = function () {
-	var scene = this.createScene();
-	scene.add(this.createEarthMesh());
+    this.createEarthScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createEarthMesh()
+	scene.add(mesh);
 	scene.add(this.createMoonMesh());
-	scene.add(this.createLight());
+	scene.add(this.createLight(mesh));
+	//scene.name="earth";
 	return scene;
     };
-    this.createMarsScene = function () {
-	var scene = this.createScene();
-	scene.add(this.createMarsMesh());
-	scene.add(this.createLight());
+    this.createMarsScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createMarsMesh()
+	scene.add(mesh);
+	scene.add(this.createLight(mesh));
+	//scene.name="mars";
 	return scene;
     };
-    this.createJupiterScene = function () {
-	var scene = this.createScene();
-	scene.add(this.createJupiterMesh());
-	scene.add(this.createLight());
+    this.createJupiterScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createJupiterMesh();
+	scene.add(mesh);
+	scene.add(this.createLight(mesh));
+	//scene.name="jupiter";
 	return scene;
     };
-    this.createSaturnScene = function () {
-	var scene = this.createScene();
-	var group = new THREE.Group();
-	group.add(this.createLight());
-	group.add(this.createSaturnMesh());
+    this.createSaturnScene = function (mainCamera) {
+	var scale = this.config.saturn.scale;
+	var scene = this.createScene(mainCamera);
+	var group = new THREE.Object3D();
+	var mesh=this.createSaturnMesh();
+	group.add(mesh);
+	group.add(this.createLight(mesh));
 	group.add(this.createSaturnRingMesh(THREE.FrontSide));
 	group.add(this.createSaturnRingMesh(THREE.BackSide));
-	group.add(this.createDeathStarMesh());
+	group.add(this.createDeathStarMesh(scale));
 	this.setPosition(group,"deathstar",
-			 20000*this.SCALE,
-			 this.config.saturn.radius*1.01,
-			 10000*this.SCALE);//
+			 20000*scale,
+			 this.config.saturn.radius*1.01*scale,
+			 10000*scale);//
 	group.name="saturn";
 	scene.add(group);
+	//scene.name="saturn";
 	return scene;
     };
-    this.createUranusScene = function () {
-	var scene = this.createScene();
+    this.createUranusScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
 	var group = new THREE.Group();
-	group.add(this.createUranusMesh());
+	var mesh=this.createUranusMesh();
+	group.add(mesh);
 	group.add(this.createUranusRingMesh(THREE.FrontSide));
 	group.add(this.createUranusRingMesh(THREE.BackSide));
-	group.add(this.createLight());
+	group.add(this.createLight(mesh));
 	group.name="uranus";
 	scene.add(group);
+	//scene.name="uranus";
 	return scene;
     };
-    this.createNeptuneScene = function () {
-	var scene = this.createScene();
-	scene.add(this.createNeptuneMesh());
-	scene.add(this.createLight());
+    this.createNeptuneScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createNeptuneMesh();
+	scene.add(mesh);
+	scene.add(this.createLight(mesh));
+	//scene.name="neptune";
 	return scene;
     };
-    this.createPlutoScene = function () {
-	var scene = this.createScene();
-	scene.add(this.createPlutoMesh());
-	scene.add(this.createLight());
+    this.createPlutoScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createPlutoMesh();
+	scene.add(mesh);
+	scene.add(this.createLight(mesh));
+	//scene.name="pluto";
 	return scene;
     };
-    this.createScenes = function(camera) {
-	this.scenes["sun"]     = this.createSunScene(camera);
-	this.scenes["mercuy"]  = this.createMercuryScene(camera);
-	this.scenes["venus"]   = this.createVenusScene(camera);
-	this.scenes["earth"]   = this.createEarthScene(camera);
-	this.scenes["mars"]    = this.createMarsScene(camera);
-	this.scenes["jupiter"] = this.createJupiterScene(camera);
-	this.scenes["saturn"]  = this.createSaturnScene(camera);
-	this.scenes["uranus"]  = this.createUranusScene(camera);
-	this.scenes["neptune"] = this.createNeptuneScene(camera);
-	this.scenes["pluto"]   = this.createPlutoScene(camera);
+    this.createScenes = function(mainCamera) {
+	this.scenes["sun"]     = this.createSunScene(mainCamera);
+	this.scenes["mercuy"]  = this.createMercuryScene(mainCamera);
+	this.scenes["venus"]   = this.createVenusScene(mainCamera);
+	this.scenes["earth"]   = this.createEarthScene(mainCamera);
+	this.scenes["mars"]    = this.createMarsScene(mainCamera);
+	this.scenes["jupiter"] = this.createJupiterScene(mainCamera);
+	this.scenes["saturn"]  = this.createSaturnScene(mainCamera);
+	this.scenes["uranus"]  = this.createUranusScene(mainCamera);
+	this.scenes["neptune"] = this.createNeptuneScene(mainCamera);
+	this.scenes["pluto"]   = this.createPlutoScene(mainCamera);
 	return this.scenes;
     };
     //////////////////////////////////////////////////////////////////////////////////

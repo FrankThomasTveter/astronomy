@@ -6,6 +6,7 @@ console.log("Loading Backdrop");
 
 function Backdrop() { 
     this.debug=false;
+    this.lookat=new THREE.Vector3(0,0,-1);
     this.SCALE = 1.0e-15;
     this.X =          0;
     this.Y =          1;
@@ -145,25 +146,68 @@ function Backdrop() {
     this.period=5000.0;
     this.first=undefined;
     //
-    this.prepareForRender=function(scene,camera) {
+    this.prepareForRender=function(scene,mainCamera) {
 	var points=scene.getObjectByName("stars");
-	if (points !== undefined) {
+	var camera=scene.getObjectByName("camera");
+	if (camera !== undefined && points !== undefined) {
 	    points.material.size = this.defaultSize / Math.tan( ( Math.PI / 180 ) * camera.fov / 2 );
 	};
     };
 
-    this.createStarsScene	= function(){
+    this.createScene = function (mainCamera) { // 
 	var scene = new THREE.Scene();
+	var camera=mainCamera.clone();
+	//camera.matrixAutoUpdate=false;
+	camera.position.set(0,0,0);
+	camera.name="camera";
+	scene.add(camera);
+	return scene;
+    };
+
+    this.updateScene = function(state,mainCamera,observer,name,scene) {
+	// update camera position and orientation
+	var camera=this.getCamera(scene);
+	if (camera !== undefined) {
+	    camera.copy(mainCamera);
+	    if (name === "navigation") {
+		camera.position.set(0,0,0); //camera is always in center...
+	    } else if (name === "stars") {
+		var x=observer.position.x*this.SCALE;
+		var y=observer.position.y*this.SCALE;
+		var z=observer.position.z*this.SCALE;
+		camera.position.set(x,y,z);
+	    } else {
+		console.log("Unknown name:",name);
+	    };
+	    // camera.up.set(observer.zenith);
+	    // this.lookat.set(0,0,-1);
+	    // this.lookat.applyEuler(camera.rotation,camera.rotationOrder);
+	    // this.lookat.add(camera.position);
+	    // camera.lookAt(this.lookat);
+	    // camera.updateMatrixWorld(true);
+	    // camera.updateProjectionMatrix();
+	} else {
+	    console.log("Missing camera...",name);
+	}
+    };
+
+    this.createStarsScene	= function(mainCamera){
+	var scene = this.createScene(mainCamera);
 	var stars=this.createStarsBackdrop();
 	scene.add(stars);
 	return scene;
     };
-    this.createNavigationScene	= function(){
-	var scene = new THREE.Scene();
+    this.createNavigationScene	= function(mainCamera){
+	var scene = this.createScene(mainCamera);
 	var nav=this.createNavigationBackdrop();
 	scene.add(nav);
 	return scene;
     };
+
+    this.getCamera=function(scene) {
+	return scene.getObjectByName("camera");
+    };
+    
     this.createStarsBackdrop	= function(){
 	//https://jsfiddle.net/prisoner849/z3yfw208/
 	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true, alphaTest:0.01 }); //   alphaTest: 0.99
