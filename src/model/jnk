@@ -1,7 +1,6 @@
 //import Vector3 from './Vector3Lib';
 //import Vector2 from './Vector2Lib';
 import * as THREE from 'three';
-import * as UTILS from './utils';
 
 console.log("Loading BodiesLib");
 
@@ -37,10 +36,6 @@ function Bodies() {
     this.NLON=2*this.NLAT;
     this.SMAG = 5;
     this.NMAG = 10;
-
-    this.direction=new THREE.Vector3();
-    this.right=new THREE.Vector3();
-    this.location=new THREE.Vector3();
     
     this.J2000 = new Date('2000-01-01T12:00:00-00:00');
     this.scenes={};
@@ -70,7 +65,7 @@ function Bodies() {
 	    title : 'Mercury',
 	    visible: true,
 	    mass : 3.3022e23,
-	    radius: 2439,
+	    radius: 2439*100,
 	    color : '#588a7b',
 	    map : 'mercurymap.jpg',
 	    bumpMap : 'mercurybump.jpg',
@@ -91,7 +86,7 @@ function Bodies() {
 	    title : 'Venus',
 	    visible: true,
 	    mass : 4.868e24,
-	    radius : 6051,
+	    radius : 6051*100,
 	    color : '#fda700',
 	    map : 'venusmap.jpg',
 	    bumpMap : 'venusbump.jpg',
@@ -110,9 +105,9 @@ function Bodies() {
 	earth : {
 	    scale : 0.00002,
 	    title : 'The Earth',
-	    visible: false,
+	    visible: true,
 	    mass : 5.9736e24,
-	    radius : 6371.0088,
+	    radius : 6371.0088*100,
 	    color : '#1F7CDA',
 	    map : 'earthmap1k.jpg',
 	    bumpMap : 'earthbump1k.jpg',
@@ -161,7 +156,7 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	jupiter : {
-	    scale : 0.000002,
+	    scale : 0.00002,
 	    title : 'Jupiter',
 	    visible: true,
 	    mass : 1.8986e27,
@@ -183,7 +178,7 @@ function Bodies() {
 	},
 	ash :{map : 'ash_uvgrid01.jpg'},
 	saturn : {
-	    scale : 0.0000001,
+	    scale : 0.00002,
 	    title : 'Saturn',
 	    visible: true,
 	    mass : 5.6846e26,
@@ -213,7 +208,7 @@ function Bodies() {
 	    position : new THREE.Vector3(),
 	},
 	uranus : {
-	    scale : 0.00000001,
+	    scale : 0.00002,
 	    title : 'Uranus',
 	    visible: true,
 	    mass : 8.6810e25,
@@ -242,7 +237,7 @@ function Bodies() {
 	    position : new THREE.Vector3(),
 	},
 	neptune : {
-	    scale : 0.0000002,
+	    scale : 0.00002,
 	    title : 'Neptune',
 	    visible: true,
 	    mass : 1.0243e26,
@@ -262,7 +257,7 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	pluto : {
-	    scale : 0.0000002,
+	    scale : 0.00002,
 	    title : 'Pluto',
 	    visible: true,
 	    mass : 1.305e22+1.52e21,
@@ -436,16 +431,16 @@ function Bodies() {
 	}
     };
     this.baseURL	= process.env.PUBLIC_URL+'/media/planets/';             // from http://planetpixelemporium.com/
-    this.createSunMesh	= function(){
+    this.createMesh     = function(name) {
+	if (name === "sun") {
 	var scale=this.config.sun.scale;
 	var material	= this.Material({map:this.baseURL+this.config.sun.map});
 	var geometry	= new THREE.SphereGeometry(this.config.sun.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="sun";
 	mesh.rotation.x=Math.PI/2;
-	return mesh	
-    };
-    this.createMercuryMesh	= function(){
+
+	} else if (name === "mercury") {
 	var scale=this.config.mercury.scale;
 	var material	= this.Material({map:this.baseURL+this.config.mercury.map,
 					 bumpMap:this.baseURL+this.config.mercury.bumpMap,
@@ -456,9 +451,8 @@ function Bodies() {
 	mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
-	return mesh	
-    };
-    this.createVenusMesh	= function(){
+
+	} else if (name === "venus") {
 	var scale=this.config.venus.scale;
 	var material	= this.Material({map:this.baseURL+this.config.venus.map,
 					 bumpMap:this.baseURL+this.config.venus.bumpMap,
@@ -469,9 +463,8 @@ function Bodies() {
 	mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
-	return mesh	
-    };
-    this.createEarthMesh	= function(){
+
+	} else if (name === "earth") {
 	var scale=this.config.earth.scale;
 	var material	= this.Material({map:this.baseURL+this.config.earth.map,
 					 bumpMap:this.baseURL+this.config.earth.bumpMap,
@@ -484,9 +477,8 @@ function Bodies() {
 	mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
-	return mesh	
-    };
-    this.createMoonMesh	= function(){
+
+	} else if (name === "moon") {
 	var scale=this.config.earth.scale;
 	var material	= this.Material({map: this.baseURL+this.config.moon.map,
 					 bumpMap: this.baseURL+this.config.moon.bumpMap,
@@ -497,9 +489,8 @@ function Bodies() {
 	mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
-	return mesh	
-    };
-    this.createMarsMesh	= function(){
+
+	} else if (name === "mars") {
 	var scale=this.config.mars.scale;
 	var material	= this.Material({map: this.baseURL+this.config.mars.map,
 					 bumpMap: this.baseURL+this.config.mars.bumpMap,
@@ -510,9 +501,8 @@ function Bodies() {
 	mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
-	return mesh	
-    };
-    this.createJupiterMesh= function(){
+
+	} else if (name === "jupiter") {
 	var scale=this.config.jupiter.scale;
 	var material    = this.Material({map:this.baseURL+this.config.jupiter.map,
 					 bumpMap:this.baseURL+this.config.jupiter.map,
@@ -523,9 +513,8 @@ function Bodies() {
 	mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
-	return mesh	
-    };
-    this.createSaturnMesh= function(){
+
+	} else if (name === "saturn") {
 	var scale=this.config.saturn.scale;
 	var material	= this.Material({map:this.baseURL+this.config.saturn.map,
 					 bumpMap	: this.baseURL+this.config.saturn.map,
@@ -533,9 +522,46 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(this.config.saturn.radius*scale, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material);
 	mesh.name       = "saturn";
-	mesh.rotation.x=Math.PI/2;
+	mesh.rotation.x = Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
+
+	} else if (name === "saturnRing") {
+	} else if (name === "uranus") {
+
+	} else if (name === "neptune") {
+
+	} else if (name === "pluto") {
+
+	} else if (name === "deathstar") {
+
+	    
+	} else {
+	};
+	return mesh
+    };
+    this.createSunMesh	= function(){
+	return mesh	
+    };
+    this.createMercuryMesh	= function(){
+	return mesh	
+    };
+    this.createVenusMesh	= function(){
+	return mesh	
+    };
+    this.createEarthMesh	= function(){
+	return mesh	
+    };
+    this.createMoonMesh	= function(){
+	return mesh	
+    };
+    this.createMarsMesh	= function(){
+	return mesh	
+    };
+    this.createJupiterMesh= function(){
+	return mesh	
+    };
+    this.createSaturnMesh= function(){
 	return mesh	
     };
     this.createSaturnRingMesh	= function(side){
@@ -560,7 +586,7 @@ function Bodies() {
 	};
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
-	offset=normal.clone().multiplyScalar(this.config.saturn.ring.thickness*scale); // offset so shadow is not messed up...
+	offset=normal.clone().multiplyScalar(this.config.saturn.ring.thickness); // offset so shadow is not messed up...
 	mesh.position.set(offset.x,offset.y,offset.z);
 	mesh.lookAt(normal);
 	//mesh.rotation.x=Math.PI/2;
@@ -574,7 +600,6 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(this.config.uranus.radius*scale, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material);
 	mesh.name="uranus";
-	mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	return mesh	
@@ -600,7 +625,7 @@ function Bodies() {
 	};
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
-	offset=normal.clone().multiplyScalar(this.config.uranus.ring.thickness*scale); // offset so shadow is not messed up...
+	offset=normal.clone().multiplyScalar(this.config.uranus.ring.thickness); // offset so shadow is not messed up...
 	mesh.position.set(offset.x,offset.y,offset.z);
 	mesh.lookAt(normal);
 	return mesh	
@@ -661,196 +686,175 @@ function Bodies() {
     //
     //////////////////////////////////////////////////////////////////////////////////
     //
-    this.prepareForRender=function(name,scene,mainCamera) {
+    this.prepareForRender=function(scene,mainCamera) {
+    };
+
+    this.getCamera=function(scene) {
+	return scene.getObjectByName("camera");
     };
     
     this.updateScene=function(state,mainCamera,observer,name,scene) {
+	let scale= this.config[name].scale;
 	//console.log("UpdateScene:",name,scale);
-	this.updateCamera(state,mainCamera,observer,name,scene);
-	this.updateLabel(state,mainCamera,observer,name,scene);
-	if (name === "sun" ||
-		   name === "mercury" ||
+	var camera=this.getCamera(scene);
+	if (camera !== undefined) {
+	    // update camera position
+	    camera.copy(mainCamera);
+	    var x=observer.position.x*scale;
+	    var y=observer.position.y*scale;
+	    var z=observer.position.z*scale;
+	    camera.position.set(x,y,z);
+	};
+	if (name === "sun") {
+	    //update sun positions (nothing to do)
+	} else if (name === "mercury" ||
 		   name === "venus" ||
 		   name === "earth" ||
 		   name === "mars" ||
 		   name === "jupiter" ||
+		   name === "saturn" ||
+		   name === "uranus" ||
 		   name === "neptune" ||
 		   name === "pluto"
 		  ) {
-	    let scale = this.config[name].scale;
-	    let pos   = this.config[name].position;
-	    let body  = scene.getObjectByName(name);
-
-	    //console.log("Pos:",name,pos);
-
+	    let pos=   this.config[name].position;
+	    let body=  scene.getObjectByName(name);
+	    //body.position.x=pos.x*scale;
+	    //body.position.y=pos.y*scale;
+	    //body.position.z=pos.z*scale;
 	    body.position.set(pos.x*scale,pos.y*scale,pos.z*scale);
+	    //body.updateMatrix();
+	    //body.position.set(0,0,0);
+	    //body.matrixAutoUpdate=true;
+	    //body.updateMatrix();
+	    //body.updateMatrixWorld();
 	    //console.log("Bodies scene:",name,scene,body);
-	} else if (name === "earth") {
-	    let scale = this.config[name].scale;
-	    let pos   = this.config[name].position;
-	    let group = scene.getObjectByName("group");
-	    let body  = scene.getObjectByName(name);
-	    group.position.set(pos.x*scale,pos.y*scale,pos.z*scale);
-	} else if (name === "saturn" || name === "uranus") {
-	    let scale = this.config[name].scale;
-	    let pos   = this.config[name].position;
-	    let group = scene.getObjectByName("group");
-	    let body  = scene.getObjectByName(name);
-	    let light  = scene.getObjectByName("sunlight");
-	    group.position.set(pos.x*scale,pos.y*scale,pos.z*scale);
-	    this.direction.setFromMatrixPosition( group.matrixWorld );
-	    this.location.setFromMatrixPosition( body.matrixWorld );
-	    
-	    //console.log(name,this.direction,scene);
-
-	    
 	} else {
 	    console.log("Unknown name:",name);
 	};
     };
 
-    this.updateCamera=function(state,mainCamera,observer,name,scene) {
-	var camera=scene.getObjectByName("camera");
-	if (camera !== undefined) {
-	    let scale = this.config[name].scale;
-	    // update camera position
-	    let obs=observer.position;
-	    camera.copy(mainCamera);
-	    camera.position.set(obs.x*scale,obs.y*scale,obs.z*scale);
-	};
-    };
-
-    this.updateLabel=function(state,mainCamera,observer,name,scene) {
-	var label=scene.getObjectByName("label");
-	if (label !== undefined) {
-	    let scale = this.config[name].scale;
-	    var radius=this.config[name].radius;
-	    this.direction.set();
-	    let pos=this.config[name].position;
-	    let obs=observer.position;
-	    this.direction.set(pos.x-obs.x,pos.y-obs.y,pos.z-obs.z);
-	    // resize...
-	    let size=label.width*scale*this.direction.length()/500;
-	    label.material.size=size;
-	    //console.log("Sprite:",name,label.width,label.height);
-	    //console.log(name,label.scale,size,label);
-	    // reposition...
-	    this.right.crossVectors(this.direction,this.config.observer.zenith);
-	    if (this.right.length() > 0) {
-		this.right.normalize();
-		this.right.multiplyScalar(radius*scale*1.1);
-		this.right.addScaledVector(pos,scale);
-		label.position.set(this.right.x,this.right.y,this.right.z);
-		//console.log("Right:",this.right,label.position);
-	    };	    
-	} else {
-	    console.log("No label found...",name);
-	};
-    };
-    
-    this.createLabel = function (name) {
-	var title=this.config[name].title;
-	var label=UTILS.createTextSprite(title,
-					 {font:'48px Arial',
-					  floating:true,
-					  fillStyle:'yellow',
-					  size:200,
-					  cx:0,cy:0.5,
-					  x:0,y:0,z:0,
-					  alphaTest:0.01,
-					  //border:true,
-					  name:"label",
-					 });
-	if (this.config[name].visible) {
-	    label.visible=true;
-	} else {
-	    label.visible=false;
-	}
-	return label;
-    }
-    this.createScene = function (name,mainCamera) { // 
-	var size=48;
-	var font='48px Arial';
+    this.createScene = function (mainCamera,name) { // 
 	var scene = new THREE.Scene();
 	var camera=mainCamera.clone();
 	camera.name="camera";
 	scene.name="scene";
 	scene.add(camera);
-	var mesh;
 	if (name === "sun") {
-	    mesh=this.createSunMesh();
-	    scene.add(mesh);
+	    scene.add(this.createSunMesh());
 	    scene.add(new THREE.AmbientLight('#ffff88',1000));
-	    scene.add(this.createLabel(name));
-	} else if (name === "mercury") {
-	    mesh=this.createMercuryMesh()
-	    scene.add(mesh);
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
-	} else if (name === "venus") {
-	    mesh=this.createVenusMesh()
-	    scene.add(mesh);
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
-	} else if (name === "earth") {
-	    var group = new THREE.Object3D();
-	    group.name="group";
-	    mesh=this.createEarthMesh()
-	    group.add(mesh);
-	    group.add(this.createMoonMesh());
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
-	    scene.add(group);
-	} else if (name === "mars") {
-	    mesh=this.createMarsMesh()
-	    scene.add(mesh);
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
-	} else if (name === "jupiter") {
-	    mesh=this.createJupiterMesh();
-	    scene.add(mesh);
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
-	} else if (name === "saturn") {
-	    var scale = this.config.saturn.scale;
-	    var group = new THREE.Object3D();
-	    group.name="group";
-	    mesh=this.createSaturnMesh();
-	    group.add(mesh);
-	    group.add(this.createSaturnRingMesh(THREE.FrontSide));
-	    group.add(this.createSaturnRingMesh(THREE.BackSide));
-	    group.add(this.createDeathStarMesh(scale));
-	    this.setPosition(group,"deathstar",
-			     20000*scale,
-			     this.config.saturn.radius*1.25*scale,
-			     10000*scale);//
-	    scene.add(this.createLabel(name));
-	    scene.add(this.createLight(mesh));
-	    scene.add(group);
-	} else if (name === "uranus") {
-	    var group = new THREE.Object3D();
-	    group.name="group";
-	    mesh=this.createUranusMesh();
-	    group.add(mesh);
-	    group.add(this.createUranusRingMesh(THREE.FrontSide));
-	    group.add(this.createUranusRingMesh(THREE.BackSide));
-	    scene.add(this.createLabel(name));
-	    scene.add(this.createLight(mesh));
-	    scene.add(group);
-	} else if (name === "neptune") {
-	    mesh=this.createNeptuneMesh();
-	    scene.add(mesh);
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
-	} else if (name === "pluto") {
-	    mesh=this.createPlutoMesh();
-	    scene.add(mesh);
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
 	} else {
-	    console.log("Unknown scene:",name);
 	}
 	return scene;
+    };
+    this.createSunScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	scene.add(this.createSunMesh());
+	scene.add(new THREE.AmbientLight('#ffff88',1000));
+	//scene.name="sun";
+	return scene;
+    };
+    this.createMercuryScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createMercuryMesh()
+	scene.add(mesh);
+	scene.add(this.createLight(mesh));
+	//scene.name="mercury";
+	return scene;
+    };
+    this.createVenusScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createVenusMesh()
+	scene.add(mesh);
+	scene.add(this.createLight(mesh));
+	//scene.name="venus";
+	return scene;
+    };
+    this.createEarthScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createEarthMesh()
+	scene.add(mesh);
+	scene.add(this.createMoonMesh());
+	scene.add(this.createLight(mesh));
+	//scene.name="earth";
+	return scene;
+    };
+    this.createMarsScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createMarsMesh()
+	scene.add(mesh);
+	scene.add(this.createLight(mesh));
+	//scene.name="mars";
+	return scene;
+    };
+    this.createJupiterScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createJupiterMesh();
+	scene.add(mesh);
+	scene.add(this.createLight(mesh));
+	//scene.name="jupiter";
+	return scene;
+    };
+    this.createSaturnScene = function (mainCamera) {
+	var scale = this.config.saturn.scale;
+	var scene = this.createScene(mainCamera);
+	var group = new THREE.Object3D();
+	var mesh=this.createSaturnMesh();
+	group.add(mesh);
+	group.add(this.createLight(mesh));
+	group.add(this.createSaturnRingMesh(THREE.FrontSide));
+	group.add(this.createSaturnRingMesh(THREE.BackSide));
+	group.add(this.createDeathStarMesh(scale));
+	this.setPosition(group,"deathstar",
+			 20000*scale,
+			 this.config.saturn.radius*1.01*scale,
+			 10000*scale);//
+	group.name="saturn";
+	scene.add(group);
+	//scene.name="saturn";
+	return scene;
+    };
+    this.createUranusScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var group = new THREE.Group();
+	var mesh=this.createUranusMesh();
+	group.add(mesh);
+	group.add(this.createUranusRingMesh(THREE.FrontSide));
+	group.add(this.createUranusRingMesh(THREE.BackSide));
+	group.add(this.createLight(mesh));
+	group.name="uranus";
+	scene.add(group);
+	//scene.name="uranus";
+	return scene;
+    };
+    this.createNeptuneScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createNeptuneMesh();
+	scene.add(mesh);
+	scene.add(this.createLight(mesh));
+	//scene.name="neptune";
+	return scene;
+    };
+    this.createPlutoScene = function (mainCamera) {
+	var scene = this.createScene(mainCamera);
+	var mesh=this.createPlutoMesh();
+	scene.add(mesh);
+	scene.add(this.createLight(mesh));
+	//scene.name="pluto";
+	return scene;
+    };
+    this.createScenes = function(mainCamera) {
+	this.scenes["sun"]     = this.createSunScene(mainCamera);
+	this.scenes["mercuy"]  = this.createMercuryScene(mainCamera);
+	this.scenes["venus"]   = this.createVenusScene(mainCamera);
+	this.scenes["earth"]   = this.createEarthScene(mainCamera);
+	this.scenes["mars"]    = this.createMarsScene(mainCamera);
+	this.scenes["jupiter"] = this.createJupiterScene(mainCamera);
+	this.scenes["saturn"]  = this.createSaturnScene(mainCamera);
+	this.scenes["uranus"]  = this.createUranusScene(mainCamera);
+	this.scenes["neptune"] = this.createNeptuneScene(mainCamera);
+	this.scenes["pluto"]   = this.createPlutoScene(mainCamera);
+	return this.scenes;
     };
     //////////////////////////////////////////////////////////////////////////////////
     //		Texture functions					//

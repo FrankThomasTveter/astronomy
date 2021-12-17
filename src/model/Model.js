@@ -6,41 +6,11 @@ import Backdrop from "./Backdrop";
 //import { SpriteText2D, textAlign } from 'three-text2d'
 
 import * as THREE from 'three'
+import * as UTILS from './utils';
 import { PointOfViewControls } from './PointOfViewControls'
 
-// utility function
-const sceneTraverse = (obj, fn) => {
-    if (!obj) return
-    fn(obj)
-    if (obj.children && obj.children.length > 0) {
-	obj.children.forEach(o => {
-	    sceneTraverse(o, fn)
-	})
-    }
-}
-const cleanScene =  (o) => {
-    if (o.geometry) {
-        o.geometry.dispose()
-        //console.log("dispose geometry ", o.geometry)                        
-    }
-    if (o.material) {
-        if (o.material.length) {
-            for (let i = 0; i < o.material.length; ++i) {
-                o.material[i].dispose()
-                //console.log("dispose material ", o.material[i])                                
-            }
-        }
-        else {
-            o.material.dispose()
-            //console.log("dispose material ", o.material)                            
-        }
-    }
-};
-
-const emptyFunction = () => {};
-
 const defaultCallbacks = {
-    onTextureLoaded: emptyFunction,
+    onTextureLoaded: ()=>{},
 };
 
 const defaultOptions = {
@@ -58,8 +28,7 @@ const defaultOptions = {
     }
 };
 
-
-// model handles all graphics related to model, data is updated using  ModelLib
+// model handles all graphics related to model, Model data is updated using ModelLib
 export default class Model {
     constructor(state, canvas) {
 	this.state=state;
@@ -67,7 +36,6 @@ export default class Model {
 	this.init(state,canvas);
 	this.state.React.Model=this;
     }
-
     toggleNavigation() {};   // show backdrop grid?
     toggleInformation() {};  // show information?
     toggleSnap() {};         // snap to body?
@@ -89,20 +57,49 @@ export default class Model {
 	console.log("Initialised");
     };
 
+    initScene(state) {
+	this.scene = new THREE.Scene();
+	//this.scene.add(this.Backdrop.createStarsBackdrop());
+	//this.scene.add(this.Backdrop.createNavigationBackdrop());
+	this.scenes={backdrop:[],bodies:{},order:["navigation","stars"]};
+	this.scenes.backdrop["navigation"]={scene: this.Backdrop.createScene("navigation",this.mainCamera),   show:true};
+	this.scenes.backdrop["stars"]=     {scene: this.Backdrop.createScene("stars",this.mainCamera),        show:true};
+	this.scenes.bodies["sun"]=     {scene: this.Bodies.createScene("sun",this.mainCamera), distance:20,   show:true};
+	this.scenes.bodies["mercury"]= {scene: this.Bodies.createScene("mercury",this.mainCamera),distance:9, show:true};
+	this.scenes.bodies["venus"]=   {scene: this.Bodies.createScene("venus",this.mainCamera),distance:8,   show:true};
+	this.scenes.bodies["earth"]=   {scene: this.Bodies.createScene("earth",this.mainCamera),distance:0,   show:true};
+	this.scenes.bodies["mars"]=    {scene: this.Bodies.createScene("mars",this.mainCamera),distance:10,   show:true};
+	this.scenes.bodies["jupiter"]= {scene: this.Bodies.createScene("jupiter",this.mainCamera),distance:12,show:true};
+	this.scenes.bodies["saturn"]=  {scene: this.Bodies.createScene("saturn",this.mainCamera),distance:13, show:true};
+	this.scenes.bodies["uranus"]=  {scene: this.Bodies.createScene("uranus",this.mainCamera),distance:14, show:true};
+	this.scenes.bodies["neptune"]= {scene: this.Bodies.createScene("neptune",this.mainCamera),distance:15,show:true};
+	this.scenes.bodies["pluto"]=   {scene: this.Bodies.createScene("pluto",this.mainCamera),distance:16,  show:true};
+    //this.Bodies.setPosition(this.scene,"deathstar",
+    //			  20000*this.Bodies.SCALE,
+    //			  this.Bodies.config.saturn.radius*1.01,
+    //			  10000*this.Bodies.SCALE);//
+    //this.Bodies.setPosition(this.scene,"moon",
+    //			  20000*this.Bodies.SCALE,
+    //			  this.Bodies.config.saturn.radius*1.01,
+    //			  10000*this.Bodies.SCALE);//
+	// console.log("*** Scenes:",JSON.stringify(Object.keys(this.scenes.bodies)));
+    };
+    
     initRenderer(state,canvas) {
 	this.renderer = new THREE.WebGLRenderer({
 	    alpha: true,
 	    antialias: true,
 	    canvas:canvas,
 	});
-	this.renderer.setClearColor (0x000000, 1);
+	this.renderer.setClearColor (0x000000, 1); // black background
 	this.renderer.shadowMap.enabled=true;
 	//this.renderer.shadowMap.type=THREE.BasicShadowMap;
 	//this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     };	
 
+
     initCamera(state) {
-	this.mainCamera = new THREE.PerspectiveCamera(45,undefined,1,10000000);
+	this.mainCamera = new THREE.PerspectiveCamera(45,undefined,1,1000000000);
 	this.mainCamera.name="camera";
 	this.mainCamera.position.set(0,0,0);
 	this.mainCamera.up.set(0,0,1);
@@ -141,34 +138,6 @@ export default class Model {
 	}.bind(this), false );
     };	
 
-    initScene(state) {
-	this.scene = new THREE.Scene();
-	//this.scene.add(this.Backdrop.createStarsBackdrop());
-	//this.scene.add(this.Backdrop.createNavigationBackdrop());
-	this.scenes={backdrop:[],bodies:{},order:["navigation","stars"]};
-	this.scenes.backdrop["navigation"]={scene: this.Backdrop.createNavigationScene(this.mainCamera),   show:true};
-	this.scenes.backdrop["stars"]=     {scene: this.Backdrop.createStarsScene(this.mainCamera),        show:false};
-	this.scenes.bodies["sun"]=     {scene: this.Bodies.createSunScene(this.mainCamera), distance:20,   show:true};
-	this.scenes.bodies["mercury"]= {scene: this.Bodies.createMercuryScene(this.mainCamera),distance:9, show:true};
-	this.scenes.bodies["venus"]=   {scene: this.Bodies.createVenusScene(this.mainCamera),distance:8,   show:true};
-	this.scenes.bodies["earth"]=   {scene: this.Bodies.createEarthScene(this.mainCamera),distance:0,   show:true};
-	this.scenes.bodies["mars"]=    {scene: this.Bodies.createMarsScene(this.mainCamera),distance:10,   show:false};
-	this.scenes.bodies["jupiter"]= {scene: this.Bodies.createJupiterScene(this.mainCamera),distance:12,show:false};
-	this.scenes.bodies["saturn"]=  {scene: this.Bodies.createSaturnScene(this.mainCamera),distance:13, show:false};
-	this.scenes.bodies["uranus"]=  {scene: this.Bodies.createUranusScene(this.mainCamera),distance:14, show:false};
-	this.scenes.bodies["neptune"]= {scene: this.Bodies.createNeptuneScene(this.mainCamera),distance:15,show:false};
-	this.scenes.bodies["pluto"]=   {scene: this.Bodies.createPlutoScene(this.mainCamera),distance:16,  show:false};
-    //this.Bodies.setPosition(this.scene,"deathstar",
-    //			  20000*this.Bodies.SCALE,
-    //			  this.Bodies.config.saturn.radius*1.01,
-    //			  10000*this.Bodies.SCALE);//
-    //this.Bodies.setPosition(this.scene,"moon",
-    //			  20000*this.Bodies.SCALE,
-    //			  this.Bodies.config.saturn.radius*1.01,
-    //			  10000*this.Bodies.SCALE);//
-	// console.log("*** Scenes:",JSON.stringify(Object.keys(this.scenes.bodies)));
-    };
-    
     // *****************************************    
     // ************* ANIMATION *****************    
     // *****************************************    
@@ -308,14 +277,14 @@ export default class Model {
     };
 
     renderBackdrop() {
-	this.scenes.order.forEach( (kk,i)=>{
-	    let k = this.scenes.backdrop[kk];
+	this.scenes.order.forEach( (name,i)=>{
+	    let k = this.scenes.backdrop[name];
 	    let show=k.show;
 	    let scene=k.scene;
-	    let camera=this.Backdrop.getCamera(scene);
+	    let camera=scene.getObjectByName("camera");
 	    //console.log("Rendering:", k, show, camera);
 	    if (show && camera !== undefined) {
-		this.Backdrop.prepareForRender(scene,this.mainCamera);
+		this.Backdrop.prepareForRender(name,scene,this.mainCamera);
 		this.renderer.render(scene, camera);
 	    } else {
 		//console.log("Not rendering:",i);
@@ -328,14 +297,14 @@ export default class Model {
 	// sort scenes by distance...
 	var keys = Object.keys(this.scenes.bodies);
 	var order=keys.sort((a,b) => {return this.scenes.bodies[a].distance - this.scenes.bodies[b].distance;} );
-	order.forEach( (k,i)=>{
-	    let distance=this.scenes.bodies[k].distance||0;
-	    let show=this.scenes.bodies[k].show;
-	    let scene=this.scenes.bodies[k].scene;
-	    let camera=this.Bodies.getCamera(scene);
+	order.forEach( (name,i)=>{
+	    let distance=this.scenes.bodies[name].distance||0;
+	    let show=this.scenes.bodies[name].show;
+	    let scene=this.scenes.bodies[name].scene;
+	    let camera=scene.getObjectByName("camera");
 	    if (show && camera !== undefined) {
-		//console.log("Rendering:",k);
-		this.Bodies.prepareForRender(scene,this.mainCamera);
+		//console.log("Rendering:",name);
+		this.Bodies.prepareForRender(name,scene,this.mainCamera);
 		this.renderer.render(scene, camera);
 	    } else {
 		//console.log("Not rendering:",k);
@@ -478,7 +447,7 @@ export default class Model {
 	// clean up...
 	//this.scene.on('mousemove', null);
 	//this.scene.on('click', null );
-	sceneTraverse(this.scene, cleanScene);
+	UTILS.sceneTraverse(this.scene, UTILS.cleanScene);
 	this.scene.dispose();
 	this.scene=null;
 	this.renderer && this.renderer.renderLists.dispose();

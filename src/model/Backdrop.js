@@ -1,13 +1,14 @@
 //import Vector3 from './Vector3Lib';
 //import Vector2 from './Vector2Lib';
 import * as THREE from 'three';
+import * as UTILS from './utils';
 
 console.log("Loading Backdrop");
 
 function Backdrop() { 
     this.debug=false;
     this.lookat=new THREE.Vector3(0,0,-1);
-    this.SCALE = 1.0e-15;
+    this.SCALE = 1.0e-10;
     this.X =          0;
     this.Y =          1;
     this.Z =          2;
@@ -146,21 +147,29 @@ function Backdrop() {
     this.period=5000.0;
     this.first=undefined;
     //
-    this.prepareForRender=function(scene,mainCamera) {
+    this.prepareForRender=function(name,scene,mainCamera) {
 	var points=scene.getObjectByName("stars");
 	var camera=scene.getObjectByName("camera");
 	if (camera !== undefined && points !== undefined) {
 	    points.material.size = this.defaultSize / Math.tan( ( Math.PI / 180 ) * camera.fov / 2 );
 	};
     };
-
-    this.createScene = function (mainCamera) { // 
+    this.createScene = function (name,mainCamera) { // 
 	var scene = new THREE.Scene();
 	var camera=mainCamera.clone();
 	//camera.matrixAutoUpdate=false;
 	camera.position.set(0,0,0);
 	camera.name="camera";
 	scene.add(camera);
+	if (name === "stars") {
+	    var stars=this.createStarsBackdrop();
+	    scene.add(stars);
+	} else if (name === "navigation") {
+	    var nav=this.createNavigationBackdrop();
+	    scene.add(nav);
+	} else {
+	    console.log("Unknown scene:",name);
+	};
 	return scene;
     };
 
@@ -191,19 +200,6 @@ function Backdrop() {
 	}
     };
 
-    this.createStarsScene	= function(mainCamera){
-	var scene = this.createScene(mainCamera);
-	var stars=this.createStarsBackdrop();
-	scene.add(stars);
-	return scene;
-    };
-    this.createNavigationScene	= function(mainCamera){
-	var scene = this.createScene(mainCamera);
-	var nav=this.createNavigationBackdrop();
-	scene.add(nav);
-	return scene;
-    };
-
     this.getCamera=function(scene) {
 	return scene.getObjectByName("camera");
     };
@@ -212,8 +208,8 @@ function Backdrop() {
 	//https://jsfiddle.net/prisoner849/z3yfw208/
 	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true, alphaTest:0.01 }); //   alphaTest: 0.99
 	//var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
-	//this.addTextureMap(material,this.fullStarsURL + "ball.png");
-	this.addTextureMap(material,this.fullStarsURL + this.sprites[0]);
+	//UTILS.addTextureMap(material,this.fullStarsURL + "ball.png");
+	UTILS.addTextureMap(material,this.fullStarsURL + this.sprites[0]);
 	var geometry = new THREE.InstancedBufferGeometry();
 	//var geometry = new THREE.BufferGeometry();
 	var positions = new Float32Array(30000);
@@ -224,18 +220,18 @@ function Backdrop() {
             let x = 2000 * Math.random() - 1000;
             let y = 2000 * Math.random() - 1000;
             let z = 2000 * Math.random() - 1000;
-            positions[i * 3 + 0] = x;
-            positions[i * 3 + 1] = y;
-            positions[i * 3 + 2] = z;
+            positions[i * 3 + 0] = x*10;
+            positions[i * 3 + 1] = y*10;
+            positions[i * 3 + 2] = z*10;
             
             colors[i * 3 + 0] = 0.5+0.5*Math.random();
             colors[i * 3 + 1] = 0.5+0.5*Math.random();
             colors[i * 3 + 2] = 0.5+0.5*Math.random();
             
-            sizes[i] = 0*(Math.random() * 90) + 90;
+            sizes[i] = 10*(Math.random() * 90) + 90;
             //alphas[i] = 1;
 	}
-	this.modifyShaders(geometry,material,sizes);
+	UTILS.modifyShaders(geometry,material,sizes);
 	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
 	geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
 	//geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
@@ -266,40 +262,44 @@ function Backdrop() {
 	    //if (ilat%30 === 0.0) {
 		let x=radius*Math.cos(ilat*Math.PI/180);
 		let y=0;
-		group.add(this.createTextSprite(""+ilat,{
+		group.add(UTILS.createTextSprite(""+ilat,{
 		    font:'48px Arial',
 		    //floating:true,
 		    fillStyle:colorh,
 		    size:size,
 		    cx:1,cy:0,
 		    x:x,y:y,z:offset.z,
+		    alphaTest:0.01,
 		    //border:true,
 		}));
-		group.add(this.createTextSprite(""+ilat,{
+		group.add(UTILS.createTextSprite(""+ilat,{
 		    font:'48px Arial',
 		    //floating:true,
 		    fillStyle:colorh,
 		    size:size,
 		    cx:1,cy:0,
 		    x:-x,y:y,z:offset.z,
+		    alphaTest:0.01,
 		    //border:true,
 		}));
-		group.add(this.createTextSprite(""+ilat,{
+		group.add(UTILS.createTextSprite(""+ilat,{
 		    font:'48px Arial',
 		    //floating:true,
 		    fillStyle:colorh,
 		    size:size,
 		    cx:1,cy:0,
 		    x:0,y:-x,z:offset.z,
+		    alphaTest:0.01,
 		    //border:true,
 		}));
-		group.add(this.createTextSprite(""+ilat,{
+		group.add(UTILS.createTextSprite(""+ilat,{
 		    font:'48px Arial',
 		    //floating:true,
 		    fillStyle:colorh,
 		    size:size,
 		    cx:1,cy:0,
 		    x:0,y:x,z:offset.z,
+		    alphaTest:0.01,
 		    //border:true,
 		}));
 	    //};
@@ -313,7 +313,7 @@ function Backdrop() {
 	    group.add(this.createCircleMesh(radius,look,offset,color,width));
 	    let x=radius*Math.cos(ilon*Math.PI/180);
 	    let y=radius*Math.sin(ilon*Math.PI/180);
-	    group.add(this.createTextSprite(""+(360+180-ilon)%360,{
+	    group.add(UTILS.createTextSprite(""+(360+180-ilon)%360,{
 		font:'48px Arial',
 		//floating:true,
 		fillStyle:colorh,
@@ -322,7 +322,7 @@ function Backdrop() {
 		x:x,y:y,z:0,
 		//border:true,
 	    }));
-	    group.add(this.createTextSprite(""+(360-ilon)%360,{
+	    group.add(UTILS.createTextSprite(""+(360-ilon)%360,{
 		font:'48px Arial',
 		//floating:true,
 		fillStyle:colorh,
@@ -369,172 +369,6 @@ function Backdrop() {
 	};
 	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
 	return geometry;
-    };
-    this.getTextCanvas=function(text,opts) {
-	var lines=text.split('\n');
-	var longest = text.split('\n').sort(
-	    function (a, b) {
-		return b.length - a.length;
-	    }
-	)[0];
-	var canvas = document.createElement('canvas');
-	if (opts.width !== undefined) {canvas.width=opts.width;}
-	if (opts.height !== undefined) {canvas.height=opts.height;}
-	var context = canvas.getContext('2d');
-	context.font         = opts.font         || "bold 48px Serif";
-	context.fontSize     = opts.fontSize     || 48;
-	context.textAlign    = opts.textAlign    || "left";
-	context.textBaseline = opts.textBaseline || "top";//"top,hanging,middle,alphabetic,ideographic,bottom
-	const metrics = context.measureText(longest);
-	// this will reset the canvas...
-	var width=Math.ceil(metrics.actualBoundingBoxRight - metrics.actualBoundingBoxLeft+1+1);
-	var lheight=Math.ceil(metrics.actualBoundingBoxDescent - metrics.actualBoundingBoxAscent+1);
-	var height=lheight * lines.length;
-	canvas.width=width;
-	canvas.height=height;
-	var dx=0,dy=0;
-	if (opts.floating) {
-	    var twidth=width;
-	    var theight=height;
-	    if (opts.cx !== undefined) {
-		twidth=(width*2);
-	    };
-	    if (opts.cy !== undefined) {
-		theight=(height*2);
-	    };
-	    var block=Math.max(theight,twidth);
-	    canvas.height=block;
-	    canvas.width=block;
-	    if (opts.cx !== undefined) {
-		dx=(canvas.width*0.5)-width;
-	    };
-	    if (opts.cy !== undefined) {
-		dy=(canvas.height*0.5)-height;
-	    };
-	    opts.scale=canvas.height/lheight
-	};
-	//console.log( canvas.width, canvas.height );
-	// final draw...
-	if (opts.border) {
-	    context.strokeStyle  = "#9999ff";
-	    context.strokeRect(1, 1, canvas.width-2, canvas.height-2);
-	};
-	context.font         = opts.font         || "bold 48px Serif";
-	context.fontSize     = opts.fontSize     || 48;
-	context.textAlign    = opts.textAlign    || "left";
-	context.textBaseline = opts.textBaseline || "top";
-	context.fillStyle    = opts.fillStyle    || "#ff4444";
-	var ox=0,oy=0;
-	if (opts.cy !== undefined) {
-	    oy=(canvas.height - height - 2*dy)*(opts.cy);
-	    //console.log("Dy",dy,oy,height,canvas.height);
-	};
-	if (opts.cx !== undefined) {
-	    ox=(canvas.width - width - 2*dx)*(1-opts.cx);
-	}
-	lines.forEach((ll,i) => {context.fillText(ll,ox+dx,oy+dy+i*lheight);});
-	//context.fillText(text, 0, 0);
-	return canvas;
-    };
-    this.createTextSprite=function(text,opts) {
-	var canvas=this.getTextCanvas(text,opts);
-	var texture=new THREE.Texture(canvas);
-	texture.needsUpdate = true;
-	var size=opts.size||10;
-	var sprite;
-	if (opts.floating) {
-	    var color=new THREE.Color(opts.color || 0x0000ff);
-	    //console.log( texture.image.width, texture.image.height );
-	    var material = new THREE.PointsMaterial({
-		map: texture,
-		vertexColors: THREE.VertexColors,
-		size:size*(opts.scale||1),
-		transparent:true,
-		//alphaTest:0.01,
-		//useScreenCoordinates: false,
-	    });
-	    var geometry = new THREE.BufferGeometry();
-	    geometry.setAttribute('position',new THREE.Float32BufferAttribute(
-		new THREE.Vector3(opts.x,opts.y,opts.z).toArray(),3));
-	    geometry.setAttribute('color',new THREE.Float32BufferAttribute([1,1,1],3));
-	    geometry.setAttribute('alpha',new THREE.Float32BufferAttribute([1],1));
-	    var sizes = new Float32Array(1);
-	    sizes[0]=1;
-	    this.modifyShaders(geometry,material, sizes);
-	    sprite = new THREE.Points(geometry, material);
-	} else {
-	    var material = new THREE.SpriteMaterial({
-		map: texture,
-		//needsUpdate:true,
-		//useScreenCoordinates: false,
-		sizeAttenuation:opts.sizeAttenuation||true,
-		transparent: true,
-	    });
-	    sprite = new THREE.Sprite(material);
-	    if (opts.size !== undefined) {
-		sprite.scale.set(canvas.width*size/100,canvas.height*size/100,canvas.height*size/100);
-	    };
-	    if (opts.cx !== undefined && opts.cy !== undefined) {
-		sprite.center.set(opts.cx,opts.cy);
-	    };
-	}
-	if (sprite !== undefined) {
-	    if (opts.x !== undefined && opts.y !== undefined && opts.z !== undefined) {
-		sprite.position.set(opts.x,opts.y,opts.z);
-	    };
-	    sprite.name="text";
-	};
-	//this.scene.add(sprite)
-	return sprite;
-    };
-    this.addTextureMap=function(material,map) {
-	if (map !== undefined) {
-	    const textureLoader=new THREE.TextureLoader();
-	    textureLoader.load(
-		map,
-		function(mapTexture) {
-		    mapTexture.name=map;
-		    mapTexture.center.setScalar(0.5);
-		    //mapTexture.rotation= -Math.PI * 0.5;
-		    material.map=mapTexture;
-		    material.size=2.0;
-		    material.color.setHex(0xffffff);
-		    material.sizeAttenuation=true;
-		    material.needsUpdate=true;
-		},
-		function ( xhr ) {
-		    console.log( "Map:", (xhr.loaded / xhr.total * 100) + '% loaded' );
-		},
-		function ( xhr ) {
-		    console.log( 'Map: An error happened '+map  );
-		}
-	    );
-	};
-	return material;
-    };
-    this.modifyShaders=function(geometry,material, sizes) {
-	material.onBeforeCompile = shader => {
-	    shader.vertexShader = `
-    attribute float sizes;
-    attribute vec3 offset;
-    ` + shader.vertexShader;
-	    //console.log(shader.vertexShader);
-	    shader.vertexShader = shader.vertexShader.replace(
-  		`#include <begin_vertex>`,
-		`#include <begin_vertex>
-    transformed += offset;
-    `
-	    )
-	    shader.vertexShader = shader.vertexShader.replace(
-  		`gl_PointSize = size;`,
-		`gl_PointSize = size * sizes;`
-	    )
-	};
-
-	var sumDisplacement =  [0, 0, 0, 0, 0, 0, 0, 0, 0];
-	const sumDisp = new Float32Array(sumDisplacement);
-	geometry.setAttribute( 'sizes', new THREE.BufferAttribute( sizes, 1 ) );
-	geometry.setAttribute('offset', new THREE.InstancedBufferAttribute(sumDisp, 3 ));
     };
     this.lightenDarkenColor = function (hex, amount) {
 	var col = [hex >> 16, (hex >> 8) & 0x00FF,  hex & 0x0000FF];
