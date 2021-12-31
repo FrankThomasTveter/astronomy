@@ -9,6 +9,7 @@ function File() {
 	if (callbacks !== undefined) {
 	    var callback=callbacks.shift();
 	    if (callback !== undefined) {
+
 		setTimeout(callback(state,response,callbacks),0.1);
 	    }
 	}

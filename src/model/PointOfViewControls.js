@@ -7,14 +7,15 @@
 
 import * as THREE from 'three';
 
-var PointOfViewControls = function ( object, domElement ) {
+var PointOfViewControls = function ( object, domElement, model ) {
 
 	var _this = this;
 	var STATE = { NONE: - 1, ROTATE: 0, ZOOM: 1, PAN: 2, TOUCH_ROTATE: 3, TOUCH_ZOOM_PAN: 4 };
 
 	this.object = object;
 	this.domElement = ( domElement !== undefined ) ? domElement : document;
-
+        this.model = model;
+    
 	// API
 
 	this.enabled = true;
@@ -401,6 +402,10 @@ var PointOfViewControls = function ( object, domElement ) {
 
 	function mousedown( event ) {
 
+	    if (_this.model !== undefined && _this.model.onMouseDown !== undefined) {
+		_this.model.onMouseDown(event);
+	    };
+	    
 		if ( _this.enabled === false ) return;
 
 		event.preventDefault();
@@ -462,7 +467,11 @@ var PointOfViewControls = function ( object, domElement ) {
 
 	function mouseup( event ) {
 
-		if ( _this.enabled === false ) return;
+	    if (_this.model !== undefined && _this.model.onMouseUp !== undefined) {
+		_this.model.onMouseUp(event);
+	    };
+
+	        if ( _this.enabled === false ) return;
 
 		event.preventDefault();
 		event.stopPropagation();

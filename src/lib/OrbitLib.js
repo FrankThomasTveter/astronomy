@@ -560,5 +560,10 @@ function Orbit(){
 	    return x;
 	};
     };
+    this.getMeanMotion = function(a,mu) {
+	if (a<1.0) {a=1.0;};
+	return Math.sqrt(mu/(a*a*a));
+    }
+
 };
 export default Orbit;

@@ -45,6 +45,9 @@ function Bodies() {
     this.J2000 = new Date('2000-01-01T12:00:00-00:00');
     this.scenes={};
     
+    this.near=147;// 1
+    this.far=149;//1000000000
+    
     this.config={
 	sun  :  {
 	    scale : 0.00002,
@@ -56,7 +59,6 @@ function Bodies() {
 	    map : 'sunmap.jpg',
 	    bumpScale : 10.0,
 	    k : 0.01720209895, //gravitational constant (μ)
-	    type:   'sphere',
 	    material : {
 		emissive : new THREE.Color( 0xdddd33 )
 	    },
@@ -77,10 +79,9 @@ function Bodies() {
 	    bumpScale : 3.0,
 	    orbit : { 
 		base : {a : 0.38709927 * this.AU ,  e : 0.20563593, i: 7.00497902, l : 252.25032350, lp : 77.45779628, o : 48.33076593},
-		cy : {a : 0.00000037 * this.AU ,  e : 0.00001906, i: -0.00594749, l : 149472.67411175, lp : 0.16047689, o : -0.12534081}
+		cy : {a : 0.00000037 * this.AU ,  e : 0.00001906, i: -0.00594749, l : 149472.67411175, lp : 0.16047689, o : -0.12534081},
 	    },
-	    type:   'sphere',
-	    shade : 'sun',
+	    orbits: "sun",
 	    mg : -2.45, // superior conjunction
 	    md : 1.307,
 	    rotation : new THREE.Vector3(0,0,1),
@@ -98,17 +99,16 @@ function Bodies() {
 	    bumpScale : 6.0,
 	    orbit : {
 		base : {a : 0.72333566 * this.AU ,  e : 0.00677672, i: 3.39467605, l : 181.97909950, lp : 131.60246718, o : 76.67984255},
-		cy : {a : 0.00000390 * this.AU ,  e : -0.00004107, i: -0.00078890, l : 58517.81538729, lp : 0.00268329, o : -0.27769418}
+		cy : {a : 0.00000390 * this.AU ,  e : -0.00004107, i: -0.00078890, l : 58517.81538729, lp : 0.00268329, o : -0.27769418},
 	    },
-	    type:   'sphere',
-	    shade : 'sun',
+	    orbits: "sun",
 	    mg : -3.82, // far side of sun
 	    md : 1.718,
 	    rotation : new THREE.Vector3(0,0,1),
 	    position : new THREE.Vector3()
 	},
 	earth : {
-	    scale : 0.00002,
+	    scale : 1,
 	    title : 'The Earth',
 	    visible: false,
 	    mass : 5.9736e24,
@@ -130,11 +130,10 @@ function Bodies() {
 	    tilt : 23+(26/60)+(21/3600) ,
 	    orbit : {
 		base : {a : 1.00000261 * this.AU, e : 0.01671123, i : -0.00001531, l : 100.46457166, lp : 102.93768193, o : 0.0},
-		cy : {a : 0.00000562 * this.AU, e : -0.00004392, i : -0.01294668, l : 35999.37244981, lp : 0.32327364, o : 0.0}
+		cy : {a : 0.00000562 * this.AU, e : -0.00004392, i : -0.01294668, l : 35999.37244981, lp : 0.32327364, o : 0.0},
 	    },
-	    type:   'sphere',
-	    shade : 'sun',
-	    shadows : ['moon'],
+	    orbits: "sun",
+	    satellites:[{name:"moon"}],
 	    rotation : new THREE.Vector3(0,0,1),
 	    position : new THREE.Vector3()
 	},
@@ -151,10 +150,9 @@ function Bodies() {
 	    sideralDay : 1.025957 * this.DAY,
 	    orbit : {
 		base : {a : 1.52371034 * this.AU ,  e : 0.09339410, i: 1.84969142, l : -4.55343205, lp : -23.94362959, o : 49.55953891},
-		cy : {a : 0.00001847 * this.AU ,  e : 0.00007882, i: -0.00813131, l : 19140.30268499, lp : 0.44441088, o : -0.29257343}
+		cy : {a : 0.00001847 * this.AU ,  e : 0.00007882, i: -0.00813131, l : 19140.30268499, lp : 0.44441088, o : -0.29257343},
 	    },
-	    type:   'sphere',
-	    shade : 'sun',
+	    orbits: "sun",
 	    mg : -2.91, //closest to earth
 	    md : 0.38,
 	    rotation : new THREE.Vector3(0,0,1),
@@ -171,11 +169,10 @@ function Bodies() {
 	    bumpScale : 10.0,
 	    orbit : {
 		base : {a : 5.20288700 * this.AU ,  e : 0.04838624, i: 1.30439695, l : 34.39644051, lp : 14.72847983, o : 100.47390909},
-		cy : {a : -0.00011607 * this.AU ,  e : -0.00013253, i: -0.00183714, l : 3034.74612775, lp : 0.21252668, o : 0.20469106}
+		cy : {a : -0.00011607 * this.AU ,  e : -0.00013253, i: -0.00183714, l : 3034.74612775, lp : 0.21252668, o : 0.20469106},
 	    },
-	    type:   'sphere',
-	    shade : 'sun',
-	    shadows : ['io', 'europa', 'ganymedes','callisto'],
+	    orbits: "sun",
+	    satellitesX : ['io', 'europa', 'ganymedes','callisto'],
 	    mg : -2.94 , //closest to earth
 	    md : 3.95,
 	    rotation : new THREE.Vector3(0,0,1),
@@ -201,12 +198,12 @@ function Bodies() {
 		density : 0.9,
 		color : '#aa8866'
 	    },
+	    satellites :[{name:"deathstar"}],
 	    orbit : {
 		base : {a : 9.53667594 * this.AU ,  e : 0.05386179, i: 2.48599187, l : 49.95424423, lp : 92.59887831, o : 113.66242448},
-		cy : {a : -0.00125060 * this.AU ,  e : -0.00050991, i: 0.00193609, l : 1222.49362201, lp : -0.41897216, o : -0.28867794}
+		cy : {a : -0.00125060 * this.AU ,  e : -0.00050991, i: 0.00193609, l : 1222.49362201, lp : -0.41897216, o : -0.28867794},
 	    },
-	    type:   'sphere',
-	    shade : 'sun',
+	    orbits: "sun",
 	    mg : -0.49, // at opposition
 	    md : 8.05,
 	    rotation : new THREE.Vector3(0,0,1),
@@ -232,10 +229,9 @@ function Bodies() {
 	    },
 	    orbit : {
 		base : {a : 19.18916464 * this.AU ,  e : 0.04725744, i: 0.77263783, l : 313.23810451, lp : 170.95427630, o : 74.01692503},
-		cy : {a : -0.00196176 * this.AU ,  e : -0.00004397, i: -0.00242939, l : 428.48202785, lp : 0.40805281, o : 0.04240589}
+		cy : {a : -0.00196176 * this.AU ,  e : -0.00004397, i: -0.00242939, l : 428.48202785, lp : 0.40805281, o : 0.04240589},
 	    },
-	    type:   'sphere',
-	    shade : 'sun',
+	    orbits: "sun",
 	    mg : 5.32, // closest to earth
 	    md : 17.4,
 	    rotation : new THREE.Vector3(0,0,1),
@@ -252,10 +248,9 @@ function Bodies() {
 	    bumpScale : 10.0,
 	    orbit : {
 		base : {a : 30.06992276  * this.AU,  e : 0.00859048, i: 1.77004347, l : -55.12002969, lp : 44.96476227, o : 131.78422574},
-		cy : {a : 0.00026291  * this.AU,  e : 0.00005105, i: 0.00035372, l : 218.45945325, lp : -0.32241464, o : -0.00508664}
+		cy : {a : 0.00026291  * this.AU,  e : 0.00005105, i: 0.00035372, l : 218.45945325, lp : -0.32241464, o : -0.00508664},
 	    },
-	    type:   'sphere',
-	    shade : 'sun',
+	    orbits: "sun",
 	    mg : 7.78, // closest to earth
 	    md : 28.8,
 	    rotation : new THREE.Vector3(0,0,1),
@@ -275,19 +270,19 @@ function Bodies() {
 	    dispScale : 50,
 	    orbit : {
 		base : {a : 39.48211675 * this.AU ,  e : 0.24882730, i: 17.14001206, l : 238.92903833, lp : 224.06891629, o : 110.30393684},
-		cy : {a : -0.00031596 * this.AU ,  e : 0.00005170, i: 0.00004818, l : 145.20780515, lp : -0.04062942, o : -0.01183482}
+		cy : {a : -0.00031596 * this.AU ,  e : 0.00005170, i: 0.00004818, l : 145.20780515, lp : -0.04062942, o : -0.01183482},
 	    },
-	    type:   'sphere',
-	    shade : 'sun',
-	    shadows : ['charon'],
+	    orbits:"sun",
+	    satellitesX : ['charon'],
 	    mg : 13.65, // closest to earth
 	    md : 28.7,
 	    rotation : new THREE.Vector3(0,0,1),
 	    position : new THREE.Vector3()
 	},
 	moon : {
-	    scale : 0.00002,
+	    scale : 0.1,
 	    title : 'The Moon',
+	    label : true,
 	    visible: true,
 	    mass : 7.3477e22,
 	    radius : 1738.1,
@@ -298,8 +293,6 @@ function Bodies() {
 	    sideralDay : (27.3215782 * this.DAY) ,
 	    tilt : 1.5424,
 	    fov : 1,
-	    relativeTo : 'earth',
-	    calculateFromElements : true,
 	    orbit: {
 		base : {
 		    a : 384400,
@@ -316,33 +309,9 @@ function Bodies() {
 		    M : 13.176358,//360 / 27.321582,
 		    w : (360 / 5.997) / 365.25,
 		    o : (360 / 18.600) / 365.25
-		}       
+		},
 	    },
-	    getMapRotation : function(angle){
-		if(angle > 0) {
-		    return angle - Math.PI;
-		}
-		return angle + Math.PI;
-	    },
-	    customInitialize : function() {
-		if(this.relativeTo !== 'earth') return;
-		this.baseMapRotation = this.getMapRotation(this.getAngleTo('earth'));
-		this.nextCheck = this.sideralDay;
-	    },
-	    // customAfterTick : function(time){
-	    // 	if(this.relativeTo !== 'earth') return;
-	    // 	//when a sideral day has passed, make sure that the near side is still facing the earth.
-	    //  // Since the moon's orbit is heavily disturbed, some imprecision occurs in its orbit, and its duration is not always the same,
-	    //  // especially in an incomplete scenario (where there are no sun/planets). Therefore, a correction is brought to the base map rotation, tweened so that is is not jerky.
-	    // 	if(time >= this.nextCheck){
-	    // 	    this.nextCheck += this.sideralDay;
-	    // 	    TweenMax.to(this, 2, {baseMapRotation : this.getMapRotation(this.getAngleTo('earth')), ease:Sine.easeInOut});
-	    // 	}
-	    // },
 	    orbits: 'earth',
-	    type:   'sphere',
-	    shade : 'sun',
-	    shadows : ['earth'],
 	    mg : -12.90, // closest to earth
 	    md : 0.00257,
 	    rotation : new THREE.Vector3(0,0,1),
@@ -360,11 +329,10 @@ function Bodies() {
 	    bumpScale : 9.0,
 	    orbit : {
 		base : {a : 49.48211675 * this.AU ,  e : 0.24882730, i: 17.14001206, l : 238.92903833, lp : 224.06891629, o : 110.30393684},
-		cy : {a : -0.00031596 * this.AU ,  e : 0.00005170, i: 0.00004818, l : 145.20780515, lp : -0.04062942, o : -0.01183482}
+		cy : {a : -0.00031596 * this.AU ,  e : 0.00005170, i: 0.00004818, l : 145.20780515, lp : -0.04062942, o : -0.01183482},
 	    },
-	    orbits: 'saturn',
-	    type:   'sphere',
-	    shade : 'sun',
+	    calculateFromElements : true,
+	    orbits: undefined,
 	    rotation : new THREE.Vector3(0,0,1),
 	    position : new THREE.Vector3()
 	},
@@ -377,15 +345,12 @@ function Bodies() {
 	    zenith : new THREE.Vector3(0,0,1)
 	}
     };
+    this.baseURL = process.env.PUBLIC_URL+'/media/planets/';             // from http://planetpixelemporium.com/
     //
     //////////////////////////////////////////////////////////////////////////////////
     //
     this.init = function(state) {
 	// executed after state has been created but before any data is loaded...
-    };
-    this.createStarfield = function(dir){
-	var ret={};
-	return ret;	
     };
     this.copyObserver = function (src, trg) {
 	//console.log("Observer:",src,trg);
@@ -411,31 +376,92 @@ function Bodies() {
 	    trg.rotation.w=src.rotation.w;
 	};
     };
-    this.linkShadows = function () {
-	for (var body in this) {
-	    // link source of shade
-	    if (body.shade !== undefined) {
-		var shades= body.shade;
-		for (var shade in shades) {
-		    if (this.config[shade] !== undefined) {
-			if (body.shadeLink === undefined) {body.shadeLink={};};
-			body.shadeLink[shade]=this.config[shade];
-		    }
-		}
-	    }
-	    // link bodies shaded by this body
-	    if (body.shadows !== undefined) {
-		var shadows= body.shadows;
-		for (var shadow in shadows) {
-		    if (this.config[shadow] !== undefined) {
-			if (body.shadowLink === undefined) {body.shadowLink={};};
-			body.shadowLink[shadow]=this.config[shadow];
-		    }
-		}
-	    }
+    this.createScene = function (name,mainCamera) { // 
+	var size=48;
+	var font='48px Arial';
+	var scene = new THREE.Scene();
+	var camera=mainCamera.clone();
+	camera.name="camera";
+	scene.name="scene";
+	scene.add(camera);
+	this.addSatellites(scene,name);
+	var mesh=this.createMesh(name);
+	if (name === "sun") {
+	    scene.add(mesh);
+	    scene.add(new THREE.AmbientLight('#ffff88',1000));
+	    scene.add(this.createLabel(name));
+	} else { // other planets
+	    scene.add(mesh);
+	    scene.add(this.createLight(mesh,name));
+	    scene.add(this.createLabel(name));
+	}
+	return scene;
+    };
+
+    this.addSatellites=function(group,name) {
+	let satellites=this.config[name].satellites||[];
+	if (satellites === undefined) { return;};
+	let scale=this.config[name].scale;
+	let radius=this.config[name].radius;
+	satellites.forEach((k,i)=>{
+	    k.orbits=name;
+	    group.add(this.createMesh(k.name,scale));
+	    this.setPosition(group,k.name,
+			     -radius*1.5*scale,
+			     20000*scale,
+			     50000*scale);//
+	});
+    };    
+
+
+    this.createMesh = function(name,...args) {
+	if (name === "sun") {
+	    return this.createSunMesh();
+	} else if (name === "mercury") {
+	    return this.createMercuryMesh();
+	} else if (name === "venus") {
+	    return this.createVenusMesh();
+	} else if (name === "earth") {
+	    return this.createEarthMesh();
+	} else if (name === "mars") {
+	    return this.createMarsMesh();
+	} else if (name === "jupiter") {
+	    return this.createJupiterMesh();
+	} else if (name === "saturn") {
+	    var group = new THREE.Object3D();
+	    group.name="group";
+	    group.add(this.createSaturnMesh());
+	    group.add(this.createSaturnRingMesh(THREE.FrontSide));
+	    group.add(this.createSaturnRingMesh(THREE.BackSide));
+	    group.castShadow = true;
+	    group.receiveShadow = true;
+	    return group;
+	} else if (name === "uranus") {
+	    var group = new THREE.Object3D();
+	    group.name="group";
+	    group.add(this.createUranusMesh());
+	    group.add(this.createUranusRingMesh(THREE.FrontSide));
+	    group.add(this.createUranusRingMesh(THREE.BackSide));
+	    group.castShadow = true;
+	    group.receiveShadow = true;
+	    return group;
+	} else if (name === "neptune") {
+	    return this.createNeptuneMesh();
+	} else if (name === "pluto") {
+	    return this.createPlutoMesh();
+	} else if (name === "moon") {
+	    return this.createMoonMesh();
+	} else if (name === "saturnring") {
+	    return this.createSaturnRingMesh(...args); // side
+	} else if (name === "uranusring") {
+	    return this.createUranusRingMesh(...args); // side
+	} else if (name === "deathstar") {
+	    return this.createDeathStarMesh(...args); // scale
+	} else {
+	    console.log("Mesh not implemented:",name);
 	}
     };
-    this.baseURL	= process.env.PUBLIC_URL+'/media/planets/';             // from http://planetpixelemporium.com/
+
     this.createSunMesh	= function(){
 	var scale=this.config.sun.scale;
 	var material	= this.Material({map:this.baseURL+this.config.sun.map});
@@ -449,7 +475,8 @@ function Bodies() {
 	var scale=this.config.mercury.scale;
 	var material	= this.Material({map:this.baseURL+this.config.mercury.map,
 					 bumpMap:this.baseURL+this.config.mercury.bumpMap,
-					 bumpScale:this.config.mercury.bumpScale*scale});
+					 bumpScale:this.config.mercury.bumpScale*scale,
+					 shadowSide: THREE.FrontSide});
 	var geometry	= new THREE.SphereGeometry(this.config.mercury.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="mercury";
@@ -462,7 +489,8 @@ function Bodies() {
 	var scale=this.config.venus.scale;
 	var material	= this.Material({map:this.baseURL+this.config.venus.map,
 					 bumpMap:this.baseURL+this.config.venus.bumpMap,
-					 bumpScale: this.config.venus.bumpScale*scale});
+					 bumpScale: this.config.venus.bumpScale*scale,
+					 shadowSide: THREE.FrontSide});
 	var geometry	= new THREE.SphereGeometry(this.config.venus.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="venus";
@@ -477,7 +505,11 @@ function Bodies() {
 					 bumpMap:this.baseURL+this.config.earth.bumpMap,
 					 bumpScale:this.config.earth.bumpScale*scale,
 					 specularMap:this.baseURL+this.config.earth.spec,
-					 specularColor: 'grey'});
+					 specularColor: 'grey',
+					 transparent:true,
+					 opacity:0.7,
+					 shadowSide: THREE.FrontSide});
+	//	wireframe:true,
 	var geometry	= new THREE.SphereGeometry(this.config.earth.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="earth";
@@ -490,7 +522,8 @@ function Bodies() {
 	var scale=this.config.earth.scale;
 	var material	= this.Material({map: this.baseURL+this.config.moon.map,
 					 bumpMap: this.baseURL+this.config.moon.bumpMap,
-					 bumpScale: this.config.moon.bumpScale*scale});
+					 bumpScale: this.config.moon.bumpScale*scale,
+					 shadowSide: THREE.FrontSide});
 	var geometry	= new THREE.SphereGeometry(this.config.moon.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="moon";
@@ -503,7 +536,8 @@ function Bodies() {
 	var scale=this.config.mars.scale;
 	var material	= this.Material({map: this.baseURL+this.config.mars.map,
 					 bumpMap: this.baseURL+this.config.mars.bumpMap,
-					 bumpScale: this.config.mars.bumpScale*scale});
+					 bumpScale: this.config.mars.bumpScale*scale,
+					 shadowSide: THREE.FrontSide});
 	var geometry	= new THREE.SphereGeometry(this.config.mars.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="mars";
@@ -516,7 +550,8 @@ function Bodies() {
 	var scale=this.config.jupiter.scale;
 	var material    = this.Material({map:this.baseURL+this.config.jupiter.map,
 					 bumpMap:this.baseURL+this.config.jupiter.map,
-					 bumpScale: this.config.jupiter.bumpScale*scale});
+					 bumpScale: this.config.jupiter.bumpScale*scale,
+					 shadowSide: THREE.FrontSide});
 	var geometry	= new THREE.SphereGeometry(this.config.jupiter.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="jupiter";
@@ -529,7 +564,8 @@ function Bodies() {
 	var scale=this.config.saturn.scale;
 	var material	= this.Material({map:this.baseURL+this.config.saturn.map,
 					 bumpMap	: this.baseURL+this.config.saturn.map,
-					 bumpScale: this.config.saturn.bumpScale*scale});
+					 bumpScale: this.config.saturn.bumpScale*scale,
+					 shadowSide: THREE.FrontSide});
 	var geometry	= new THREE.SphereGeometry(this.config.saturn.radius*scale, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material);
 	mesh.name       = "saturn";
@@ -540,23 +576,26 @@ function Bodies() {
     };
     this.createSaturnRingMesh	= function(side){
 	var scale=this.config.saturn.scale;
+	if (side === undefined) { side= THREE.DoubleSide;}
 	//THREE.DoubleSide,THREE.FrontSide,THREE.BackSide,
 	var material;
 	material    = this.Material({map:this.baseURL+this.config.saturn.ring.map,
 				     transMap:this.baseURL+this.config.saturn.ring.trans,
-				     side:THREE.FrontSide,
+				     side:side,
 				     transparent:true,
 				     opacity:0.9,
 				    });
 	var geometry	= this.RingGeometry(this.config.saturn.ring.innerRadius*scale, this.config.saturn.ring.outerRadius*scale, 128);
 	var mesh	= new THREE.Mesh(geometry, material);
-	var normal=new THREE.Vector3(1,0,5).normalize();
+	var normal=new THREE.Vector3(0,0,1).normalize();
 	var offset;
 	if (side === THREE.BackSide) {
 	    mesh.name       = "saturnringbottom";
-	    normal.multiplyScalar(-1.0);
+	    //normal.multiplyScalar(-1.0);
 	} else if (side === THREE.FrontSide) {
 	    mesh.name       = "saturnringtop";
+	} else {
+	    mesh.name       = "saturnring";
 	};
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
@@ -570,7 +609,8 @@ function Bodies() {
 	var scale=this.config.uranus.scale;
 	var material    = this.Material({ map:this.baseURL+this.config.uranus.map,
 					  bumpMap:this.baseURL+this.config.uranus.map,
-					  bumpScale:this.config.uranus.bumpScale*scale});
+					  bumpScale:this.config.uranus.bumpScale*scale,
+					  shadowSide: THREE.FrontSide});
 	var geometry	= new THREE.SphereGeometry(this.config.uranus.radius*scale, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material);
 	mesh.name="uranus";
@@ -597,6 +637,8 @@ function Bodies() {
 	    normal.multiplyScalar(-1.0);
 	} else if (side === THREE.FrontSide) {
 	    mesh.name       ="uranusringtop";
+	} else {
+	    mesh.name       = "uranusring";
 	};
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
@@ -609,7 +651,8 @@ function Bodies() {
 	var scale=this.config.neptune.scale;
 	var material	= this.Material({map:this.baseURL+this.config.neptune.map,
 					 bumpMap:this.baseURL+this.config.neptune.map,
-					 bumpScale:this.config.neptune.bumpScale*scale});
+					 bumpScale:this.config.neptune.bumpScale*scale,
+					 shadowSide: THREE.FrontSide});
 	var geometry	= new THREE.SphereGeometry(this.config.neptune.radius*scale, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = "neptune";
@@ -624,7 +667,8 @@ function Bodies() {
 					 bumpMap:this.baseURL+this.config.pluto.bumpMap,
 					 bumpScale: this.config.pluto.bumpScale*scale,
 					 displacementMap:this.baseURL+this.config.pluto.dispMap,
-					 displacementScale: this.config.pluto.dispScale*scale});
+					 displacementScale: this.config.pluto.dispScale*scale,
+					 shadowSide: THREE.FrontSide});
 	var geometry	= new THREE.SphereGeometry(this.config.pluto.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = "pluto";
@@ -637,7 +681,8 @@ function Bodies() {
 	if (scale===undefined) {scale=this.config.saturn.scale;}
 	var material	= this.Material({map:this.baseURL+this.config.deathstar.map,
 					 bumpMap:this.baseURL+this.config.deathstar.bumpMap,
-					 bumpScale:this.config.deathstar.bumpScale*scale});
+					 bumpScale:this.config.deathstar.bumpScale*scale,
+					 shadowSide: THREE.FrontSide});
 	var geometry	= new THREE.SphereGeometry(this.config.deathstar.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = "deathstar";
@@ -646,18 +691,47 @@ function Bodies() {
 	mesh.receiveShadow = true;
 	return mesh	
     };
-    this.createLight    = function(target) {
-	var light   = new THREE.DirectionalLight( 0xffffff, 1, 100 )
-	light.position.set(0,0,0);
-	light.target                = target;
-	light.castShadow            = true;
-	light.shadow.mapSize.width  = 1024; // default
-	light.shadow.mapSize.height = 1024; // default
-	light.shadow.camera.near    = 0.0 * this.config.sun.radius;
-	light.shadow.camera.far     = 3.0 * this.config.sun.radius;
+    this.createLight    = function(target,name,scene) {
+	if (name === "sun") {
+	    return new THREE.AmbientLight('#ffff88',1000);
+	} else {
+	    var light   = new THREE.DirectionalLight( 0xffffff, 1, 100 )
+	    light.position.set(0,0,0);
+	    light.target                = target;
+	    light.castShadow            = true;
+	    light.shadow.mapSize.width  = 1048; // default
+	    light.shadow.mapSize.height =  1048; // default
+	    if (scene!==undefined) {scene.add(this.createShadowCameraOutline(light));};
+	}
 	light.name                  = "sunlight";
 	return light;
     };
+    this.createShadowCameraOutline=function(light) {
+	let helper=new THREE.CameraHelper( light.shadow.camera );
+	helper.name="helper";
+	return helper;
+    };
+    this.createLabel = function (name) {
+	var title=this.config[name].title;
+	var label=UTILS.createTextSprite(title,
+					 {font:'48px Arial',
+					  floating:true,
+					  fillStyle:'yellow',
+					  size:200,
+					  cx:0,cy:0.5,
+					  x:0,y:0,z:0,
+					  alphaTest:0.01,
+					  //border:true,
+					  renderOrder:1,
+					  name:"label"+name,
+					 });
+	if (this.config[name].visible) {
+	    label.visible=true;
+	} else {
+	    label.visible=false;
+	}
+	return label;
+    }
     //
     //////////////////////////////////////////////////////////////////////////////////
     //
@@ -668,31 +742,10 @@ function Bodies() {
 	//console.log("UpdateScene:",name,scale);
 	this.updateCamera(state,mainCamera,observer,name,scene);
 	this.updateLabel(state,mainCamera,observer,name,scene);
-	if (name === "sun" ||
-		   name === "mercury" ||
-		   name === "venus" ||
-		   name === "earth" ||
-		   name === "mars" ||
-		   name === "jupiter" ||
-		   name === "neptune" ||
-		   name === "pluto"
-		  ) {
+	this.updateSatellites(state,mainCamera,observer,name,scene);
+	if (name === "saturn" || name === "uranus") {
 	    let scale = this.config[name].scale;
-	    let pos   = this.config[name].position;
-	    let body  = scene.getObjectByName(name);
-
-	    //console.log("Pos:",name,pos);
-
-	    body.position.set(pos.x*scale,pos.y*scale,pos.z*scale);
-	    //console.log("Bodies scene:",name,scene,body);
-	} else if (name === "earth") {
-	    let scale = this.config[name].scale;
-	    let pos   = this.config[name].position;
-	    let group = scene.getObjectByName("group");
-	    let body  = scene.getObjectByName(name);
-	    group.position.set(pos.x*scale,pos.y*scale,pos.z*scale);
-	} else if (name === "saturn" || name === "uranus") {
-	    let scale = this.config[name].scale;
+	    let range= this.config[name].radius*2;
 	    let pos   = this.config[name].position;
 	    let group = scene.getObjectByName("group");
 	    let body  = scene.getObjectByName(name);
@@ -700,13 +753,74 @@ function Bodies() {
 	    group.position.set(pos.x*scale,pos.y*scale,pos.z*scale);
 	    this.direction.setFromMatrixPosition( group.matrixWorld );
 	    this.location.setFromMatrixPosition( body.matrixWorld );
-	    
-	    //console.log(name,this.direction,scene);
-
-	    
-	} else {
-	    console.log("Unknown name:",name);
+	    this.updateShadowCamera(light,pos,scale,range);
+	    let helper  = scene.getObjectByName("helper");
+	    if (helper !== undefined) {
+		//console.log(helper);
+		helper.camera.copy(light.shadow.camera);
+		helper.update();
+	    }
+	    //console.log(name,this.direction,scene);	    
+	} else { // sun and other planets
+	    let scale = this.config[name].scale;
+	    let pos   = this.config[name].position;
+	    let body  = scene.getObjectByName(name);
+	    //console.log("Pos:",name,pos);
+	    body.position.set(pos.x*scale,pos.y*scale,pos.z*scale);
 	};
+    };
+
+    this.updateSatellites = function(state,mainCamera,observer,name,scene) {
+	let satellites=this.config[name].satellites||[];
+	if (satellites === undefined) { return;};
+	let scale=this.config[name].scale;
+	let radius=this.config[name].radius;
+	let pos   = this.config[name].position;
+	satellites.forEach((satellite,i)=>{
+	    let body  = scene.getObjectByName(satellite.name);
+	    if (body!==undefined) {
+		if ( this.config[satellite.name]!==undefined &&
+		     this.config[satellite.name].position!==undefined) { // dynamic position
+		    this.config[satellite.name].orbits=name;
+		    let offset=this.config[satellite.name].position;
+		    body.position.set(offset.x*scale,offset.y*scale,offset.z*scale);
+		}
+	    };
+	});
+    };
+
+    this.getElements=function(name) {
+	return this.config[name].base;
+    };
+    
+    this.getPosition=function(state,elements) {
+    };
+    
+    this.updateShadowCamera=function(light,pos,scale,range) {
+	let x = pos.x;
+	let y = pos.y;
+	let z = pos.z;
+	let d=Math.max(Math.sqrt(x*x+y*y+z*z),1);
+	let metric= range*scale;
+	let near= 10*metric;
+	let far = near + 2*metric
+	x=-(metric+near)*x/d + x*scale;
+	y=-(metric+near)*y/d + y*scale;
+	z=-(metric+near)*z/d + z*scale;
+	light.position.x=x;
+	light.position.y=y;
+	light.position.z=z;
+	light.shadow.camera.near    = near;
+	light.shadow.camera.far     = far;
+	light.shadow.camera.left = -range*scale;
+	light.shadow.camera.right = range*scale;
+	light.shadow.camera.top = -range*scale;
+	light.shadow.camera.bottom = range*scale;
+	// light.shadow.camera.updateProjectionMatrix();
+	light.shadow.camera.updateMatrixWorld(true);
+	// light.shadow.camera.needsUpdate=true;
+	// light.shadow.camera.matrixWorldNeedsUpdate=true;
+	//console.log("Updating light:",light.shadow.camera);
     };
 
     this.updateCamera=function(state,mainCamera,observer,name,scene) {
@@ -721,10 +835,11 @@ function Bodies() {
     };
 
     this.updateLabel=function(state,mainCamera,observer,name,scene) {
-	var label=scene.getObjectByName("label");
+	var label=scene.getObjectByName("label"+name);
 	if (label !== undefined) {
 	    let scale = this.config[name].scale;
-	    var radius=this.config[name].radius;
+	    var range=this.config[name].radius;
+	    if (name==="saturn" || name==="uranus") {range=2*range;} // make room for rings
 	    this.direction.set();
 	    let pos=this.config[name].position;
 	    let obs=observer.position;
@@ -738,7 +853,7 @@ function Bodies() {
 	    this.right.crossVectors(this.direction,this.config.observer.zenith);
 	    if (this.right.length() > 0) {
 		this.right.normalize();
-		this.right.multiplyScalar(radius*scale*1.1);
+		this.right.multiplyScalar(range*scale*1.1);
 		this.right.addScaledVector(pos,scale);
 		label.position.set(this.right.x,this.right.y,this.right.z);
 		//console.log("Right:",this.right,label.position);
@@ -748,110 +863,6 @@ function Bodies() {
 	};
     };
     
-    this.createLabel = function (name) {
-	var title=this.config[name].title;
-	var label=UTILS.createTextSprite(title,
-					 {font:'48px Arial',
-					  floating:true,
-					  fillStyle:'yellow',
-					  size:200,
-					  cx:0,cy:0.5,
-					  x:0,y:0,z:0,
-					  alphaTest:0.01,
-					  //border:true,
-					  name:"label",
-					 });
-	if (this.config[name].visible) {
-	    label.visible=true;
-	} else {
-	    label.visible=false;
-	}
-	return label;
-    }
-    this.createScene = function (name,mainCamera) { // 
-	var size=48;
-	var font='48px Arial';
-	var scene = new THREE.Scene();
-	var camera=mainCamera.clone();
-	camera.name="camera";
-	scene.name="scene";
-	scene.add(camera);
-	var mesh;
-	if (name === "sun") {
-	    mesh=this.createSunMesh();
-	    scene.add(mesh);
-	    scene.add(new THREE.AmbientLight('#ffff88',1000));
-	    scene.add(this.createLabel(name));
-	} else if (name === "mercury") {
-	    mesh=this.createMercuryMesh()
-	    scene.add(mesh);
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
-	} else if (name === "venus") {
-	    mesh=this.createVenusMesh()
-	    scene.add(mesh);
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
-	} else if (name === "earth") {
-	    var group = new THREE.Object3D();
-	    group.name="group";
-	    mesh=this.createEarthMesh()
-	    group.add(mesh);
-	    group.add(this.createMoonMesh());
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
-	    scene.add(group);
-	} else if (name === "mars") {
-	    mesh=this.createMarsMesh()
-	    scene.add(mesh);
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
-	} else if (name === "jupiter") {
-	    mesh=this.createJupiterMesh();
-	    scene.add(mesh);
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
-	} else if (name === "saturn") {
-	    var scale = this.config.saturn.scale;
-	    var group = new THREE.Object3D();
-	    group.name="group";
-	    mesh=this.createSaturnMesh();
-	    group.add(mesh);
-	    group.add(this.createSaturnRingMesh(THREE.FrontSide));
-	    group.add(this.createSaturnRingMesh(THREE.BackSide));
-	    group.add(this.createDeathStarMesh(scale));
-	    this.setPosition(group,"deathstar",
-			     20000*scale,
-			     this.config.saturn.radius*1.25*scale,
-			     10000*scale);//
-	    scene.add(this.createLabel(name));
-	    scene.add(this.createLight(mesh));
-	    scene.add(group);
-	} else if (name === "uranus") {
-	    var group = new THREE.Object3D();
-	    group.name="group";
-	    mesh=this.createUranusMesh();
-	    group.add(mesh);
-	    group.add(this.createUranusRingMesh(THREE.FrontSide));
-	    group.add(this.createUranusRingMesh(THREE.BackSide));
-	    scene.add(this.createLabel(name));
-	    scene.add(this.createLight(mesh));
-	    scene.add(group);
-	} else if (name === "neptune") {
-	    mesh=this.createNeptuneMesh();
-	    scene.add(mesh);
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
-	} else if (name === "pluto") {
-	    mesh=this.createPlutoMesh();
-	    scene.add(mesh);
-	    scene.add(this.createLight(mesh));
-	    scene.add(this.createLabel(name));
-	} else {
-	    console.log("Unknown scene:",name);
-	}
-	return scene;
-    };
     //////////////////////////////////////////////////////////////////////////////////
     //		Texture functions					//
     //////////////////////////////////////////////////////////////////////////////////
@@ -1031,7 +1042,7 @@ function Bodies() {
 	// load earthcloudmap
 	const maploader = new THREE.ImageLoader();
 	maploader.load(map, function(imageMap) {
-	    // create dataMap ImageData for saturnring
+	    // create dataMap ImageData
 	    var canvasMap	= document.createElement('canvas')
 	    canvasMap.width	= imageMap.width
 	    canvasMap.height    = imageMap.height

@@ -136,6 +136,7 @@ function Model() {
 	    };
 	}
 	if (this.requestUpdate(state)) { this.step=0;};
+
 	if (this.processNewRequests()) { 
 	    this.offzoom(0.5);
 	    this.step=0;
@@ -644,14 +645,14 @@ function Model() {
 			//var s = reqState[name].position;
 			//var e=elements[name];
 			console.log("Processnew:",name,req["initial"]);
-			// var main =  req["initial"][name]["main"];
-			// if (main !== "") { // body orbits another body...
-			//     //var r, xmu;
-			//     //r=reqState[main].position;
-			//     //xmu=req["initial"][main]["xmu"];
-			//     //this.state2elements(s,e,r,xmu);
-			//     //this.elements2anomalies(e);
-			// }
+			var main =  req["initial"][name]["main"];
+			if (main !== "") { // body orbits another body...
+			    //var r, xmu;
+			    //r=reqState[main].position;
+			    //xmu=req["initial"][main]["xmu"];
+			    //this.state2elements(s,e,r,xmu);
+			    //this.elements2anomalies(e);
+			}
 		    };
 		};
 		//document.getElementById("log").innerHTML="orbit loop end";

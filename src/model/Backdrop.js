@@ -8,7 +8,10 @@ console.log("Loading Backdrop");
 function Backdrop() { 
     this.debug=false;
     this.lookat=new THREE.Vector3(0,0,-1);
-    this.SCALE = 1.0e-10;
+    this.parsec= 3.08567758e13;// km 
+    this.parscale=100.0; // scaled stars must be further away than bodies (1->1AU)...
+    this.lightyear = 9.4605284e12; // km
+    this.SCALE = this.parscale/this.parsec;
     this.X =          0;
     this.Y =          1;
     this.Z =          2;
@@ -39,8 +42,10 @@ function Backdrop() {
 	0xfeead3,
 	0xfccecb,
 	0xebd3da,
+	0xe7dbf3,
 	0xe7dbf3
     ];
+    this.scenes={};
     //this.sprites=["flare.png"];
     this.sprites=["flare.png"];
     this.fullStarsURL=process.env.PUBLIC_URL+"/media/stars/";
@@ -117,13 +122,14 @@ function Backdrop() {
     this.pxRatio = (window.devicePixelRatio || 1);
     //keys of the loaded array
     this.namedStars = {};
+    this.starBlock=[];
     this.starList=[];
     this.initialised=false;
     // workspace
     this.canvasWidth=undefined;
     this.canvasHeight=undefined;
     this.canvasData=undefined;
-    this.ll = this.starList.length;
+    this.ll = this.starBlock.length;
     this.fact=undefined;
     this.cnt=undefined;
     this.position=undefined;
@@ -136,8 +142,6 @@ function Backdrop() {
     this.b=undefined;
     this.a=undefined;
     this.ln10=Math.log(10);
-    this.parsec= 3.08567758e13;// km 
-    this.lightyear = 9.4605284e12; // km
     this.radius = 30000.0*this.lightyear*this.SCALE;
     this.cons=undefined;
     this.cpos=undefined;
@@ -153,6 +157,29 @@ function Backdrop() {
 	if (camera !== undefined && points !== undefined) {
 	    points.material.size = this.defaultSize / Math.tan( ( Math.PI / 180 ) * camera.fov / 2 );
 	};
+    };
+    this.initScenes = function (mainCamera) {
+	this.scenes["navigation"]={scene: this.createScene("navigation",mainCamera),   show:true};
+	this.scenes["stars"]=     {scene: this.createScene("stars",mainCamera),        show:true};
+
+    }
+    this.updateScenes = function(state,mainCamera,observer) {
+	this.updateScene(state,mainCamera,observer,"navigation");
+	this.updateScene(state,mainCamera,observer,"stars");
+    };
+    this.renderScenes = function(renderer,mainCamera) {
+	["stars","navigation"].forEach( (name,i)=>{
+	    let k = this.scenes[name];
+	    let show=k.show;
+	    let scene=k.scene;
+	    let camera=scene.getObjectByName("camera");
+	    if (show && camera !== undefined) {
+	 	this.prepareForRender(name,scene,this.mainCamera);
+	 	renderer.render(scene, camera);
+	    } else {
+	 	//console.log("Not rendering:",i);
+	     }
+	 });	
     };
     this.createScene = function (name,mainCamera) { // 
 	var scene = new THREE.Scene();
@@ -172,9 +199,9 @@ function Backdrop() {
 	};
 	return scene;
     };
-
-    this.updateScene = function(state,mainCamera,observer,name,scene) {
+    this.updateScene = function(state,mainCamera,observer,name) {
 	// update camera position and orientation
+	var scene=this.getScene(name);
 	var camera=this.getCamera(scene);
 	if (camera !== undefined) {
 	    camera.copy(mainCamera);
@@ -200,6 +227,10 @@ function Backdrop() {
 	}
     };
 
+    this.getScene=function(name) {
+	return this.scenes[name].scene;
+    };
+    
     this.getCamera=function(scene) {
 	return scene.getObjectByName("camera");
     };
@@ -207,6 +238,7 @@ function Backdrop() {
     this.createStarsBackdrop	= function(){
 	//https://jsfiddle.net/prisoner849/z3yfw208/
 	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true, alphaTest:0.01 }); //   alphaTest: 0.99
+	material.depthTest=false;
 	//var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
 	//UTILS.addTextureMap(material,this.fullStarsURL + "ball.png");
 	UTILS.addTextureMap(material,this.fullStarsURL + this.sprites[0]);
@@ -238,7 +270,57 @@ function Backdrop() {
 	var sprites = new THREE.Points( geometry, material );
 	//var sprites = new THREE.Sprite( geometry, material );
 	sprites.name       = "stars";
+	sprites.renderOrder=100;
 	return sprites	
+    };
+    this.replaceStarsBackdrop=function(stars) {
+	var scene=this.scenes["stars"].scene;
+	var oldstars=scene.getObjectByName("stars");
+	oldstars.geometry.dispose();
+	oldstars.material.dispose();
+	scene.remove(oldstars);
+	scene.add(stars);	
+    };
+    this.updateStarsBackdrop=function() {
+	//https://jsfiddle.net/prisoner849/z3yfw208/
+	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true, alphaTest:0.01 }); //   alphaTest: 0.99
+	//var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
+	//UTILS.addTextureMap(material,this.fullStarsURL + "ball.png");
+	UTILS.addTextureMap(material,this.fullStarsURL + this.sprites[0]);
+	var geometry = new THREE.InstancedBufferGeometry();
+	//var geometry = new THREE.BufferGeometry();
+	var ll=this.starList.length;
+	var positions = new Float32Array(ll*3);
+	var colors = new Float32Array(ll*3);
+	var sizes = new Float32Array(ll);
+	var alphas = new Float32Array(ll);
+	for (let i = 0; i < ll; i++) {
+	    let ss=this.starList[i];
+	    //console.log("ss:",ss);
+            positions[i * 3 + 0] = ss.x * this.parscale;
+            positions[i * 3 + 1] = ss.y * this.parscale;
+            positions[i * 3 + 2] = ss.z * this.parscale;
+            colors[i * 3 + 0] = ss.color.r/255;
+            colors[i * 3 + 1] = ss.color.g/255;
+            colors[i * 3 + 2] = ss.color.b/255;
+	    var dist=Math.sqrt(ss.x*ss.x+ss.y*ss.y+ss.z*ss.z); // dist is in parsec
+	    var amag=Math.max(-2,ss.mag - 5.0*this.log10(dist) + 5.0);  // dist is in parsec
+            sizes[i] = this.parscale*10*Math.pow(10,-amag/5.0);
+	    // if (i < 200) {
+	    // 	console.log("Mag:",ss.mag,amag,dist,this.log10(dist),sizes[i]," Cols:",ss.color,ss.pos);
+	    // 	//alphas[i] = 1;
+	    // };
+	}
+	UTILS.modifyShaders(geometry,material,sizes);
+	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+	geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
+	//geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
+	var sprites = new THREE.Points( geometry, material );
+	//var sprites = new THREE.Sprite( geometry, material );
+	sprites.name       = "stars";
+	this.replaceStarsBackdrop(sprites);
+	return sprites	
+
     };
     this.createNavigationBackdrop=function() {
 	var group=new THREE.Group();
@@ -383,16 +465,17 @@ function Backdrop() {
 	return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
     };
     this.init = function(state) {
-	this.starList=[];
+	this.starBlock=[];
 	for (var imag=this.SMAG;imag < this.NMAG; imag++) {
-	    this.starList[imag]=[];
+	    this.starBlock[imag]=[];
 	    for (var ilat=0;ilat < this.NLAT; ilat++) {	    
-		this.starList[imag][ilat]=[];
+		this.starBlock[imag][ilat]=[];
 		for (var ilon=0;ilon < this.NLON; ilon++) {	    
-		    this.starList[imag][ilat][ilon]=[];
+		    this.starBlock[imag][ilat][ilon]=[];
 		}
 	    }
 	};
+	this.starList=[];
 	var processStars=function(state,response,callbacks){this.generateStars(state,response,callbacks)}.bind(this);
 	var processDescr=function(state,response,callbacks){this.generateDescr(state,response,callbacks)}.bind(this);
 	var processConst=function(state,response,callbacks){this.generateConst(state,response,callbacks)}.bind(this);
@@ -406,6 +489,7 @@ function Backdrop() {
 				  loadDescr,processDescr,
 				  loadConst,processConst,
 				  function(state,response,callbacks) {
+				      this.updateStarsBackdrop();
 				      if (this.debug) {console.log("Done loading milkyway data...");}
 				  }.bind(this)]);
     };
@@ -456,14 +540,16 @@ function Backdrop() {
 	    //console.log("Looping:",i,star);
 	    this.position = new THREE.Vector3(star[this.X], star[this.Y], star[this.Z]);
 	    this.cartesian2Spherical(this.position);
-	    //console.log("Looping:",i,star,this.position);
+	    // if (i < 200) {
+	    // 	console.log("Looping:",i,star,this.position);
+	    // };
 	    if(this.position.x === 0 && this.position.y === 0 && this.position.z === 0) continue;//dont add the sun
 	    //this.position.multiplyScalar(9.4605284e9);//normalize().
-	    this.position.multiplyScalar(this.parsec);// parsecs...
+	    //this.position.multiplyScalar(this.parsec);// parsecs...
 	    mag = this.position.mag = star[this.MAG];
 	    name = star[this.NAME] || "";
 	    spectralType = Math.round(star[this.SPECT]);
-	    starColor  = this.spectralColors[spectralType] || this.spectralColors.F;
+	    starColor  = this.spectralColors[spectralType] || 	0xfff4e8; //this.spectralColors.F;
 	    /**/
 	    //this.position.size = Math.floor(10 * (2 + (1 / mag))) / 10;
 	    var starRGB = this.lightenDarkenColor(starColor, Math.pow(10,-mag/2.5));
@@ -487,8 +573,12 @@ function Backdrop() {
 	    this.position.ilat = this.modulus(this.getILat(this.position.lat),this.NLAT);
 	    this.position.ilon = this.modulus(this.getILon(this.position.lon),this.NLON);
 	    this.position.phase=Math.random()*Math.PI*2.0;
-	    var list = this.starList[this.position.imag][this.position.ilat][this.position.ilon];
+	    var list = this.starBlock[this.position.imag][this.position.ilat][this.position.ilon];
 	    list.push( this.position );
+	    if (starColor === undefined) {
+		console.log("Undefined color:",spectralType,this.spectralColors.F,-mag/2.5);
+	    };
+	    this.starList.push({x:this.position.x,y:this.position.y,z:this.position.z,mag:mag,color:this.hexToRgb(starColor),pos:this.position});
 	};
 	if (this.debug) {console.log("Stars with name:",cnt);};
 	this.initialised=true;
@@ -587,7 +677,7 @@ function Backdrop() {
 	    for (var ilat = limits.nlatmin; ilat <= limits.nlatmax; ilat++) {
 		for (var ilon = limits.nlonmin; ilon <= limits.nlonmax; ilon++) {
 		    for (var imag = this.SMAG; imag < limits.nmag; imag++) {
-			var list=this.starList[imag][this.modulus(ilat,this.NLAT)][this.modulus(ilon,this.NLON)];
+			var list=this.starBlock[imag][this.modulus(ilat,this.NLAT)][this.modulus(ilon,this.NLON)];
 			if (list === undefined) {
 			    console.log("Missing starlist:",
 					imag,
@@ -638,7 +728,7 @@ function Backdrop() {
 		//console.log("Drew stars:",this.cnt," of ",this.tot," max(mag):",this.mag,limits.nmag," col:",this.col);
 	    //}
 	    // for (var ii = 0; ii < -ll; ii++) {
-	    // 	this.position=this.starList[ii];
+	    // 	this.position=this.starBlock[ii];
 	    // 	camera.vector2Angle(position);
 	    // 	camera.angle2Screen(position);
 	    // 	var x=Math.floor(position.w+0.5);
@@ -910,6 +1000,57 @@ function Backdrop() {
     this.getClass = function (cls) {
 	return this.descriptions["class"][cls]||cls;
     }    
+    this.hexToRgb=function(hex) {
+	var r = (hex >> 16) & 255;
+	var g = (hex >> 8) & 255;
+	var b = hex & 255;
+	return {r:r,g:g,b:b};
+    };
+    this.RGBvalues = function(col) {
+	var _hex2dec = function(v) {
+            return parseInt(v, 16)
+	};
+	var _splitHEX = function(hex) {
+            var c;
+            if (hex.length === 4) {
+		c = (hex.replace('#','')).split('');
+		return {
+                    r: _hex2dec((c[0] + c[0])),
+                    g: _hex2dec((c[1] + c[1])),
+                    b: _hex2dec((c[2] + c[2]))
+		};
+            } else {
+		return {
+                    r: _hex2dec(hex.slice(1,3)),
+                    g: _hex2dec(hex.slice(3,5)),
+                    b: _hex2dec(hex.slice(5))
+		};
+            }
+	};
+	var _splitRGB = function(rgb) {
+            var c = (rgb.slice(rgb.indexOf('(')+1, rgb.indexOf(')'))).split(',');
+            var flag = false, obj;
+            c = c.map(function(n,i) {
+		return (i !== 3) ? parseInt(n, 10) : flag = true, parseFloat(n);
+            });
+            obj = {
+		r: c[0],
+		g: c[1],
+		b: c[2]
+            };
+            if (flag) obj.a = c[3];
+            return obj;
+	};
+        var slc = col.slice(0,1);
+        if (slc === '#') {
+	    return _splitHEX(col);
+        } else if (slc.toLowerCase() === 'r') {
+	    return _splitRGB(col);
+        } else {
+	    console.log('!Ooops! RGBvalues.color('+col+') : HEX, RGB, or RGBa strings only');
+        }
+    };
+
 };
 export default Backdrop;
     // this.createCircleMesh2=function() {

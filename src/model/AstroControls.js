@@ -846,7 +846,7 @@ var AstroControls = function ( object, domElement ) {
 
 	function onMouseDown( event ) {
 
-		// Prevent the browser from scrolling.
+	        // Prevent the browser from scrolling.
 		event.preventDefault();
 
 		// Manually set the focus since calling preventDefault above
@@ -989,7 +989,7 @@ var AstroControls = function ( object, domElement ) {
 	}
 
 	function onMouseUp( event ) {
-
+	    
 		scope.domElement.ownerDocument.removeEventListener( 'pointermove', onPointerMove );
 		scope.domElement.ownerDocument.removeEventListener( 'pointerup', onPointerUp );
 

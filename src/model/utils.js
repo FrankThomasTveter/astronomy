@@ -67,6 +67,10 @@ export function createTextSprite(text,opts) {
 	sizes[0]=1;
 	modifyShaders(geometry,material, sizes);
 	sprite = new THREE.Points(geometry, material);
+	if (opts.renderOrder !== undefined) {
+	    material.depthTest=false;
+	    sprite.renderOrder=opts.renderOrder;
+	};
 	sprite.width=canvas.width;
 	sprite.height=canvas.height;
     } else {

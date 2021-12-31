@@ -45,6 +45,8 @@ export default class Model {
     
     init(state,canvas) {
 	state.React.Model=this;
+	this.near=1;
+	this.far=1000000000;
 	this.Bodies=new Bodies();
 	this.Backdrop=new Backdrop();
 	this.Bodies.init(state);
@@ -59,15 +61,12 @@ export default class Model {
 
     initScene(state) {
 	this.scene = new THREE.Scene();
-	//this.scene.add(this.Backdrop.createStarsBackdrop());
-	//this.scene.add(this.Backdrop.createNavigationBackdrop());
-	this.scenes={backdrop:[],bodies:{},order:["navigation","stars"]};
-	this.scenes.backdrop["navigation"]={scene: this.Backdrop.createScene("navigation",this.mainCamera),   show:true};
-	this.scenes.backdrop["stars"]=     {scene: this.Backdrop.createScene("stars",this.mainCamera),        show:true};
+	this.Backdrop.initScenes(this.mainCamera);
+	this.scenes={bodies:{}};
 	this.scenes.bodies["sun"]=     {scene: this.Bodies.createScene("sun",this.mainCamera), distance:20,   show:true};
 	this.scenes.bodies["mercury"]= {scene: this.Bodies.createScene("mercury",this.mainCamera),distance:9, show:true};
 	this.scenes.bodies["venus"]=   {scene: this.Bodies.createScene("venus",this.mainCamera),distance:8,   show:true};
-	this.scenes.bodies["earth"]=   {scene: this.Bodies.createScene("earth",this.mainCamera),distance:0,   show:true};
+	this.scenes.bodies["earth"]=   {scene: this.Bodies.createScene("earth",this.mainCamera),distance:1,   show:true};
 	this.scenes.bodies["mars"]=    {scene: this.Bodies.createScene("mars",this.mainCamera),distance:10,   show:true};
 	this.scenes.bodies["jupiter"]= {scene: this.Bodies.createScene("jupiter",this.mainCamera),distance:12,show:true};
 	this.scenes.bodies["saturn"]=  {scene: this.Bodies.createScene("saturn",this.mainCamera),distance:13, show:true};
@@ -94,12 +93,12 @@ export default class Model {
 	this.renderer.setClearColor (0x000000, 1); // black background
 	this.renderer.shadowMap.enabled=true;
 	//this.renderer.shadowMap.type=THREE.BasicShadowMap;
-	//this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+	this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     };	
 
 
     initCamera(state) {
-	this.mainCamera = new THREE.PerspectiveCamera(45,undefined,1,1000000000);
+	this.mainCamera = new THREE.PerspectiveCamera(45,undefined,this.near,this.far);
 	this.mainCamera.name="camera";
 	this.mainCamera.position.set(0,0,0);
 	this.mainCamera.up.set(0,0,1);
@@ -114,7 +113,7 @@ export default class Model {
     };	
     
     initControls(state) {
-	this.controls = new PointOfViewControls(this.mainCamera, this.renderer.domElement);
+	this.controls = new PointOfViewControls(this.mainCamera, this.renderer.domElement, this);
 	this.controls.rotateSpeed = 1.0;
 	this.controls.zoomSpeed = 2.5;
 	this.controls.panSpeed = 0.0;
@@ -160,7 +159,6 @@ export default class Model {
 
     updateModel() {
 	// update the information sprite...
-	//this.updateRaycaster(this.state);
 
 	// update model config
 	var config=this.state.Model.getCurrentConfig(this.state);
@@ -186,6 +184,20 @@ export default class Model {
 	};
     };
 
+    onMouseUp(event) { // called by pointController...
+	//console.log("Mouse up:",event);
+	//// check if mouse was stationary
+	//// update raycaster
+	// this.updateRaycaster(this.state);
+	//// find target object, target star
+	//// point camera towards target
+	//// update target information...
+    }	
+
+    onMouseDown(event) { // called by pointController...
+	// console.log("Mouse down:",event);
+    }	
+
     updateConfig (state,config) {
 	//console.log("Updating config",config);
 	this.Bodies.copyObserver( config.observer,        this.Bodies.config.observer);
@@ -207,19 +219,16 @@ export default class Model {
 
     updateScenes (state,camera) {
 	//console.log("UpdateScenes...");
-	// loop over Backdrop
+	// update Backdrop
 	var observer=this.Bodies.config.observer;
-	this.scenes.order.forEach( (key,i) => {
-	    var item=this.scenes.backdrop[key];
-	    this.Backdrop.updateScene(state,camera,observer,key,item.scene);
-	});
+	this.Backdrop.updateScenes(state,camera,observer);
 	// loop over Bodies scenes
-	for (var key in this.scenes.bodies) {
-	    var item=this.scenes.bodies[key];
+	for (var name in this.scenes.bodies) {
+	    var item=this.scenes.bodies[name];
 	    if (item.scene !== undefined) {
 		if (item.show) {
-		    //console.log("Scene:",item.scene);
-		    this.Bodies.updateScene(state,camera,observer,key,item.scene);
+		    //console.log("Scene:",name);
+		    this.Bodies.updateScene(state,camera,observer,name,item.scene);
 		};
 	    };
 	};
@@ -227,8 +236,10 @@ export default class Model {
     
     updateMainCamera(state) {
 	//console.log("Zenith:",this.Bodies.config.observer.zenith);
-	//this.mainCamera.position.copy(this.Bodies.config.observer.position);
-	//this.mainCamera.up.set(this.Bodies.config.observer.zenith); // up is always towards observer zenith...
+	let pos=this.Bodies.config.observer.position;
+	let zen=this.Bodies.config.observer.zenith;
+	this.mainCamera.position.set(pos.x,pos.y,pos.z);
+	this.mainCamera.up.set(zen.x,zen.y,zen.z); // up is always towards observer zenith...
 	//this.mainCamera.poinAt(new THREE.Vector3(0,1,0)); // up is always towards observer zenith...
 	//this.mainCamera.updateMatrixWorld(true);
 	//this.mainCamera.updateProjectionMatrix();
@@ -277,26 +288,15 @@ export default class Model {
     };
 
     renderBackdrop() {
-	this.scenes.order.forEach( (name,i)=>{
-	    let k = this.scenes.backdrop[name];
-	    let show=k.show;
-	    let scene=k.scene;
-	    let camera=scene.getObjectByName("camera");
-	    //console.log("Rendering:", k, show, camera);
-	    if (show && camera !== undefined) {
-		this.Backdrop.prepareForRender(name,scene,this.mainCamera);
-		this.renderer.render(scene, camera);
-	    } else {
-		//console.log("Not rendering:",i);
-	    }
-	});	
+	this.Backdrop.renderScenes(this.renderer,this.mainCamera);
     };
 
     renderBodies() {
 	//this.renderer.autoClear = false;
 	// sort scenes by distance...
 	var keys = Object.keys(this.scenes.bodies);
-	var order=keys.sort((a,b) => {return this.scenes.bodies[a].distance - this.scenes.bodies[b].distance;} );
+	var order=keys.sort((a,b) => {return this.scenes.bodies[b].distance - this.scenes.bodies[a].distance;} );
+	//console.log("Sorted by distance:",order);
 	order.forEach( (name,i)=>{
 	    let distance=this.scenes.bodies[name].distance||0;
 	    let show=this.scenes.bodies[name].show;
