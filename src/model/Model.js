@@ -46,7 +46,7 @@ export default class Model {
     init(state,canvas) {
 	state.React.Model=this;
 	this.near=1;
-	this.far=1000000000;
+	this.far=10e9;
 	this.Bodies=new Bodies();
 	this.Backdrop=new Backdrop();
 	this.Bodies.init(state);

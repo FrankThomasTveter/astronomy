@@ -304,12 +304,12 @@ function Backdrop() {
             colors[i * 3 + 1] = ss.color.g/255;
             colors[i * 3 + 2] = ss.color.b/255;
 	    var dist=Math.sqrt(ss.x*ss.x+ss.y*ss.y+ss.z*ss.z); // dist is in parsec
-	    var amag=Math.max(-2,ss.mag - 5.0*this.log10(dist) + 5.0);  // dist is in parsec
+	    var amag=Math.max(-30,Math.min(10,ss.mag - 5.0*this.log10(dist) + 5.0));  // dist is in parsec
             sizes[i] = this.parscale*10*Math.pow(10,-amag/5.0);
-	    // if (i < 200) {
-	    // 	console.log("Mag:",ss.mag,amag,dist,this.log10(dist),sizes[i]," Cols:",ss.color,ss.pos);
-	    // 	//alphas[i] = 1;
-	    // };
+	     if (ss.pos.lab === "HIP89086") {
+		  	console.log("Mag:",ss.mag,amag,dist,this.log10(dist),sizes[i]," Cols:",ss.color,ss.pos);
+	     };
+	    //alphas[i] = 1;
 	}
 	UTILS.modifyShaders(geometry,material,sizes);
 	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
@@ -320,7 +320,6 @@ function Backdrop() {
 	sprites.name       = "stars";
 	this.replaceStarsBackdrop(sprites);
 	return sprites	
-
     };
     this.createNavigationBackdrop=function() {
 	var group=new THREE.Group();

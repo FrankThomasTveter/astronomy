@@ -732,6 +732,92 @@ function Bodies() {
 	}
 	return label;
     }
+    this.getMagnitude=function(name) {
+	// get sun position
+	let opos=this.config.observer.position;
+	let bpos=this.config[name].position;
+	let dx=bpos.x-opos.x;
+	let dy=bpos.y-opos.y;
+	let dz=bpos.z-opos.z;
+	let dist=Math.sqrt(dx*dx+dy*dy+dz*dz);
+	let mg=this.config[name].mg;
+	let md=this.config[name].md;
+	let fact=(md*md)/(dist*dist);
+	if (name === "sun") {
+	    return mg*fact;
+	} else {
+	    // get sun position
+	    let spos=this.config.sun.position;
+	    let sx=spos.x-bpos.x;
+	    let sy=spos.y-bpos.y;
+	    let sz=spos.z-bpos.z;
+	    let sist=Math.sqrt(sx*sx+sy*sy+sz*sz);
+	    let dot=(sx*dx+sy*dy+sz*dz)/(dist*sist);
+	    let ang=Math.acos(dot);
+	    let ill=(1.0-Math.sin(ang))/2.0;
+	    
+
+	    
+	    // get size
+	};
+    }
+
+
+    this.createAura=function(name) {
+	// get sun position
+	let spos=this.config.sun.position;
+	if (name === "sun") {
+
+	} else {
+	    // get body position
+	    let bpos=this.config[name].position;
+	    
+	    // get size
+	};
+
+	//https://jsfiddle.net/prisoner849/z3yfw208/
+	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true, alphaTest:0.01 }); //   alphaTest: 0.99
+	//var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
+	//UTILS.addTextureMap(material,this.fullStarsURL + "ball.png");
+	UTILS.addTextureMap(material,this.fullStarsURL + this.sprites[0]);
+	var geometry = new THREE.InstancedBufferGeometry();
+	//var geometry = new THREE.BufferGeometry();
+	var ll=this.starList.length;
+	var positions = new Float32Array(ll*3);
+	var colors = new Float32Array(ll*3);
+	var sizes = new Float32Array(ll);
+	var alphas = new Float32Array(ll);
+	for (let i = 0; i < ll; i++) {
+	    let ss=this.starList[i];
+	    //console.log("ss:",ss);
+            positions[i * 3 + 0] = ss.x * this.parscale;
+            positions[i * 3 + 1] = ss.y * this.parscale;
+            positions[i * 3 + 2] = ss.z * this.parscale;
+            colors[i * 3 + 0] = ss.color.r/255;
+            colors[i * 3 + 1] = ss.color.g/255;
+            colors[i * 3 + 2] = ss.color.b/255;
+	    var dist=Math.sqrt(ss.x*ss.x+ss.y*ss.y+ss.z*ss.z); // dist is in parsec
+	    var amag=Math.max(-30,Math.min(10,ss.mag - 5.0*this.log10(dist) + 5.0));  // dist is in parsec
+            sizes[i] = this.parscale*10*Math.pow(10,-amag/5.0);
+	     if (ss.pos.lab === "HIP89086") {
+		  	console.log("Mag:",ss.mag,amag,dist,this.log10(dist),sizes[i]," Cols:",ss.color,ss.pos);
+	     };
+	    //alphas[i] = 1;
+	}
+	UTILS.modifyShaders(geometry,material,sizes);
+	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+	geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
+	//geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
+	var sprites = new THREE.Points( geometry, material );
+	//var sprites = new THREE.Sprite( geometry, material );
+	sprites.name       = "stars";
+	this.replaceStarsBackdrop(sprites);
+	return sprites	
+
+
+    };
+    this.updateAura=function(name) {
+    };
     //
     //////////////////////////////////////////////////////////////////////////////////
     //
