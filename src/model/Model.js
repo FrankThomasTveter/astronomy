@@ -62,30 +62,13 @@ export default class Model {
     initScene(state) {
 	this.scene = new THREE.Scene();
 	this.Backdrop.initScenes(this.mainCamera);
-	this.scenes={bodies:{}};
-	this.scenes.bodies["sun"]=     {scene: this.Bodies.createScene("sun",this.mainCamera), distance:20,   show:true};
-	this.scenes.bodies["mercury"]= {scene: this.Bodies.createScene("mercury",this.mainCamera),distance:9, show:true};
-	this.scenes.bodies["venus"]=   {scene: this.Bodies.createScene("venus",this.mainCamera),distance:8,   show:true};
-	this.scenes.bodies["earth"]=   {scene: this.Bodies.createScene("earth",this.mainCamera),distance:1,   show:true};
-	this.scenes.bodies["mars"]=    {scene: this.Bodies.createScene("mars",this.mainCamera),distance:10,   show:true};
-	this.scenes.bodies["jupiter"]= {scene: this.Bodies.createScene("jupiter",this.mainCamera),distance:12,show:true};
-	this.scenes.bodies["saturn"]=  {scene: this.Bodies.createScene("saturn",this.mainCamera),distance:13, show:true};
-	this.scenes.bodies["uranus"]=  {scene: this.Bodies.createScene("uranus",this.mainCamera),distance:14, show:true};
-	this.scenes.bodies["neptune"]= {scene: this.Bodies.createScene("neptune",this.mainCamera),distance:15,show:true};
-	this.scenes.bodies["pluto"]=   {scene: this.Bodies.createScene("pluto",this.mainCamera),distance:16,  show:true};
-    //this.Bodies.setPosition(this.scene,"deathstar",
-    //			  20000*this.Bodies.SCALE,
-    //			  this.Bodies.config.saturn.radius*1.01,
-    //			  10000*this.Bodies.SCALE);//
-    //this.Bodies.setPosition(this.scene,"moon",
-    //			  20000*this.Bodies.SCALE,
-    //			  this.Bodies.config.saturn.radius*1.01,
-    //			  10000*this.Bodies.SCALE);//
+	this.Bodies.initScenes(this.mainCamera);
 	// console.log("*** Scenes:",JSON.stringify(Object.keys(this.scenes.bodies)));
     };
     
     initRenderer(state,canvas) {
 	this.renderer = new THREE.WebGLRenderer({
+	    //sortObjects: false,
 	    alpha: true,
 	    antialias: true,
 	    canvas:canvas,
@@ -140,55 +123,52 @@ export default class Model {
     // *****************************************    
     // ************* ANIMATION *****************    
     // *****************************************    
-    animate() { // ReactModel starts the animation loop...
-	this.render();
+    animate(time) { // ReactModel starts the animation loop...
+	//console.log(time);
+	this.render(time);
 	this.animationFrameId = requestAnimationFrame(this.animate.bind(this));
     }
 
-    render() {
+    render(time) {
 	//console.log("Rendering...");
 	this.renderer.sortObjects = false;
 	// process controls (point camera)
-	this.controls.update();
-	this.updateModel();
-	this.renderInitial();
-	this.renderBackdrop();
-	this.renderBodies();
+	this.controls.update(time);
+	this.updateModel(time);
+	this.renderInitial(time);
+	this.renderBackdrop(time);
+	this.renderBodies(time);
 	//TWEEN.update();
     }
 
-    updateModel() {
+    updateModel(time) {
 	// update the information sprite...
 
 	// update model config
 	var config=this.state.Model.getCurrentConfig(this.state);
-	this.updateConfig(this.state,config);
+	this.updateConfig(this.state,config,time);
 
 	//check if we have a new config...
-	//this.updateTarget(this.state,config);
+	//this.updateTarget(this.state,config,time);
 
 	// update main camera position (to observer)...
-	this.updateMainCamera(this.state);
+	this.updateMainCamera(this.state,time);
 
 	// update scenes
-	this.updateScenes(this.state,this.mainCamera);
+	this.updateScenes(this.state,this.mainCamera,time);
     };
 
     updateRaycaster (state) {
-	this.raycaster.setFromCamera(this.mouse,this.mainCamera);
-	const intersects = this.raycaster.intersectObjects( this.scene.children );
-	var cnt=intersects.length;
-	for ( let i = 0; i < intersects.length; i ++ ) {
-	    //console.log("Pointing at:",cnt,i,intersects[ i ].object.name,this.mouse);
-	    //intersects[ i ].object.material.color.set( 0xff0000 );
-	};
+	var objects=[];
+	this.Bodies.updateRaycaster(state,this.raycaster,this.mouse,this.mainCamera,objects);
+	this.Backdrop.updateRaycaster(state,this.raycaster,this.mouse,this.mainCamera,objects);
+	//console.log("Ray:",this.mouse,objects);
+	return objects;
     };
 
     onMouseUp(event) { // called by pointController...
-	//console.log("Mouse up:",event);
-	//// check if mouse was stationary
-	//// update raycaster
-	// this.updateRaycaster(this.state);
+	// get objects that were pointed to...
+	let objects=this.updateRaycaster(this.state);
 	//// find target object, target star
 	//// point camera towards target
 	//// update target information...
@@ -200,45 +180,23 @@ export default class Model {
 
     updateConfig (state,config) {
 	//console.log("Updating config",config);
-	this.Bodies.copyObserver( config.observer,        this.Bodies.config.observer);
-	this.Bodies.copyBody(     config.bodies.sun,      this.Bodies.config.sun);
-	this.Bodies.copyBody(     config.bodies.mercury,  this.Bodies.config.mercury);
-	this.Bodies.copyBody(     config.bodies.sun,      this.Bodies.config.sun);
-	this.Bodies.copyBody(     config.bodies.mercury,  this.Bodies.config.mercury);
-	this.Bodies.copyBody(     config.bodies.venus,    this.Bodies.config.venus);
-	this.Bodies.copyBody(     config.bodies.earth,    this.Bodies.config.earth);
-	this.Bodies.copyBody(     config.bodies.moon,     this.Bodies.config.moon);
-	this.Bodies.copyBody(     config.bodies.mars,     this.Bodies.config.mars);
-	this.Bodies.copyBody(     config.bodies.jupiter,  this.Bodies.config.jupiter);
-	this.Bodies.copyBody(     config.bodies.saturn,   this.Bodies.config.saturn);
-	this.Bodies.copyBody(     config.bodies.uranus,   this.Bodies.config.uranus);
-	this.Bodies.copyBody(     config.bodies.neptune,  this.Bodies.config.neptune);
-	this.Bodies.copyBody(     config.bodies.pluto,    this.Bodies.config.pluto);
-	//console.log("Updated config",this.Bodies.config);
+	this.Bodies.updateConfig(state,config);
     };
 
-    updateScenes (state,camera) {
+    updateScenes (state,camera,time) {
 	//console.log("UpdateScenes...");
 	// update Backdrop
 	var observer=this.Bodies.config.observer;
-	this.Backdrop.updateScenes(state,camera,observer);
-	// loop over Bodies scenes
-	for (var name in this.scenes.bodies) {
-	    var item=this.scenes.bodies[name];
-	    if (item.scene !== undefined) {
-		if (item.show) {
-		    //console.log("Scene:",name);
-		    this.Bodies.updateScene(state,camera,observer,name,item.scene);
-		};
-	    };
-	};
+	this.Backdrop.updateScenes(state,camera,observer,time);
+	this.Bodies.updateScenes(state,camera,observer,time);
     };
     
     updateMainCamera(state) {
 	//console.log("Zenith:",this.Bodies.config.observer.zenith);
 	let pos=this.Bodies.config.observer.position;
 	let zen=this.Bodies.config.observer.zenith;
-	this.mainCamera.position.set(pos.x,pos.y,pos.z);
+	//this.mainCamera.position.set(pos.x,pos.y,pos.z);
+	this.mainCamera.position.set(0,0,0);
 	this.mainCamera.up.set(zen.x,zen.y,zen.z); // up is always towards observer zenith...
 	//this.mainCamera.poinAt(new THREE.Vector3(0,1,0)); // up is always towards observer zenith...
 	//this.mainCamera.updateMatrixWorld(true);
@@ -280,36 +238,21 @@ export default class Model {
 	};
     };	
 
-    renderInitial() {
-	this.renderer.autoClear = true; // clear canvas completely
+    renderInitial(time) {
+	this.renderer.autoClear = true;  // clear canvas completely
 	this.renderer.render(this.scene, this.mainCamera);
 	this.renderer.autoClear = false; // draw on top of previous drawing
 	//console.log("Camera:",this.mainCamera);
     };
 
-    renderBackdrop() {
-	this.Backdrop.renderScenes(this.renderer,this.mainCamera);
+    renderBackdrop(time) {
+	this.renderer.clearDepth();      // clear depth buffer...
+	this.Backdrop.renderScenes(this.renderer,this.mainCamera,time);
     };
 
-    renderBodies() {
-	//this.renderer.autoClear = false;
-	// sort scenes by distance...
-	var keys = Object.keys(this.scenes.bodies);
-	var order=keys.sort((a,b) => {return this.scenes.bodies[b].distance - this.scenes.bodies[a].distance;} );
-	//console.log("Sorted by distance:",order);
-	order.forEach( (name,i)=>{
-	    let distance=this.scenes.bodies[name].distance||0;
-	    let show=this.scenes.bodies[name].show;
-	    let scene=this.scenes.bodies[name].scene;
-	    let camera=scene.getObjectByName("camera");
-	    if (show && camera !== undefined) {
-		//console.log("Rendering:",name);
-		this.Bodies.prepareForRender(name,scene,this.mainCamera);
-		this.renderer.render(scene, camera);
-	    } else {
-		//console.log("Not rendering:",k);
-	    }
-	});	
+    renderBodies(time) {
+	this.renderer.clearDepth();      // clear depth buffer...
+	this.Bodies.renderScenes(this.renderer,this.mainCamera,time);
     };
 
     // For each animation, update the focus and focusOptions provided by the animation over an array of timeouts

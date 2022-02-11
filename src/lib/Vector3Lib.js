@@ -321,6 +321,44 @@ function Vector3( x, y, z ) {
     this.setLength= function ( length ) {
 	return this.multiplyScalar( length / this.length() );
     };
+    this.slerpVectors= function ( v1, v2, alpha ) { // spherical linear interpolation
+	let len1=v1.length();
+	let len2=v2.length();
+	let theta=Math.PI/2;
+	let f1=1;
+	let f2=0;
+	if (len1*len2 > 1e-10) {
+	    theta=Math.acos(v1.dot(v2) / (len1*len2));
+	};
+	if (theta > 1e-10) {
+	    let s1=Math.sin(theta*(1-alpha));
+	    let s2=Math.sin(theta*alpha);
+	    let st=Math.max(s1+s2,Math.sin(theta));
+	    f1=s1/st;
+	    f2=s2/st;
+	};
+	this.x = f1*v1.x + f2*v2.x;
+	this.y = f1*v1.y + f2*v2.y;
+	this.z = f1*v1.z + f2*v2.z;
+	return this;
+    };
+    this.slerp= function ( v, alpha ) { // spherical linear interpolation
+	let len=this.length();
+	let lenv=v.length();
+	let theta=0.0;
+	if (len*lenv > 1e-10) {
+	    theta=Math.acos(this.dot(v) / (len*lenv));
+	};
+	let s1=Math.sin(theta*(1-alpha));
+	let sa=Math.sin(theta*alpha);
+	let st=Math.max(s1+sa,Math.sin(theta));
+	let f1=s1/st;
+	let fa=sa/st;
+	this.x = f1*this.x + fa*v.x;
+	this.y = f1*this.y + fa*v.y;
+	this.z = f1*this.z + fa*v.z;
+	return this;
+    };
     this.lerp= function ( v, alpha ) {
 	this.x += ( v.x - this.x ) * alpha;
 	this.y += ( v.y - this.y ) * alpha;

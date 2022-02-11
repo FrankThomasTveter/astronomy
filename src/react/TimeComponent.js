@@ -49,18 +49,18 @@ class Time extends Component {
 	this.show=this.show.bind(this);
 	this.changeSpeed=this.changeSpeed.bind(this);
 	this.state={speed:state.Events.getSpeed(state),
-		    targetDate: state.Events.getTargetDate(state)};
-	this.setTargetDate=this.setTargetDate.bind(this);
+		    targetDate: state.Events.getModelMoment(state)};
+	this.setModelMoment=this.setModelMoment.bind(this);
     };
     show(state) {
-	this.setTargetDate(state); // undefined date will be reloaded...
+	this.setModelMoment(state); // undefined date will be reloaded...
 	//this.forceUpdate();
     };
-    setTargetDate(state,date){
+    setModelMoment(state,date){
 	//console.log("Date:",date);
-	state.Events.setTargetDate(state,date);
+	state.Events.setModelMoment(state,date);
 	this.setState({
-	    targetDate: state.Events.getTargetDate(state)
+	    targetDate: state.Events.getModelMoment(state)
 	});
     };
     // Draggable functions
@@ -89,18 +89,14 @@ class Time extends Component {
     };
     render() {
         const { classes, state } = this.props; // layout,  , zIndex
-	var setTargetDate=function(date){
-	    this.setTargetDate(state,date);
+	var setModelMoment=function(date){
+	    this.setModelMoment(state,date);
 	}.bind(this);
 	var forward=function(state) {
-            //const { setTarget } = this.props;
 	    state.Events.forward(state);
-	    this.setTargetDate(state);
 	}.bind(this);
 	var rewind=function(state) {
-            //const { setTarget } = this.props;
 	    state.Events.rewind(state);
-	    this.setTargetDate(state);
 	}.bind(this);
 	var togglePlay=function(state) {
 	    state.Events.togglePlay(state);
@@ -141,7 +137,7 @@ class Time extends Component {
 	        timeFormat="HH:mm:ss"
 	        inputProps={{ disabled: false }}
 	        value={this.state.targetDate}
-	        onChange={setTargetDate}
+	        onChange={setModelMoment}
 	        onClick={this.handleChildClick}
 	        style={{height:"100%"}}
 	       />
@@ -149,7 +145,7 @@ class Time extends Component {
 	         className={classes.button}
                  onClick={function(e) {
 		     var now=new moment();
-		     setTargetDate(now)}}
+		     setModelMoment(now)}}
 	         title={"Now"}
 	         disabled={false}> <TimeIcon/> </Button>
 	      </div>

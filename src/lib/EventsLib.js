@@ -19,7 +19,7 @@ function Events() {
     this.endDt=1;              // time difference between start and end
     this.speed=1.0;
     this.cost=0;
-    this.delay=500;
+    this.delay=250;
     //
     this.lastTime=new moment().valueOf();
     this.lastCnt=0;
@@ -43,9 +43,9 @@ function Events() {
     };
     this.targetSet=false;      // is a target time set?
     this.targetId=undefined;   // target time event id
-    this.targetTime=new moment().valueOf();   // target time is now
+    this.modelTime=new moment().valueOf();   // target time is now
     this.targetZone=new Date().getTimezoneOffset() * 60000;// client time zone
-    this.refTime=this.targetTime;        // reference time so we dont drift during play...
+    this.refTime=this.modelTime;        // reference time so we dont drift during play...
     this.playing=true;
     this.changed=false;
     // offset=target-now
@@ -185,7 +185,7 @@ function Events() {
     this.launchModel=function(state,dtg) {
 	if (dtg === undefined) {
             if (this.targetSet) {
-		dtg=new Date(this.targetTime).toISOString();
+		dtg=new Date(this.modelTime).toISOString();
             } else {
 		dtg = new Date().toISOString();
             }
@@ -206,7 +206,6 @@ function Events() {
 	if (state.Events.isPlaying(state) || state.Events.changed) {
 	    // reload if necessary
 	    state.Events.changed=false;
-	    state.Events.setRefTime(state);
 	    if (! state.Events.countdown(state)) { // are we in a countdown?
 		state.Events.setEventTime(state);
 	    };
@@ -221,7 +220,7 @@ function Events() {
 	var active=false;
 	if (this.initialised) {
 	    var now=new moment().valueOf();
-	    if (Math.abs(state.Events.targetTime-state.Events.eventTime) < 65*1000) {
+	    if (Math.abs(state.Events.modelTime-state.Events.eventTime) < 65*1000) {
 		active=true;
 		//console.log("We are in a countdown...",state.Events.eventTime);
 		// load new data if we just passed countdown...
@@ -232,30 +231,30 @@ function Events() {
 		    state.Events.sendRequest(state,"",[state.Show.showAll]);
 		    console.log("Updating...");
 		} else {
-		    if (state.Events.targetTime - state.Events.lastTime > 1000)  { // code suspended during event 
+		    if (state.Events.modelTime - state.Events.lastTime > 1000)  { // code suspended during event 
 		    } else if (state.Events.eventTime-999 > state.Events.lastTime && 
-			       state.Events.eventTime-999 < state.Events.targetTime) {       // T   0s
+			       state.Events.eventTime-999 < state.Events.modelTime) {       // T   0s
 			state.Events.playAudio(state,state.Events.beep0s);
 		    } else if (state.Events.eventTime-1999 > state.Events.lastTime &&
-			       state.Events.eventTime-1999 < state.Events.targetTime) {	  // T -1s
+			       state.Events.eventTime-1999 < state.Events.modelTime) {	  // T -1s
 			state.Events.playAudio(state,state.Events.beep1s);
 		    } else if (state.Events.eventTime-2999 > state.Events.lastTime &&
-			       state.Events.eventTime-2999 < state.Events.targetTime) {	  // T -2s
+			       state.Events.eventTime-2999 < state.Events.modelTime) {	  // T -2s
 			state.Events.playAudio(state,state.Events.beep2s);
 		    } else if (state.Events.eventTime-3999 > state.Events.lastTime &&
-			       state.Events.eventTime-3999 < state.Events.targetTime) {	  // T -3s
+			       state.Events.eventTime-3999 < state.Events.modelTime) {	  // T -3s
 			state.Events.playAudio(state,state.Events.beep3s);
 		    } else if (state.Events.eventTime-10999 > state.Events.lastTime &&
-			       state.Events.eventTime-10999 < state.Events.targetTime) {	  // T -10s
+			       state.Events.eventTime-10999 < state.Events.modelTime) {	  // T -10s
 			state.Events.playAudio(state,state.Events.beep10s);
 		    } else if (state.Events.eventTime-60999 > state.Events.lastTime &&
-			       state.Events.eventTime-60999 < state.Events.targetTime) {	  // T -60s
+			       state.Events.eventTime-60999 < state.Events.modelTime) {	  // T -60s
 			state.Events.playAudio(state,state.Events.beep1m);
 		    }
-		    state.Events.lastTime=state.Events.targetTime;
+		    state.Events.lastTime=state.Events.modelTime;
 		}
 	    } else {
-		//console.log("Not in a countdown...",state.Events.targetTime,state.Events.eventTime);
+		//console.log("Not in a countdown...",state.Events.modelTime,state.Events.eventTime);
 	    };
 	};
 	return active;
@@ -401,7 +400,7 @@ function Events() {
     this.togglePlay = function(state) {
 	var now=new moment().valueOf();
 	if (state.Events.isPlaying(state)) { // stop clock
-	    state.Events.setRefTime(state);
+	    state.Events.setModelClock(state,now);
 	    state.Events.setEventTime(state);
 	    state.Events.playing=false;
 	} else { // start clock
@@ -411,7 +410,7 @@ function Events() {
 	state.Events.changed=true;
     };
     this.setSpeed = function(state,speed) {
-	state.Events.setRefTime(state);
+	state.Events.setModelClock(state);
 	state.Events.setEventTime(state);
 	state.Events.speed=speed;
 	//console.log("Speed:",state.Events.speed);
@@ -420,16 +419,14 @@ function Events() {
 	return state.Events.speed;
     };
     this.rewind = function(state) {
-	state.Events.changed=true;
-	state.Events.increment(state,-state.Events.speed*1000);
+	state.Events.incrementModelTime(state,-state.Events.speed*1000);
     };
     this.forward = function(state) {
-	state.Events.changed=true;
-	state.Events.increment(state,+state.Events.speed*1000);
+	state.Events.incrementModelTime(state,+state.Events.speed*1000);
     };
-    this.increment = function(state,dt) {
+    this.incrementModelTime = function(state,dt) {
 	state.Events.changed=true;
-	state.Events.targetTime=state.Events.targetTime+dt;
+	state.Events.modelTime=state.Events.modelTime+dt;
     };
     this.getData = function(state) {
 	return state.Events.rawData;
@@ -438,33 +435,30 @@ function Events() {
 	// set focus on the body i.e. sun, moon
 	console.log("Focus on id:",id);
     };
-    this.setRefTime = function(state) {
-	var now=new moment().valueOf();
+    this.setModelClock = function(state,now) {
 	if (state.Events.isPlaying(state)) {
-	    var doff=now-state.Events.refTime;
-	    state.Events.increment(state,doff*state.Events.speed);
+	    if (now === undefined) { now=new moment().valueOf(); }
+	    var dt=now-state.Events.refTime;
+	    state.Events.modelTime=state.Events.modelTime + dt*state.Events.speed;
 	    state.Events.refTime=now;
 	};
-	return state.Events.targetDate;
-    };
-    this.getTargetTime = function(state) {
-	return state.Events.targetTime;
-    };
-    this.setTargetTime = function(state,time) {
-	if (state.Events.targetTime===time) {
-	    state.Events.targetTime=new moment().valueOf();
+    };    
+    this.getModelTime = function(state,now) {
+	if (state.Events.isPlaying(state)) {
+	    if (now === undefined) { now=new moment().valueOf(); }
+	    var dt=now-state.Events.refTime;
+	    return state.Events.modelTime + dt*state.Events.speed;
 	} else {
-	    state.Events.targetTime=time;
-	};
-	state.Events.changed=true;
+	    return state.Events.modelTime;
+	}
     };
-    this.getTargetDate = function(state) {
-	return new moment(state.Events.targetTime);
+    this.getModelMoment = function(state) {
+	return new moment(this.getModelTime(state));
     };
-    this.setTargetDate = function(state,date) {
+    this.setModelMoment = function(state,date) {
 	if (date!==undefined) {
 	    state.Events.changed=true;
-	    state.Events.targetTime=date.valueOf();
+	    state.Events.modelTime=date.valueOf();
 	    state.Events.refTime=new moment().valueOf();
 	};
     };
@@ -488,7 +482,7 @@ function Events() {
 	state.Events.criteria=criteria;
     };
     //
-    // this.setRefTime = function(state) {
+    // this.setModelClock = function(state) {
     // 	var d = new moment();
     // 	var epoch=d.valueOf();
     // 	//console.log("Times:",epoch,this.epoch0);
@@ -510,7 +504,7 @@ function Events() {
 	var req=new this.request();
 	var requestTime=now;
 	var replace=true;
-	if (this.targetSet) {replace=false;requestTime=this.targetTime;};
+	if (this.targetSet) {replace=false;requestTime=this.modelTime;};
 	req.addDebug();
 	req.addPosition("",state.Events.lat,state.Events.lon,0)
 	if(this.getPrev(state)) {
@@ -593,7 +587,7 @@ function Events() {
 	    //var dt = 86400000.0;
 	    var requestTime=now;
 	    var replace=true;
-	    if (this.targetSet) {replace=false;requestTime=this.targetTime;};
+	    if (this.targetSet) {replace=false;requestTime=this.modelTime;};
 	    if (newpos) {replace=true;};
 	    req.addDebug();
 	    req.addPosition("",position.coords.latitude,position.coords.longitude,0)
@@ -755,7 +749,7 @@ function Events() {
     // 		    //console.log("drawing button:"+this.nice(t));
     // 		}
     // 		var dt=t-now;
-    // 		if (this.targetSet) {dt=t-this.targetTime;}
+    // 		if (this.targetSet) {dt=t-this.modelTime;}
     // 		//documentCells[2].innerHTML=this.getTimeDiff(dt);
     // 		//documentCells[4].innerHTML=dataReport[0];
     // 		if (this.drawAll) {
@@ -801,23 +795,23 @@ function Events() {
     }
     this.setTarget = function(tt,id) {
 	//console.log("Setting target to:"+tt+" "+this.targetSet);
-	if (this.targetSet && tt === this.targetTime) {
+	if (this.targetSet && tt === this.modelTime) {
 	    this.targetSet=false;
 	    this.targetId=undefined;
 	} else {
 	    this.targetSet=true;
-	    this.targetTime=tt;
-	    this.setTargetDateOld(this.targetTime);
-	    this.setEndDate(this.targetTime);
+	    this.modelTime=tt;
+	    this.setTargetDateOld(this.modelTime);
+	    this.setEndDate(this.modelTime);
 	    this.targetId=id;
 	}
     }
     this.setTargetId = function(tt,id) {
 	//console.log("Setting target to:"+tt+" "+this.targetSet);
 	this.targetSet=true;
-	this.targetTime=tt;
-	this.setTargetDateOld(this.targetTime);
-	this.setEndDate(this.targetTime);
+	this.modelTime=tt;
+	this.setTargetDateOld(this.modelTime);
+	this.setEndDate(this.modelTime);
 	this.targetId=id;
     }
 
@@ -882,8 +876,8 @@ function Events() {
 	//var now=new moment().valueOf();
 	state.Events.rawData.forEach(function(v,i) {
 	    var time=v[0];
-	    if (time > state.Events.targetTime && 
-		(state.Events.eventTime===undefined || state.Events.eventTime < state.Events.targetTime || time < state.Events.eventTime)) {
+	    if (time > state.Events.modelTime && 
+		(state.Events.eventTime===undefined || state.Events.eventTime < state.Events.modelTime || time < state.Events.eventTime)) {
 		state.Events.eventTime=time;
 	    }
 	});
@@ -1190,7 +1184,7 @@ function Events() {
     this.minus = function() {
 	this.dtime=Math.max(1,this.dtime-1);
 	if (this.targetSet) {
-	    this.setEndDate(this.targetTime);
+	    this.setEndDate(this.modelTime);
 	} else {
 	    this.setEndDate(Date.now());
 	}
@@ -1198,7 +1192,7 @@ function Events() {
     this.pluss = function() {
 	this.dtime=Math.min(365,this.dtime+1);
 	if (this.targetSet) {
-	    this.setEndDate(this.targetTime);
+	    this.setEndDate(this.modelTime);
 	} else {
 	    this.setEndDate(Date.now());
 	}
@@ -1218,8 +1212,8 @@ function Events() {
 	this.targetSet=true;
 	var dtg=this.start_dt+"T"+this.start_tm+"Z"
 	var tzoffset = (new moment(dtg)).getTimezoneOffset() * 60000; //offset in milliseconds
-	this.targetTime=new moment(dtg).valueOf()+tzoffset;
-	this.setEndDate(this.targetTime);
+	this.modelTime=new moment(dtg).valueOf()+tzoffset;
+	this.setEndDate(this.modelTime);
     }
     this.setEndDate = function(target) {
 	var tzoffset = (new moment(target)).getTimezoneOffset() * 60000; //offset in milliseconds

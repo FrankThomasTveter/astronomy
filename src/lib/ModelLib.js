@@ -29,12 +29,11 @@ function Model() {
 		 controls:false,
 		 config:false};
     // other data...
-    this.modelRedraw=false; 
+    this.deg2rad = Math.PI/180.0;
     this.controlsRedraw=false; 
     this.configRedraw=false; 
     this.redraw = true;
     // update 3D model of the solar system...
-    this.model={};
     this.scenes={};
     this.controls=undefined;
     this.consTime = (new Date().getTime())-10000.0;
@@ -42,10 +41,21 @@ function Model() {
     this.lastCon = 0;
     this.lastTime = (new Date().getTime())-10000.0;
     this.reqId=undefined;
-    this.speed = 0.0;
-    this.step = 0;
     this.AU = 149597870;
-    this.MU= {sun:1.32712440018e11, // km3/s2
+    // xmu = G * Mass
+    this.xmu = { sun     : 132712440018.0,
+		 Mercury :        22032.0,
+		 Venus   :       324859.0,
+		 Earth   :       398601.3,
+		 Mars    :        42828.0,
+		 Ceres   :           63.0,
+		 Jupiter :    126686534.0,
+		 Saturn  :     37931187.0,
+		 Uranus  :      5793947.0,
+		 Neptune :      6836529.0,
+		 Pluto   :         1001.0 
+	       };
+    this.MU= {sun:1.32712440018e11, // gravitational constant (μ) km3/s2, gaussian - k = 0.01720209895 rad/day, //
 	      mercury:	2.2032e4,
 	      venus:	3.24859e5,
 	      earth:	3.986004418e5,
@@ -58,50 +68,220 @@ function Model() {
 	      neptune:	6.836529e6,
 	      pluto:	8.71e2,
 	      eris:	1.108e3};
-    this.satellites = [{name:"deathstar",
-			rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:-0.001},
-			orbit:{
-			    around:"saturn",
-			    x:60000,
-			    y:2000,
-			    z:2000}},
-		       {name:"charon",
-			rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
-			orbit:{
-			    around:"mars",
-			    a : 384400, // semi-major axis
-			    e : 0.0554, // eccentricity
-			    w : 318.15, // argument of periapsis
-			    m0: 135.27, // mean anomaly at epoch
-			    i : 5.16,   // inclination
-			    o : 125.08  // longitude of ascending node
-			}}];
-    this.requests = { state:{0:{location : {latitude : 60.0,
-					    longitude: 10.0,
-					    height   : 0.0},
-				play : { event : 0,
-					 speed : 0.0,       // configEpoch = (epoch-e0) * speed + m0
-					 e0 : 0.0,
-					 m0 : 0.0 },
-				events : [{ reqId : 1,
-					    label: "Sunrise", 
-					    pointAt : "The Sun",
-					    viewAngle : 25.0,
-					    dtg : "2016-01-02T16:56:00Z"
-					  }
-					 ],
-				current : 0
-			       },
-			     1:{}},
-                      current : 0,
+    // satellites with analytical orbits...
+    this.orbits = [
+	{name:"phobos",
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 orbit:{
+	     around:"mars",
+	     a : 55989, // semi-major axis
+	     e : 0.0554, // eccentricity
+	     i : 5.16*this.deg2rad,   // inclination
+	     w : 318.15*this.deg2rad, // argument of periapsis
+	     m0: 135.27*this.deg2rad, // mean anomaly at epoch
+	     o : 125.08*this.deg2rad  // longitude of ascending node
+	 }},
+	{name:"deimos",
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 orbit:{
+	     around:"mars",
+	     a : 23463.2, // semi-major axis
+	     e : 0.00033, // eccentricity
+	     i : 0.93*this.deg2rad,   // inclination
+	     w : 318.15*this.deg2rad, // argument of periapsis
+	     m0: 135.29*this.deg2rad, // mean anomaly at epoch
+	     o : 125.08*this.deg2rad  // longitude of ascending node
+	 }},
+	{name:"charon",
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 orbit:{
+	     around:"pluto",
+	     a : 19591.4, // semi-major axis
+	     e : 0.0002, // eccentricity
+	     i : 0.08*this.deg2rad,   // inclination
+	     w : 318.15*this.deg2rad, // argument of periapsis
+	     m0: 135.27*this.deg2rad, // mean anomaly at epoch
+	     o : 125.08*this.deg2rad  // longitude of ascending node
+	 }},
+	{name:"mercury",
+	 rotation:{ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 orbit : { 
+	     a:0.38709927*this.AU , // semi-major axis
+	     e : 0.20563593,        // eccentricity
+	     i: 7.00497902*this.deg2rad,         // inclination
+	     l : 252.25032350*this.deg2rad,      // mean longitude
+	     lp : 77.45779628*this.deg2rad,      // longitude of perihelion
+	     o : 48.33076593*this.deg2rad        // longitude of ascending node
+	 },
+	 cydrift : {a : 0.00000037 * this.AU ,
+		    e : 0.00001906,
+		    i: -0.00594749*this.deg2rad,
+		    l : 149472.67411175*this.deg2rad,
+		    lp : 0.16047689*this.deg2rad,
+		    o : -0.12534081*this.deg2rad}},
+	{name:"venus",
+	 rotation:{ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 orbit : { 
+	     a : 0.72333566 * this.AU ,
+	     e : 0.00677672,
+	     i: 3.39467605*this.deg2rad,
+	     l : 181.97909950*this.deg2rad,
+	     lp : 131.60246718*this.deg2rad,
+	     o : 76.67984255*this.deg2rad
+	 },
+	 cydrift:{a : 0.00000390 * this.AU ,
+		  e : -0.00004107,
+		  i: -0.00078890*this.deg2rad,
+		  l : 58517.81538729*this.deg2rad,
+		  lp : 0.00268329*this.deg2rad,
+		  o : -0.27769418*this.deg2rad}},
+	{name:"earth",
+	 rotation:{ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 orbit: {
+	     a : 1.00000261 * this.AU,
+	     e : 0.01671123,
+	     i : -0.00001531*this.deg2rad,
+	     l : 100.46457166*this.deg2rad,
+	     lp : 102.93768193*this.deg2rad,
+	     o : 0.0
+	 },
+	 cydrift: {a : 0.00000562 * this.AU,
+		   e : -0.00004392,
+		   i : -0.01294668*this.deg2rad,
+		   l : 35999.37244981*this.deg2rad,
+		   lp : 0.32327364*this.deg2rad,
+		   o : 0.0*this.deg2rad
+		  }},
+	{name:"mars",
+	 rotation:{ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 orbit: {
+	     a : 1.52371034 * this.AU ,
+	     e : 0.09339410,
+	     i: 1.84969142*this.deg2rad,
+	     l : -4.55343205*this.deg2rad,
+	     lp : -23.94362959*this.deg2rad,
+	     o : 49.55953891*this.deg2rad
+	 },
+	 cydrift: {a : 0.00001847 * this.AU ,
+		   e : 0.00007882,
+		   i: -0.00813131*this.deg2rad,
+		   l : 19140.30268499*this.deg2rad,
+		   lp : 0.44441088*this.deg2rad,
+		   o : -0.29257343*this.deg2rad
+		  }},
+	{name:"jupiter",
+	 rotation:{ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 orbit: {
+	     a : 5.20288700 * this.AU ,
+	     e : 0.04838624,
+	     i: 1.30439695*this.deg2rad,
+	     l : 34.39644051*this.deg2rad,
+	     lp : 14.72847983*this.deg2rad,
+	     o : 100.47390909*this.deg2rad
+	 },
+	 cydrift: {a : -0.00011607 * this.AU ,
+		   e : -0.00013253,
+		   i: -0.00183714*this.deg2rad,
+		   l : 3034.74612775*this.deg2rad,
+		   lp : 0.21252668*this.deg2rad,
+		   o : 0.20469106*this.deg2rad
+		  }},
+	{name:"saturn",
+	 rotation:{ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 orbit: {
+	     a : 9.53667594 * this.AU ,
+	     e : 0.05386179,
+	     i: 2.48599187*this.deg2rad,
+	     l : 49.95424423*this.deg2rad,
+	     lp : 92.59887831*this.deg2rad,
+	     o : 113.66242448*this.deg2rad
+	 },
+	 cydrift: {a : -0.00125060 * this.AU ,
+		   e : -0.00050991,
+		   i: 0.00193609*this.deg2rad,
+		   l : 1222.49362201*this.deg2rad,
+		   lp : -0.41897216*this.deg2rad,
+		   o : -0.28867794*this.deg2rad
+		  }},
+	{name:"uranus",
+	 rotation:{ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 orbit: {
+	     a : 19.18916464 * this.AU ,
+	     e : 0.04725744,
+	     i: 0.77263783*this.deg2rad,
+	     l : 313.23810451*this.deg2rad,
+	     lp : 170.95427630*this.deg2rad,
+	     o : 74.01692503*this.deg2rad
+	 },
+	 cydrift: {a : -0.00196176 * this.AU ,
+		   e : -0.00004397,
+		   i: -0.00242939*this.deg2rad,
+		   l : 428.48202785*this.deg2rad,
+		   lp : 0.40805281*this.deg2rad,
+		   o : 0.04240589*this.deg2rad
+		  }},
+	{name:"neptune",
+	 rotation:{ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 orbit: {
+	     a : 30.06992276  * this.AU,
+	     e : 0.00859048,
+	     i: 1.77004347*this.deg2rad,
+	     l : -55.12002969*this.deg2rad,
+	     lp : 44.96476227*this.deg2rad,
+	     o : 131.78422574*this.deg2rad
+	 },
+	 cydrift: {a : 0.00026291  * this.AU,
+		   e : 0.00005105,
+		   i: 0.00035372*this.deg2rad,
+		   l : 218.45945325*this.deg2rad,
+		   lp : -0.32241464*this.deg2rad,
+		   o : -0.00508664*this.deg2rad
+		  }},
+	{name:"pluto",
+	 rotation:{ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 orbit: {
+	     a : 39.48211675 * this.AU ,
+	     e : 0.24882730,
+	     i: 17.14001206*this.deg2rad,
+	     l : 238.92903833*this.deg2rad,
+	     lp : 224.06891629*this.deg2rad,
+	     o : 110.30393684*this.deg2rad
+	 },
+	 cydrift: {a : -0.00031596 * this.AU ,
+		   e : 0.00005170,
+		   i: 0.00004818*this.deg2rad,
+		   l : 145.20780515*this.deg2rad,
+		   lp : -0.04062942*this.deg2rad,
+		   o : -0.01183482*this.deg2rad
+		  }},
+	{name:"deathstar",
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:-0.001},
+	 orbit:{
+	     around:"saturn",
+	     x:60000,
+	     y:20000,
+	     z:20000}}
+    ];
+    // new requests are pushed to "this.requests", this.requests.state[id] is updated async
+    this.requests = { state:[{location : {latitude : 60.0,
+					 longitude: 10.0,
+					 height   : 0.0},
+			     event : 0,
+			     events : [{ reqId : 1,
+					 label: "Sunrise", 
+					 pointAt : "The Sun",
+					 viewAngle : 25.0,
+					 dtg : "2016-01-02T16:56:00Z"
+				       }
+				      ]
+			    }],
+		      current: 0
 		    };
+    // time is contained in Events: targettime=state.Events.getModelTime(state)
     this.config = { reqId : -1,
-		    play : { },
-		    state : {0:{bodies:{},
-				observer:{}}, // first config state goes here
-			     1:{bodies:{},
-				observer:{}}}, // second config state goes here
-		    current : 1,// current state (0 or 1)?
+		    event : 0,
+		    bodies:{},
+		    observer:{},
 		    newTarget : false,
 		  };
     this.hello=function () {
@@ -113,15 +293,25 @@ function Model() {
 		this.redraw[key]=true;
 	    }
 	};
+	// make standard orbital parameters
+	this.orbits.forEach((sat,i) => {
+	    this.standardOrbit(state,sat);
+	});
 	this.initialised=true;
     }
+    this.getOrbits=function(state) {
+	return state.Model.orbits;
+    };
     // this.initRequest = function (state) {
     // 	var url=this.getUrlVars();
     // 	this.launch(state,url["lat"],url["lon"],url["dtg"],url["hrs"],url["label"],url["target"],url["fov"],url["dir"],url["con"],url["speed"]);
     // };
     //this.fType = this.getUrlVars()["type"];
     this.getCurrentConfig = function (state) {
+	var ttrg=state.Events.getModelTime(state); // current target time
+	//
 	//this.requestAnimFrame(this.update);
+	var config=undefined;
 	this.nowMsec=new Date().getTime();
 	if (this.lastMsec === undefined) {this.lastTimeMsec=this.nowMsec;};
 	//var deltaMsec   = Math.min(200, this.nowMsec - this.lastMsec)
@@ -129,34 +319,39 @@ function Model() {
 	    //TWEEN.update();
 	    this.redraw=true;
 	} else {
-	    if (this.controlsUpdate()) { this.step=0;};
-	    if (this.controlsRedraw) {
-		this.controlsRedraw=false;
-		this.redraw=true;
-	    };
+	    // if (this.controlsUpdate()) { this.step=0;};
+	    // if (this.controlsRedraw) {
+	    // 	this.controlsRedraw=false;
+	    // 	this.redraw=true;
+	    // };
 	}
 	if (this.requestUpdate(state)) { this.step=0;};
-	if (this.processNewRequests()) { 
+	if (this.processNewRequests(state)) { 
 	    this.offzoom(0.5);
 	    this.step=0;
 	};
-	if (this.step === 0) {
-	    this.configUpdate(state);
-	    if (this.configRedraw) {
-		this.redraw=true;
-		this.configRedraw=false;
-	    };
-	    //this.updateScene(state);
-	};
-	this.lastTimeMsec= this.nowMsec;
-	if (this.reqId !== -1 && this.speed > 0) {
-	    this.step=(this.step+1)%2;    
-	} else {
-	    this.step=(this.step+1)%100;    
-	};
-	if (this.reqId !== -1 && state.React !== undefined && state.React.Model !== undefined) {
-	    return this.config.state[this.config.current];
-	};
+	//if (this.step === 0) {
+	this.configUpdate(state,ttrg);
+	//     if (this.configRedraw) {
+	// 	this.redraw=true;
+	// 	this.configRedraw=false;
+	//     };
+	//     //this.updateScene(state);
+	// };
+	// this.lastTimeMsec= this.nowMsec;
+	// var speed=state.Events.getSpeed(state);
+	// if (this.reqId !== -1 && speed > 0) {
+	//     this.step=(this.step+1)%2;    
+	// } else {
+	//     this.step=(this.step+1)%100;    
+	// };
+
+
+	 if (this.reqId !== -1 && state.React !== undefined && state.React.Model !== undefined) {
+	     config=this.config;
+	 };
+	//console.log("Config:",ttrg,JSON.stringify(config));
+	return  config;
     };
     this.offzoom = function (delta) {
         //_zoomStart.y = _zoomStart.y + delta;
@@ -188,7 +383,7 @@ function Model() {
 	//this.play();
     };
     this.pushUrl  = function (state) {
-	this.pushUrl();
+	//this.pushUrl();
     };
     this.toggleConstellations  = function (state) {
 	this.consTime=new Date().getTime();
@@ -256,7 +451,7 @@ function Model() {
     };
     this.launch= function (state,lat, lon, dtg, hrs, label, target, fov, dir, con, speed) {
 	if (hrs===undefined) {hrs=1.0;};
-	if (speed===undefined) {speed=this.speed;}
+	if (speed!==undefined) {state.Events.setSpeed(state,speed);}
 	console.log("*** launching model:",lat, lon, dtg, hrs, label, target, fov, dir, con, speed);
 	lat=(lat || 51.5);
 	lon=(lon || 0.0);
@@ -285,36 +480,26 @@ function Model() {
 		dir=undefined;
 	    }
 	}
-	var newRequest=this.requests.current + 1;
-	this.requests.state[newRequest]={ location : {latitude : lat,
-					   longitude : lon,
-					   height : 0.0},
-			       play : {  } ,
-			       events : [],
-			       current : 0
-			     };
+	var events=[];
 	for ( tt = 0; tt < dtgs.length; tt++) {
-	    this.requests.state[newRequest]["events"].push({reqId : tt+1,
-						 label: label,
-						 target : target,
-						 dir : dir,
-						 fov : fov,
-						 con : con,
-						 dtg : dtgs[tt] 
-						});
+	    events.push({reqId : tt+1,
+			 label: label,
+			 target : target,
+			 dir : dir,
+			 fov : fov,
+			 con : con,
+			 dtg : dtgs[tt] 
+			});
 	};
-	if (speed !== undefined) {
-	    this.requests.state[newRequest]["play"]["event"] = 0;
-	    this.requests.state[newRequest]["play"]["speed"] = speed;
-	    this.requests.state[newRequest]["play"]["hrs"] = hrs;
-	    this.requests.state[newRequest]["play"]["m0"] = m0;
-	    
-	    console.log("New request:",this.requests.state[newRequest]);
-
-	} else {
-	    this.requests.state[newRequest]["play"]["event"] = 0;
-	};
-	this.requests.current=newRequest;
+	var newreq={ location : {latitude : lat,
+				 longitude : lon,
+				 height : 0.0},
+		     event : 0 ,
+		     events : events,
+		     current : 0
+		   };
+	this.requests.state.push(newreq);
+	this.requests.current=this.requests.state.length-1;
     };
     this.controlsUpdate = function (state) {
     };
@@ -387,7 +572,7 @@ function Model() {
     this.setInfo = function (state,dtg,lat,lon) {
 	//var info=document.getElementById("info");
 	//info.innerHTML = dtg+" lat:"+parseFloat(lat).toFixed(2)+" lon:"+parseFloat(lon).toFixed(2);
-	console.log(dtg+" lat:"+parseFloat(lat).toFixed(2)+" lon:"+parseFloat(lon).toFixed(2));
+	//console.log(dtg+" lat:"+parseFloat(lat).toFixed(2)+" lon:"+parseFloat(lon).toFixed(2));
     };
     this.processState = function (state,result,reqId,req) {
 	//console.log("Received request '",reqId,"'");
@@ -438,8 +623,8 @@ function Model() {
 		req["initial"][name]["rotation"]={};
 		req["initial"][name]["rotation"]["ra"]=+bod.getAttribute("ra");
 		req["initial"][name]["rotation"]["dec"]=+bod.getAttribute("dec");
-		req["initial"][name]["rotation"]["w"]=+bod.getAttribute("w")*Math.PI/180.0;
-		req["initial"][name]["rotation"]["dwdt"]=+bod.getAttribute("dwdt")*Math.PI/180.0;
+		req["initial"][name]["rotation"]["w"]=+bod.getAttribute("w")*this.deg2rad;
+		req["initial"][name]["rotation"]["dwdt"]=+bod.getAttribute("dwdt")*this.deg2rad;
 		req["initial"][name]["main"]=bod.getAttribute("main");
 		req["initial"][name]["xmu"]=+bod.getAttribute("xmu");
 	    }
@@ -456,6 +641,7 @@ function Model() {
 		if (dtg !== dtg_) { // check if dtg in reply matches dtg in request
 		    console.log("Date mismatch: ",dtg," !== ",dtg_);
 		} else {
+		    req["events"][tt]["epoch"]=(new Date(dtg_)).getTime();// get epoch
 		    var jd2000=tim.getAttribute("jd2000");
 		    var obs=tim.getElementsByTagName("observer")[0];
 		    var obsi=obs.getElementsByTagName("i")[0];
@@ -510,35 +696,37 @@ function Model() {
 			req["events"][tt]["state"][name]["name"]=name;
 		    };
 		    // add analytical orbits for satellites...
-		    this.satellites.forEach( (sat,ind) => {
-			let name=sat.name;
-			let orbit=sat.orbit;
-			let rotation=sat.rotation;
-			let around=orbit.around;
-			var mu=0.01720209895;
-			if (around === undefined) { around="sun";};
-			req["events"][tt]["state"][name]={"position":new Vector3(),"rotation":new Vector3()};
-			let trg=req["events"][tt]["state"][name];
-			let ref=req["events"][tt]["state"][around];
-			if (orbit.x !== undefined && orbit.y !== undefined && orbit.z !== undefined) {
-			    trg["position"].x=orbit.x;
-			    trg["position"].y=orbit.y;
-			    trg["position"].z=orbit.z;
-			    trg["position"].vx=0.0;
-			    trg["position"].vy=0.0;
-			    trg["position"].vz=0.0;
-			} else { // orbital elements
-			    // get mean motion
-			    let mu = this.MU[name];
-			    orbit.n=state.Orbit.getMeanMotion(orbit.a,mu);
-			    orbit.m = orbit.m0 + jd2000 * orbit.n;
-			    state.Orbit.anomalies2elements(orbit); // get v and c
-			    state.Orbit.elements2state(trg["position"],orbit,ref["position"],mu);
-			}
-			trg["rotation"]["ra"]=+rotation.ra;
-			trg["rotation"]["dec"]=+rotation.dec
-			trg["rotation"]["w"]=+rotation.w0+rotation.dwdt*jd2000;
-			trg.name=name;
+		    this.orbits.forEach( (sat,ind) => {
+			if (req["events"][tt]["state"][sat.name]===undefined) { // no orbit yet
+			    var around=sat.orbit.around;
+			    if (around === undefined) { around="sun";};
+			    let ref=req["events"][tt]["state"][around];
+			    let mu = this.MU[around];
+			    let reqstate=req["events"][tt]["state"];
+			    reqstate[sat.name]={"position":new Vector3(),"rotation":new Vector3()};
+			    let trg=reqstate[sat.name];
+			    let orbit=sat.orbit;
+			    let rotation=sat.rotation;
+			    if (sat.orbit.x !== undefined && sat.orbit.y !== undefined && sat.orbit.z !== undefined) {
+				trg["position"].x=sat.orbit.x + ref.position.x;
+				trg["position"].y=sat.orbit.y + ref.position.y;
+				trg["position"].z=sat.orbit.z + ref.position.z;
+				trg["position"].vx=0.0;
+				trg["position"].vy=0.0;
+				trg["position"].vz=0.0;
+			    } else if (trg !== undefined && ref !== undefined){ // sat.orbital elements
+				// get mean motion
+				sat.orbit.n=state.Orbit.getMeanMotion(sat.orbit.a,mu);
+				sat.orbit.m = sat.orbit.m0 + jd2000 * sat.orbit.n;
+				state.Orbit.anomalies2elements(sat.orbit); // get v and c
+				state.Orbit.elements2state(trg["position"],sat.orbit,ref["position"],mu);
+				//console.log("Orbit:",sat.name,around,sat,jd2000,trg.position);
+			    }
+			    trg["rotation"]["ra"]=+rotation.ra;
+			    trg["rotation"]["dec"]=+rotation.dec
+			    trg["rotation"]["w"]=+rotation.w0+rotation.dwdt*jd2000;
+			    trg.name=sat.name;
+			};
 		    });
 		}
 	    }
@@ -550,255 +738,228 @@ function Model() {
 	}
 	//console.log("Requests:",JSON.stringify(this.requests));
     };
-    this.pushUrl = function (state) {
-	var reqId=this.requests.current;
-	var req = this.requests.state[reqId]
-	if ( req.elements) { // we have a target
-	    var reqLocation=this.requests.state[reqId]["location"];
-	    if (reqLocation !== undefined && this.config.state[this.config.current] !== undefined) {
-		var lat=reqLocation.latitude;
-		var lon=reqLocation.longitude;
-		var dtg=this.config.state[this.config.current].dtg;
-		var dir=this.camera.getDir();
-		var fov=this.camera.getFovX();
-		var con=this.consReq;
-		var speed=(this.config.play.speed||0);
-		var hrs=(this.config.play.hrs||1);
-		//var lab="";
-		var url="sky.html";
-		var first=true;
-		if (dir !== undefined) {
-		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-		    url=url + "dir=" + parseFloat(dir.x).toFixed(5)
-			+","+parseFloat(dir.y).toFixed(5)
-			+","+parseFloat(dir.z).toFixed(5);
-		}
-		if (fov !== undefined) {
-		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-		    url=url + "fov=" + parseFloat(fov).toFixed(4);
-		}
-		if (lat !== undefined) {
-		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-		    url=url + "lat=" + parseFloat(+lat).toFixed(3);
-		}
-		if (lon !== undefined) {
-		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-		    url=url + "lon=" + parseFloat(+lon).toFixed(3);
-		}
-		if (dtg !== undefined) {
-		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-		    url=url + "dtg=" + dtg;
-		}
-		if (hrs !== undefined) {
-		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-		    url=url + "hrs=" + hrs;
-		}
-		if (speed !== undefined) {
-		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-		    url=url + "speed=" + speed;
-		}
-		if (con !== undefined) {
-		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-		    url=url + "con=" + con;
-		}
-		console.log("Setting URL to:",url);
-		window.history.replaceState("", "js", url);
-	    }
-	}
-    };
-    this.play = function (state) {
-	if (this.config.play !== undefined) {
-	    var tnow=(new Date()).getTime();
-	    if (this.config.play.speed === undefined) { // start simulation first time
-		this.config.play.speed = 1.0;
-		this.config.play.e0 = tnow;
-		this.config.play.m0 = (new Date(this.config.state[this.config.current].epoch)).getTime();
-	    } else if (this.config.play.halt === undefined){ // stop running simulation, store time
-		this.config.play.m0 = this.config.play.m0 + (tnow-this.config.play.e0)*this.config.play.speed;
-		this.config.play.e0 = tnow;
-		this.config.play.halt = this.config.play.speed;
-		this.config.play.speed = 0.0;
-	    } else  { // start stopped simulation
-		this.config.play.e0 = tnow;
-		this.config.play.speed = this.config.play.halt;
-		this.config.play.halt=undefined;
-	    }
-	}
-    };
+    this.standardOrbit=function(state,sat) {
+	var around=sat.orbit.around;
+	if (around === undefined) { around="sun";};
+	state.Orbit.standardOrbit(sat.orbit,sat.cydrift,this.MU[around]);
+    }
+    // this.pushUrl = function (state) {
+    // 	var reqId=this.requests.current;
+    // 	var req = this.requests.state[reqId]
+    // 	if ( req.processed) { // we have a target
+    // 	    var reqLocation=this.requests.state[reqId]["location"];
+    // 	    if (reqLocation !== undefined && this.config !== undefined) { //
+    // 		var lat=reqLocation.latitude;
+    // 		var lon=reqLocation.longitude;
+    // 		var dtg=this.config.dtg; //
+    // 		var dir=this.camera.getDir();
+    // 		var fov=this.camera.getFovX();
+    // 		var con=this.consReq;
+    // 		var speed=state.Events.getSpeed(state);
+    // 		var hrs=(this.config.hrs||1);
+    // 		//var lab="";
+    // 		var url="sky.html";
+    // 		var first=true;
+    // 		if (dir !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "dir=" + parseFloat(dir.x).toFixed(5)
+    // 			+","+parseFloat(dir.y).toFixed(5)
+    // 			+","+parseFloat(dir.z).toFixed(5);
+    // 		}
+    // 		if (fov !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "fov=" + parseFloat(fov).toFixed(4);
+    // 		}
+    // 		if (lat !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "lat=" + parseFloat(+lat).toFixed(3);
+    // 		}
+    // 		if (lon !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "lon=" + parseFloat(+lon).toFixed(3);
+    // 		}
+    // 		if (dtg !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "dtg=" + dtg;
+    // 		}
+    // 		if (hrs !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "hrs=" + hrs;
+    // 		}
+    // 		if (speed !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "speed=" + speed;
+    // 		}
+    // 		if (con !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "con=" + con;
+    // 		}
+    // 		console.log("Setting URL to:",url);
+    // 		window.history.replaceState("", "js", url);
+    // 	    }
+    // 	}
+    // };
     // check if we have a new request to process.
     this.processNewRequests = function (state) {
 	var ret=false;
 	var reqId=this.requests.current;
 	var req = this.requests.state[reqId]
-	if ( req.received & ! req.elements) { // we have a new target
-	    //console.log("Calculating orbital elements:",req);
-	    // calculate osculating orbital elements
-	    for ( var tt = 0; tt < req["events"].length; tt++) {
-		req["events"][tt]["epoch"]=(new Date(req["events"][tt]["dtg"])).getTime();// get epoch
-		if (req["events"][tt]["state"] !== undefined) {
-		    var reqState=req["events"][tt]["state"];
-		    req["events"][tt]["elements"]={};
-		    var elements=req["events"][tt]["elements"];
-		    for (var name in reqState) {
-			elements[name]={};
-			//var s = reqState[name].position;
-			//var e=elements[name];
-			console.log("Processnew:",name,req["initial"]);
-			// var main =  req["initial"][name]["main"];
-			// if (main !== "") { // body orbits another body...
-			//     //var r, xmu;
-			//     //r=reqState[main].position;
-			//     //xmu=req["initial"][main]["xmu"];
-			//     //this.state2elements(s,e,r,xmu);
-			//     //this.elements2anomalies(e);
-			// }
-		    };
-		};
-		//document.getElementById("log").innerHTML="orbit loop end";
-	    };
-	    req.elements = true;
+	if ( req.received && ! req.processed) { // we have a new target
+	    // //console.log("Calculating orbital elements:",req);
+	    // // calculate osculating orbital elements
+	    // for ( var tt = 0; tt < req["events"].length; tt++) {
+	    // 	req["events"][tt]["epoch"]=(new Date(req["events"][tt]["dtg"])).getTime();// get epoch
+	    // 	if (req["events"][tt]["state"] !== undefined) {
+	    // 	    var reqState=req["events"][tt]["state"];
+	    // 	    req["events"][tt]["elements"]={};
+	    // 	    var elements=req["events"][tt]["elements"];
+	    // 	    for (var name in reqState) {
+	    // 		elements[name]={};
+	    // 		//var s = reqState[name].position;
+	    // 		//var e=elements[name];
+	    // 		//console.log("Processnew:",name,req["initial"]);
+	    // 		// var main =  req["initial"][name]["main"];
+	    // 		// if (main !== "") { // body orbits another body...
+	    // 		//     //var r, xmu;
+	    // 		//     //r=reqState[main].position;
+	    // 		//     //xmu=req["initial"][main]["xmu"];
+	    // 		//     //this.state2elements(s,e,r,xmu);
+	    // 		//     //this.elements2anomalies(e);
+	    // 		// }
+	    // 	    };
+	    // 	};
+	    // 	//document.getElementById("log").innerHTML="orbit loop end";
+	    // };
+	    req.processed = true;
 	    //console.log("Calculated orbital elements:",req);
 	    ret=true;
 	}
 	return ret;
     };
     // update 3D config of the solar system...
-    this.configUpdate = function (state) {
+    this.configUpdate = function (state,ttrg) {
 	var ret = false;
 	var reqId = this.requests.current;
 	var req = this.requests.state[reqId]
-	if (req.elements & this.config.reqId !== reqId ) { // process new request
+	if (req.processed & this.config.reqId !== reqId ) { // process new request
 	    //console.log("Constructing config from orbital elements.");
 	    // get times
 	    this.config.epochs = [];
 	    for ( var tt = 0; tt < req["events"].length; tt++) {
 		this.config.epochs[tt]=req["events"][tt]["epoch"];
 	    };
-	    this.config.play={};
-	    if (req.play.event !== undefined) {
-		this.config.play.event=req.play.event;
-	    };
-	    if (req.play.speed !== undefined) {
-		var tnow=(new Date()).getTime();
-		this.config.play.speed=req.play.speed;
-		if (req.play.m0 !== undefined) {
-		    this.config.play.m0=req.play.m0;
-		} else {
-		    this.config.play.m0=tnow;
-		};
-		this.config.play.e0=tnow;
-		if (this.config.play.speed > 0 ) {
-		    this.config.play.halt=undefined;
-		} else {
-		    this.config.play.halt=1.0;
-		};
-	    }
-	    this.config.young=(this.config.current+1)%2;
-	    if (this.getState(state,req,this.config.state[this.config.young])) {
-		this.config.old=this.config.current;
-		this.config.current=this.config.young;
-		if (this.config.state[this.config.old]["bodies"] !== undefined) {
+	    if (req.event !== undefined) { this.config.event=req.event;};
+	    //this.config.young=(this.config.current+1)%2;
+	    if (this.getState(state,req,this.config,ttrg)) { //
+		//this.config.old=this.config.current;
+		//this.config.current=this.config.young;
+		//if (this.config["bodies"] !== undefined) {
 		    // "tween" config from oldState to newState
-		};
+		//};
 		//  point camera
-		if (req.play.event !== undefined) {
-		    this.config.state[this.config.current].dtg = new Date(
-			this.requests.state[reqId]["events"][req.play.event]["dtg"]).toISOString();
+		if (req.event !== undefined) {
+		    //this.config.dtg = new Date(ttrg).toISOString();
+		    console.log("Dtg:",ttrg,this.config.dtg);
 		    this.config.newTarget=true;
 		}
-		// delete old requests
-		for (var key in this.requests.state) {
-		    if (this.requests.state.hasOwnProperty(key)) {
-			if (key !== this.config.old &&this.requests.state[key]["events"] !== undefined) {
-			    // delete this.requests.state[key];			    
-			}
-		    }
-		}
-		this.reqId=reqId;
+		// // delete old requests
+		// for (var ii=0; ii < this.requests.state.length; ii++) {
+		//     var req=this.requests.state[ii];
+		//     if (req["events"] !== undefined) {
+		// 	// delete this.requests.state[key];			    
+		//     }
+		// }
+ 		this.config.reqId=reqId;
 	    };
-	    req.orbit = false;
-            this.setInfo(state,this.config.state[this.config.current].dtg,
-			 this.config.state[this.config.current].lat,
-			 this.config.state[this.config.current].lon);
+	    //req.orbit = false;
+            // this.setInfo(state,this.config.dtg,
+	    // 		 this.config.lat,
+	    // 		 this.config.lon);
 	    this.configRedraw=true;
-	} else if (req.elements & this.config.play.speed!==undefined) { // time lapse...
-	    //console.log("Time lapse.",config.play.speed);
-	    this.config.young=(this.config.current+1)%2;
-	    if (this.getState(state,req, this.config.state[this.config.young])) {
-		this.setInfo(state,this.config.state[this.config.current].dtg,
-			     this.config.state[this.config.current].lat,
-			     this.config.state[this.config.current].lon);
-		this.config.old=this.config.current;
-		this.config.current=this.config.young;
+	} else if (req.processed) { // time lapse...
+	    //console.log("Time lapse.");
+	    // this.config.young=(this.config.current+1)%2;
+	    if (this.getState(state,req, this.config,ttrg)) {
+		// this.setInfo(state,this.config.dtg,
+		// 	     this.config.lat,
+		// 	     this.config.lon);
+		//this.config.old=this.config.current;
+		//this.config.current=this.config.young;
 		this.configRedraw=true;
 	    }
 	    //    } else {
-	    //	console.log("Nothing to do:",req.elements,config.play.speed);
+	    //	console.log("Nothing to do:",req.processed);
 	}
+	//console.log("Config:",ttrg,ret);
 	return ret;
     };
-    this.getState = function (state,req, newconfig){
-	var ret=true;
-	var tnow=(new Date()).getTime();
-	if (this.config.play.speed !== undefined) { // propagate state to right epoch using elliptical orbits
-	    var ttrg = (tnow-this.config.play.e0) * this.config.play.speed + this.config.play.m0;
-	    newconfig.lat=req.location.latitude;
-	    newconfig.lon=req.location.longitude;
-	    this.config.play.prev=-1;
-	    this.config.play.next=-1;
-	    this.config.play.prevEpoch=0;
-	    this.config.play.nextEpoch=0;
-	    // find correct epoch
-	    for ( var tt = 0; tt < req["events"].length; tt++) {
-		if (req["events"][tt]["epoch"] <= ttrg &  
-		    (this.config.play.prev < 0 || req["events"][tt]["epoch"] >=  this.config.play.prevEpoch)) {
-		    this.config.play.prev=tt;
-		    this.config.play.prevEpoch=req["events"][this.config.play.prev]["epoch"];
-		};
-		if (req["events"][tt]["epoch"] >= ttrg &  
-		    (this.config.play.next < 0 || req["events"][tt]["epoch"] <=  this.config.play.nextEpoch)) {
-		    this.config.play.next=tt;
-		    this.config.play.nextEpoch=req["events"][this.config.play.next]["epoch"];
-		};
+    this.getState = function (state,req,config,ttrg){
+	var ret=false;
+	if (! req.processed) {return ret;};
+	config.lat=req.location.latitude;
+	config.lon=req.location.longitude;
+	let first=-1;
+	let last=-1;
+	var firstEpoch=0;
+	var lastEpoch=0;
+	var prev=-1;
+	var next=-1;
+	var prevEpoch=0;
+	var nextEpoch=0;
+	// find correct epoch
+	for ( var tt = 0; tt < req["events"].length; tt++) {
+	    if ((first < 0 || req["events"][tt]["epoch"] >=  firstEpoch)) {
+		first=tt;
 	    };
-	    if (this.config.play.prev !== -1 & this.config.play.next !== -1) { // success!
-		var dt = ttrg-this.config.play.prevEpoch;
-		var dt0 = this.config.play.nextEpoch - this.config.play.prevEpoch;
-		var f = dt/Math.max(1e-10,dt0);
-		this.interpolateBodies(state,req["events"][this.config.play.prev],
-				       req["events"][this.config.play.next],
-				       dt,f,newconfig.bodies);
-		this.interpolateObserver(state,req["events"][this.config.play.prev],
-					 req["events"][this.config.play.next],
-					 dt,f,newconfig.observer,newconfig.bodies);
-		newconfig.epoch = ttrg;
-		newconfig.dtg=new Date(newconfig.epoch).toISOString();
-	    } else if (this.config.play.prev !== -1 ) {  // found epoch before, but not after
-		this.getBodies(req["events"][this.config.play.prev],newconfig.bodies);
-		this.getObserver(req["events"][this.config.play.prev],newconfig.observer,newconfig.bodies);
-		newconfig.epoch = req["events"][this.config.play.prev].epoch;
-		newconfig.dtg=new Date(newconfig.epoch).toISOString();
-	    } else if (this.config.play.next !== -1) {  // found epoch after, but not before
-		this.getBodies(req["events"][this.config.play.next],newconfig.bodies);
-		this.getObserver(req["events"][this.config.play.next],newconfig.observer,newconfig.bodies);
-		newconfig.epoch = req["events"][this.config.play.next].epoch;
-		newconfig.dtg=new Date(newconfig.epoch).toISOString();
-	    } else {
-		//console.log("Times:",+ttrg,"|",+this.config.play.e0 ,"|",+this.config.play.speed, "|",+this.config.play.m0);
-		console.log("Unable to find interval:",+ttrg,req["events"]);
-		ret=false;
-	    }
-	    //console.log("Pos:",+ttrg,req["events"][0]," REQ:",this.config.play.prev,this.config.play.next," DTG:",newconfig.dtg,this.config.play.prev,this.config.play.next);
+	    if ((last < 0 || req["events"][tt]["epoch"] <=  lastEpoch)) {
+		last=tt;
+	    };
+	    if (req["events"][tt]["epoch"] <= ttrg &  
+		(prev < 0 || req["events"][tt]["epoch"] >=  prevEpoch)) {
+		prev=tt;
+		prevEpoch=req["events"][prev]["epoch"];
+	    };
+	    if (req["events"][tt]["epoch"] >= ttrg &  
+		(next < 0 || req["events"][tt]["epoch"] <=  nextEpoch)) {
+		next=tt;
+		nextEpoch=req["events"][next]["epoch"];
+	    };
+	};
+	if (prev !== -1 & next !== -1) { // success!
+	    var dt = ttrg-prevEpoch;
+	    var dt0 = nextEpoch - prevEpoch;
+	    var f = dt/Math.max(1e-10,dt0);
+	    ret=true;
+	} else if (prev !== -1 ) {  // found epoch before, but not after
+	    next=first;
+	    prev=first;
+	    f=0.0;
+	    ret=true;
+	} else if (next !== -1) {  // found epoch after, but not before
+	    next=last;
+	    prev=last;
+	    f=0.0;
+	    ret=true;
 	} else {
-	    //console.log("******************getState fixed: ",newConfig);
-	    this.getBodies(req["events"][this.config.play.event],newconfig.bodies);
-	    this.getObserver(req["events"][this.config.play.event],newconfig.observer,newconfig.bodies);
-	    newconfig.epoch = req["events"][this.config.play.event].epoch;
-	    newconfig.dtg=new Date(newconfig.epoch).toISOString();
-	    newconfig.lat=req.location.latitude;
-	    newconfig.lon=req.location.longitude;
+	    //console.log("Times:",+ttrg,"|",+e0 ,"|",+speed, "|",+m0);
+	    console.log("Unable to find interval:",+ttrg,prev,next,req["events"]);
+	    ret=false;
 	}
-	//console.log("******************getState: ",newConfig);
+	if (ret) {
+	    //console.log("F:",f,prev,next);
+	    this.interpolateBodies(state,req["events"][prev],
+				   req["events"][next],
+				   f,config.bodies);
+	    this.interpolateObserver(state,req["events"][prev],
+				     req["events"][next],
+				     f,config.observer,config.bodies);
+	    config.epoch = ttrg;
+	    config.dtg=new Date(config.epoch).toISOString();
+	    //console.log("Config:",JSON.stringify(config.observer));
+	    //console.log("Config match:",config.epoch,config.dtg,config);
+	}
+	//console.log("Pos:",+ttrg,req["events"][0]," REQ:",prev,next," DTG:",config.dtg,prev,next);
+	//console.log("******************getState: ",ttrg);//config
 	return ret;
     };
     this.getBodies = function (state,reqState,configBodies) {
@@ -822,14 +983,14 @@ function Model() {
 	    configBodies[name].name=name;
 	} 
     }
-    this.interpolateBodies = function (state,reqStatePrev,reqStateNext,dt,f,configBodies) {
+    this.interpolateBodies = function (state,reqStatePrev,reqStateNext,f,configBodies) {
 	for (var name in reqStatePrev["state"]) {
 	    var reqPrev = reqStatePrev["state"][name];
 	    var reqNext = reqStateNext["state"][name];
 	    if (configBodies[name] === undefined) {
 		configBodies[name]={position:new Vector3(),rotation:new Vector3()};
 	    };
-	    configBodies[name].position.interpolate(reqPrev.position,reqNext.position,f);
+	    configBodies[name].position.lerpVectors(reqPrev.position,reqNext.position,f);
 	    configBodies[name].position.vx =  this.intlin(reqPrev.position.vx,reqNext.position.vx,f);
 	    configBodies[name].position.vy =  this.intlin(reqPrev.position.vy,reqNext.position.vy,f);
 	    configBodies[name].position.vz =  this.intlin(reqPrev.position.vz,reqNext.position.vz,f);
@@ -860,23 +1021,24 @@ function Model() {
 	if (configObserver.k === undefined) configObserver.k=new Vector3(); 
 	if (configObserver.zenith === undefined) configObserver.zenith=new Vector3(); 
 	var reqObserver=reqState["observer"];
-	var reqOrigo=reqObserver.position.origo;
-	if (configBodies[reqOrigo] === undefined ) {
-	    configObserver.position.copy(reqObserver.position);
-	} else {
-	    configObserver.position.origo=reqOrigo;
-	    configObserver.position.copy(reqObserver.position).add(configBodies[reqOrigo].position);
-	}
-	configObserver.zenith.copy(reqObserver.zenith);
-	configObserver.zenith.normalize();
-	configObserver.i.copy(reqObserver.i);
-	configObserver.j.copy(reqObserver.j);
-	configObserver.k.copy(reqObserver.k);
-
+	if (reqObserver !== undefined) {
+	    var reqOrigo=reqObserver.position.origo;
+	    if (configBodies[reqOrigo] === undefined ) {
+		configObserver.position.copy(reqObserver.position);
+	    } else {
+		configObserver.position.origo=reqOrigo;
+		configObserver.position.copy(reqObserver.position).add(configBodies[reqOrigo].position);
+	    }
+	    configObserver.zenith.copy(reqObserver.zenith);
+	    configObserver.zenith.normalize();
+	    configObserver.i.copy(reqObserver.i);
+	    configObserver.j.copy(reqObserver.j);
+	    configObserver.k.copy(reqObserver.k);
+	};
 	//console.log("setting axis:", configObserver.i.x,configObserver.i.y,configObserver.i.z);
     };
     // get observer position and EF-coordinate system...
-    this.interpolateObserver = function (state,reqStatePrev,reqStateNext,dt,f,configObserver,configBodies) { 
+    this.interpolateObserver = function (state,reqStatePrev,reqStateNext,f,configObserver,configBodies) { 
 	if (configObserver.position === undefined) configObserver.position=new Vector3(); 
 	if (configObserver.i === undefined) configObserver.i=new Vector3(); 
 	if (configObserver.j === undefined) configObserver.j=new Vector3(); 
@@ -887,37 +1049,40 @@ function Model() {
 	if (reqPrev === undefined || reqNext === undefined) {return;}
 	var reqOrigo=reqPrev.position.origo;
 	if (configBodies[reqOrigo] === undefined ) {
-	    configObserver.position.interpolate(reqPrev.position, reqNext.position, f);
+	    configObserver.position.slerpVectors(reqPrev.position, reqNext.position, f);
 	} else {
 	    configObserver.position.origo=reqOrigo;
-	    configObserver.position.interpolate(reqPrev.position, reqNext.position, f);
+	    configObserver.position.slerpVectors(reqPrev.position, reqNext.position, f);
 	    configObserver.position.add(configBodies[reqOrigo].position);
 	}
-	configObserver.zenith.interpolate(reqPrev.zenith,reqNext.zenith,f);
+	 configObserver.zenith.slerpVectors(reqPrev.zenith,reqNext.zenith,f);
+
 	configObserver.zenith.normalize();
-	configObserver.i.interpolate(reqPrev.i,reqNext.i,f);
-	configObserver.j.interpolate(reqPrev.j,reqNext.j,f);
-	configObserver.k.interpolate(reqPrev.k,reqNext.k,f);
+	 configObserver.i.slerpVectors(reqPrev.i,reqNext.i,f);
+	 configObserver.j.slerpVectors(reqPrev.j,reqNext.j,f);
+	 configObserver.k.slerpVectors(reqPrev.k,reqNext.k,f);
+
+	// console.log("Zenith:",JSON.stringify(configObserver)," prev:",JSON.stringify(reqPrev)," next:",JSON.stringify(reqNext));
 
 	//console.log("setting axis:", configObserver.i.x,configObserver.i.y,configObserver.i.z);
     };
     this.interpolateBodies2 = function(req,dt,f,configBodies) {
 	// interpolate body positions between times
 	//console.log(">>> interpolating body positions.")
-	var reqStatePrev = req["events"][req.play.prev]["state"];
-	var reqStateNext = req["events"][req.play.next]["state"];
+	var reqStatePrev = req["events"][req.prev]["state"];
+	var reqStateNext = req["events"][req.next]["state"];
 	if (reqStatePrev === undefined || reqStateNext === undefined) {
 	    console.log("THIS SHOULD NEVER HAPPEN!.");
 	    return;
 	};
-	for (var name in req["events"][req.play.next]["state"]) {
+	for (var name in req["events"][req.next]["state"]) {
 	    //var name_ = reqStatePrev[name].name;
 	    configBodies[name]={position:new Vector3(),
 			       rotation:new Vector3()};
 	    var main =  req["initial"][name]["main"];
 	    if (main !== "") { // use orbit to interpolate position
-		var ep=req["events"][req.play.prev]["elements"][name];
-		var en=req["events"][req.play.next]["elements"][name];
+		var ep=req["events"][req.prev]["elements"][name];
+		var en=req["events"][req.next]["elements"][name];
 		// interpolate elements
 		var el = {};
 		el.a = this.intlin(ep.a, en.a, f);
@@ -964,8 +1129,8 @@ function Model() {
 	if (configObserver.j === undefined) configObserver.j=new Vector3(); 
 	if (configObserver.k === undefined) configObserver.k=new Vector3(); 
 	if (configObserver.zenith === undefined) configObserver.zenith=new Vector3(); 
-	var reqObsPrev=req["events"][req.play.prev]["observer"];
-	var reqObsNext=req["events"][req.play.next]["observer"];
+	var reqObsPrev=req["events"][req.prev]["observer"];
+	var reqObsNext=req["events"][req.next]["observer"];
 	var origo=reqObsPrev.position.origo;
 	if (origo === undefined) {origo="earth";};
 	//console.log("Origo is now: ",origo);
@@ -1030,47 +1195,6 @@ function Model() {
 	pos.set(reqObsPrev.k.x,reqObsPrev.k.y,reqObsPrev.k.z);
 	pos.applyQuaternion(q);
 	configObserver.k.copy(pos);
-    };
-    this.modelUpdate = function (state) {
-	var ret = false;
-	var reqId=this.requests.current;
-	var req = this.requests.state[reqId]
-	if (req.elements & this.model.reqId !== reqId ) { // process new request
-	    console.log("Constructing model from orbital elements.");
-	    this.model.reqId=reqId;
-	    // get times
-	    this.model.epochs = [];
-	    for ( var tt = 0; tt < req["events"].length; tt++) {
-		this.model.epochs[tt]=req["events"][tt]["epoch"];
-	    };
-	    this.model.play={};
-	    if (req.play.event !== undefined) {this.model.play.event=req.play.event;}
-	    if (req.play.speed !== undefined) {this.model.play.speed=req.play.speed;}
-	    if (req.play.e0 !== undefined) {this.model.play.e0=req.play.e0;}
-	    if (req.play.m0 !== undefined) {this.model.play.m0=req.play.m0;}
-	    this.model.old=this.model.current;
-	    this.model.current=(this.model.current+1)%2;
-	    state.Orbit.getState(req,this.model[this.model.current]);
-	    if (this.model[this.model.old]["bodies"] !== undefined) {
-		// "tween" model from oldState to newState
-	    }
-	    // delete old requests
-	    for (var key in this.requests) {
-		if (this.requests.hasOwnProperty(key)) {
-		    if (key !== this.model.old & this.requests.state[key]["events"] !== undefined) {
-		    }
-		}
-	    }
-	    req.orbit = false;
-	    this.modelRedraw=true;
-	} else if (req.elements&this.model.play.event === undefined&this.model.play.speed > 0.0) { // time lapse...
-	    console.log("Re-calculating orbit state :",this.model.play.speed);
-	    this.model.old=this.model.current;
-	    this.model.current=(this.model.current+1)%2;
-	    state.Orbit.getState(req, this.model[this.model.current]);
-	    this.modelRedraw=true;
-	}
-	return ret;
     };
     this.request=function(state) {
 	this.wipe = function () {var obj=Object.keys(this);for (var ii=0; ii<obj.length;ii++) 

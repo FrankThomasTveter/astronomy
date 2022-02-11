@@ -10,8 +10,9 @@ function Orbit(){
     // useful constants...
     this.DEG_TO_RAD = Math.PI/180;
     this.RAD_TO_DEG = 180/Math.PI;
-    this.AU = 149597870;
+    this.twopi  = 2.0*Math.PI;
     this.CIRCLE = 2 * Math.PI;
+    this.AU = 149597870;
     this.KM = 1000;
     this.DEG_TO_RAD = Math.PI/180;
     this.RAD_TO_DEG = 180/Math.PI;
@@ -303,19 +304,41 @@ function Orbit(){
 	var norb = Math.floor(0.5+(t -diff)/(2.0*Math.PI));
 	return ( p + (diff + norb*2.0*Math.PI)*f ); 
     };
-    // xmu = G * Mass
-    this.xmu = { sun     : 132712440018.0,
-		 Mercury :        22032.0,
-		 Venus   :       324859.0,
-		 Earth   :       398601.3,
-		 Mars    :        42828.0,
-		 Ceres   :           63.0,
-		 Jupiter :    126686534.0,
-		 Saturn  :     37931187.0,
-		 Uranus  :      5793947.0,
-		 Neptune :      6836529.0,
-		 Pluto   :         1001.0 
-	       };
+    this.standardOrbit=function(orbit,cydrift,xmu){
+	// canonical parameters:
+	// orbit.a = semi-major axis
+	// orbit.e = eccentricity
+	// orbit.i = inclination
+	// orbit.o = ascending node  ( =0 if i=0)   between 0 and twopi.
+	// orbit.w = argument of perihelion ( =0 if e=0) between 0 and twopi.
+	// orbit.v = true anomaly,     between 0 and twopi.
+	// auxiliary parameters:
+	// orbit.n = mean motion,      rad/seconds
+	// orbit.c = eccentric anomaly,     between 0 and twopi.
+	// orbit.m0 = mean anomaly,     between 0 and twopi.
+	// orbit.l = mean longitude
+	// orbit.lp = longitude of perihelion (sum of argument of perihelion and longitude of ascending node)
+	//
+	if (orbit.lp === undefined && orbit.w !== undefined && orbit.o !== undefined) {
+	    orbit.lp = orbit.w + orbit.o;
+	    if (orbit.lp > this.twopi) {orbit.lp =orbit.lp-this.twopi;};
+	};
+	if (orbit.w === undefined && orbit.lp !== undefined && orbit.o !== undefined) {
+	    orbit.w = orbit.lp - orbit.o;
+	    if (orbit.w < 0) {orbit.w =orbit.w+this.twopi;};
+	};
+	if (orbit.o === undefined && orbit.w !== undefined && orbit.lp !== undefined) {
+	    orbit.o = orbit.lp - orbit.w;
+	    if (orbit.o < 0) {orbit.o =orbit.o+this.twopi;};
+	};
+	if (orbit.m0 === undefined && orbit.l !== undefined && orbit.w !== undefined ) {
+	    orbit.m0 = orbit.l - orbit.w;
+	    if (orbit.m < 0) {orbit.m =orbit.m+this.twopi;};
+	}
+	if (orbit.n === undefined) {
+	    orbit.n=(Math.sqrt(xmu/orbit.a))/orbit.a; // mean angular motion
+	};
+    };
     this.state2elements = function( s, e, r, xmu) {
 	//
 	//   Calculates the classical orbital elements from a state.
@@ -443,7 +466,7 @@ function Orbit(){
             if (e.v < 0.0) {e.v = e.v + 2.0*Math.PI;}
 	}
     };
-    this.elements2state = function ( s, e, r, xmu ) {
+    this.elements2state = function ( s, e, ref, xmu ) {
 	//
 	//  Calculates state from classical orbital elements.
 	//
@@ -461,7 +484,7 @@ function Orbit(){
 	var f = xmu/Math.sqrt(p);
 	var cv = Math.cos(e.v);
 	var ecv = 1.0 + e.e*cv;
-	if (r===undefined) {r = p/ecv;};
+	var r = p/ecv;
 	var u = e.w + e.v;
 	var cu = Math.cos(u);
 	var su = Math.sin(u);
@@ -478,26 +501,26 @@ function Orbit(){
 	var fz = su*si;
 	var vr = f*e.e*Math.sin(e.v);
 	var vu = f*ecv;
-	s.x = r*fx + r.x;
-	s.y = r*fy + r.y;
-	s.z = r*fz + r.z;
-	s.vx = vr*fx - vu*(cosu + socu*ci) + r.vx;
-	s.vy = vr*fy - vu*(sosu - cocu*ci) + r.vy;
-	s.vz = vr*fz + vu*cu*si + r.vz;
-	if (r === undefined) {
-	    //s.x = s.x;
+	s.x = r*fx + ref.x;
+	s.y = r*fy + ref.y;
+	s.z = r*fz + ref.z;
+	s.vx = vr*fx - vu*(cosu + socu*ci) + ref.vx;
+	s.vy = vr*fy - vu*(sosu - cocu*ci) + ref.vy;
+	s.vz = vr*fz + vu*cu*si + ref.vz;
+	if (ref === undefined) {
+	    s.x = r*fx;
 	    s.y = r*fy;
 	    s.z = r*fz;
 	    s.vx = vr*fx - vu*(cosu + socu*ci);
 	    s.vy = vr*fy - vu*(sosu - cocu*ci);
 	    s.vz = vr*fz + vu*cu*si;
 	} else {
-	    s.x = s.x + r.x;
-	    s.y = r*fy + r.y;
-	    s.z = r*fz + r.z;
-	    s.vx = vr*fx - vu*(cosu + socu*ci) + r.vx;
-	    s.vy = vr*fy - vu*(sosu - cocu*ci) + r.vy;
-	    s.vz = vr*fz + vu*cu*si + r.vz;
+	    s.x = r*fx + ref.x;
+	    s.y = r*fy + ref.y;
+	    s.z = r*fz + ref.z;
+	    s.vx = vr*fx - vu*(cosu + socu*ci) + ref.vx;
+	    s.vy = vr*fy - vu*(sosu - cocu*ci) + ref.vy;
+	    s.vz = vr*fz + vu*cu*si + ref.vz;
 	}
     };
     this.maxIterationsForEccentricAnomaly = 10;

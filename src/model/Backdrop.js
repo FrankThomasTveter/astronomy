@@ -163,6 +163,10 @@ function Backdrop() {
 	this.scenes["stars"]=     {scene: this.createScene("stars",mainCamera),        show:true};
 
     }
+    this.updateRaycaster=function(state,raycaster,mouse,mainCamera,objects) {
+	if (objects.length !== 0) {};
+	return objects;
+    };
     this.updateScenes = function(state,mainCamera,observer) {
 	this.updateScene(state,mainCamera,observer,"navigation");
 	this.updateScene(state,mainCamera,observer,"stars");
@@ -413,6 +417,7 @@ function Backdrop() {
 		//border:true,
 	    }));
 	};
+	group.renderOrder=1;
 	return group;
     }
     this.createCircleMesh=function(radius,look,offset,color,width) {

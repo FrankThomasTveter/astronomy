@@ -76,7 +76,7 @@ function HdrRow(props) {
 function DataRow(props) {
     const {state, classes, item, index, target} = props;
     var key='dataRow'+index;
-    var onTime=function() {state.Events.setTargetTime(state,item[0]);};
+    var onTime=function() {state.Events.setModelMoment(state,item[0]);};
     var onRemove=function() {state.Events.removeItem(state,item,index);};
     var bodyFocus=function() {state.Events.bodyFocus(state,item[2]);};
     //console.log("Item:",item,key);
@@ -125,7 +125,7 @@ class EventsTable extends Component {
 	//var mapFunction= (val,index)=>renderline(classes,state,val,index);
 	//{data.map(mapFunction)}
 	var data=state.Events.getData(state);
-	var target=state.Events.getTargetTime(state);
+	var target=state.Events.getModelMoment(state);
 	//console.log("Data:",data) ;
         return (
 	    <div className={classes.divTable} key={'table'}>
