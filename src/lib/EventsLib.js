@@ -434,6 +434,17 @@ function Events() {
     this.bodyFocus = function(state,id) {
 	// set focus on the body i.e. sun, moon
 	console.log("Focus on id:",id);
+	var dtg=id[1];
+	var hrs;
+	var lat=this.lat;
+	var lon=this.lon;
+	var label = "Now";
+	var target = this.getTarget(id[3]);
+	var fov = this.getFov(this.targetId);
+	var dir;   // direction
+	var con=0; // show contellations?
+	var speed; // speed of model, undefined => no speed
+	state.Model.launch(state,lat,lon,dtg,hrs,label,target,fov,dir,con,speed);
     };
     this.setModelClock = function(state,now) {
 	if (state.Events.isPlaying(state)) {
@@ -451,6 +462,13 @@ function Events() {
 	} else {
 	    return state.Events.modelTime;
 	}
+    };
+    this.setModelTime = function(state,epoch) {
+	if (epoch!==undefined) {
+	    state.Events.changed=true;
+	    state.Events.modelTime=epoch;
+	    state.Events.refTime=new moment().valueOf();
+	};
     };
     this.getModelMoment = function(state) {
 	return new moment(this.getModelTime(state));

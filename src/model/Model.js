@@ -149,7 +149,7 @@ export default class Model {
 	this.updateConfig(this.state,config,time);
 
 	//check if we have a new config...
-	//this.updateTarget(this.state,config,time);
+	this.updateTarget(this.state,config,time);
 
 	// update main camera position (to observer)...
 	this.updateMainCamera(this.state,time);
@@ -190,7 +190,9 @@ export default class Model {
 	this.Backdrop.updateScenes(state,camera,observer,time);
 	this.Bodies.updateScenes(state,camera,observer,time);
     };
-    
+    setNewTarget(state,x,y,z) {
+	this.newTarget=new THREE.Vector3(x,y,z);
+    };
     updateMainCamera(state) {
 	//console.log("Zenith:",this.Bodies.config.observer.zenith);
 	let pos=this.Bodies.config.observer.position;
@@ -198,7 +200,10 @@ export default class Model {
 	//this.mainCamera.position.set(pos.x,pos.y,pos.z);
 	this.mainCamera.position.set(0,0,0);
 	this.mainCamera.up.set(zen.x,zen.y,zen.z); // up is always towards observer zenith...
-	//this.mainCamera.poinAt(new THREE.Vector3(0,1,0)); // up is always towards observer zenith...
+	// if (this.newTarget !== undefined) {
+	//     this.mainCamera.pointAt(this.newTarget); // up is always towards observer zenith...
+	//     this.newTarget=undefined;
+	// };
 	//this.mainCamera.updateMatrixWorld(true);
 	//this.mainCamera.updateProjectionMatrix();
     }

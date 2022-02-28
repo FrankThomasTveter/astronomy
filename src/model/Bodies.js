@@ -54,8 +54,8 @@ function Bodies() {
     
     this.config={
 	sun  :  {
-	    fact : 1.0,
 	    scale : 0.00002,
+	    ambient : 1000,
 	    title : 'The Sun',
 	    visible: true,
 	    mass : 1.9891e30,
@@ -72,7 +72,6 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	mercury : {
-	    fact : 1.0,
 	    scale : 0.00002,
 	    title : 'Mercury',
 	    visible: true,
@@ -88,7 +87,6 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	venus : {
-	    fact : 1.0,
 	    scale : 0.00002,
 	    title : 'Venus',
 	    visible: true,
@@ -104,12 +102,13 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	earth : {
-	    fact : 1.1 + 0*6371.0088*this.inflate*(Math.PI*34/(60*180)),
 	    scale : 1000,
+	    ambient : 0.5,
+	    height : 0.00000001,
 	    title : 'The Earth',
 	    visible: false,
 	    mass : 5.9736e24,
-	    radius : 6371.0088*this.inflate,
+	    radius : 6378.0*this.inflate,
 	    color : '#1F7CDA',
 	    map : 'planets/earthmap1k.jpg',
 	    bumpMap : 'planets/earthbump1k.jpg',
@@ -130,7 +129,6 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	mars : {
-	    fact : 1.0,
 	    scale : 0.00002,
 	    title : 'Mars',
 	    visible: true,
@@ -147,7 +145,6 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	jupiter : {
-	    fact : 1.0,
 	    scale : 0.000002,
 	    title : 'Jupiter',
 	    visible: true,
@@ -164,7 +161,6 @@ function Bodies() {
 	},
 	ash :{map : 'ash_uvgrid01.jpg'},
 	saturn : {
-	    fact : 1.0,
 	    scale : 0.0000001,
 	    title : 'Saturn',
 	    visible: true,
@@ -190,7 +186,6 @@ function Bodies() {
 	    position : new THREE.Vector3(),
 	},
 	uranus : {
-	    fact : 1.0,
 	    scale : 0.00000001,//000
 	    title : 'Uranus',
 	    visible: true,
@@ -214,7 +209,6 @@ function Bodies() {
 	    position : new THREE.Vector3(),
 	},
 	neptune : {
-	    fact : 1.0,
 	    scale : 0.0000002,
 	    title : 'Neptune',
 	    visible: true,
@@ -229,7 +223,6 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	pluto : {
-	    fact : 1.0,
 	    scale : 0.0000002,
 	    title : 'Pluto',
 	    visible: true,
@@ -416,17 +409,15 @@ function Bodies() {
 	scene.add(camera);
 	this.addSatellites(scene,name);
 	var mesh=this.createMesh(name);
-	if (name === "sun") {
-	    let light=new THREE.AmbientLight('#ffff88',1000);
+	var ambient=this.config[name].ambient;
+	if (ambient !== undefined) {
+	    let light=new THREE.AmbientLight('#ffff88',ambient);
 	    light.name="glow";
-	    scene.add(mesh);
 	    scene.add(light);
-	    scene.add(this.createLabel(name));
-	} else { // other planets
-	    scene.add(mesh);
-	    scene.add(this.createLight(mesh,name));
-	    scene.add(this.createLabel(name));
-	}
+	};
+	scene.add(mesh);
+	scene.add(this.createLight(mesh,name));
+	scene.add(this.createLabel(name));
 	return scene;
     };
 
@@ -556,7 +547,7 @@ function Bodies() {
 					 specularMap:this.baseURL+this.config.earth.spec,
 					 specularColor: 'grey',
 					 transparent:true,
-					 opacity:0.7,
+					 opacity:0.9,
 					 shadowSide: THREE.FrontSide});
 	//	wireframe:true,
 	var geometry	= new THREE.SphereGeometry(this.config.earth.radius*scale, 128, 128)
@@ -961,7 +952,7 @@ function Bodies() {
     this.updateScene=function(state,mainCamera,observer,name,scene,time) {
 	//console.log("UpdateScene:",name,scale);
 	let scale = this.config[name].scale;
-	let fact = this.config[name].fact;
+	let radius=this.config[name].radius;
 	this.updateCamera(state,mainCamera,observer,name,scene);
 	if (name === "saturn" || name === "uranus") {
 	    let range= this.config[name].radius*2.5;
@@ -971,11 +962,12 @@ function Bodies() {
 	    let light  = scene.getObjectByName("sunlight");
 	    let obs=observer.position;
 	    //camera.position.set(obs.x*scale,obs.y*scale,obs.z*scale);	    
-	    let x=(pos.x-obs.x)*scale*fact;
-	    let y=(pos.y-obs.y)*scale*fact;
-	    let z=(pos.z-obs.z)*scale*fact;
-	    group.position.set(x,y,z);
-	    let alpha=Math.max(0.5,Math.min(1,(x*x+y*y+z*z)/(4*this.config[name].radius*this.config[name].radius)));
+	    let x=(pos.x-obs.x);
+	    let y=(pos.y-obs.y);
+	    let z=(pos.z-obs.z);
+	    let d=Math.sqrt(x*x+y*y+z*z);
+	    group.position.set(x*scale,y*scale,z*scale);
+	    let alpha=Math.max(0.0,Math.min(1,d/(4*radius)));
 	    this.makeTransparent(state,name,scene,group,alpha);
 	    let rot   = this.config[name].rotation;
 	    this.setRotation(group,rot);
@@ -990,18 +982,27 @@ function Bodies() {
 	    };
 	    //console.log(name,scene);
 	    //console.log(name,this.direction,scene);
-	} else if (name === "mars") { // sun and other planets
+	} else if (name === "earth") { // sun and other planets
+	    let height = this.config[name].height;
 	    let pos   = this.config[name].position;
 	    let obs=observer.position;
 	    let body  = scene.getObjectByName(name);
 	    let light  = scene.getObjectByName("sunlight");
 	    this.updateLight(light,pos,obs,scale);
-	    let x=(pos.x-obs.x)*scale*fact;
-	    let y=(pos.y-obs.y)*scale*fact;
-	    let z=(pos.z-obs.z)*scale*fact;
-	    //console.log("Pos:",name,x,y,z);
-	    body.position.set(x,y,z);
-	    let alpha=Math.max(0.5,Math.min(1,(x*x+y*y+z*z)/(4*this.config[name].radius*this.config[name].radius)));
+	    let x=(pos.x-obs.x);
+	    let y=(pos.y-obs.y);
+	    let z=(pos.z-obs.z); //*scale*fact;
+	    let d=Math.sqrt(x*x+y*y+z*z);
+	    let e=Math.max(d,height+radius);
+	    if (e>d) {
+		x=x*e/d;
+		y=y*e/d;
+		z=z*e/d;
+	    };
+	    //console.log("Pos:",name,x,y,z,height,radius);
+	    body.position.set(x*scale,y*scale,z*scale);
+	    let alpha=Math.max(0.0,Math.min(0.8,d/(4*radius)));
+	    //console.log("Transparent:",name,alpha);
 	    this.makeTransparent(state,name,scene,body,alpha);
 	    let rot   = this.config[name].rotation;
 	    this.setRotation(body,rot);
@@ -1011,11 +1012,12 @@ function Bodies() {
 	    let body  = scene.getObjectByName(name);
 	    let light  = scene.getObjectByName("sunlight");
 	    if (light !== undefined) {this.updateLight(light,pos,obs,scale);};
-	    let x=(pos.x-obs.x)*scale*fact;
-	    let y=(pos.y-obs.y)*scale*fact;
-	    let z=(pos.z-obs.z)*scale*fact;
-	    body.position.set(x,y,z);
-	    let alpha=Math.max(0.0,Math.min(1,(x*x+y*y+z*z)/(this.config[name].radius*this.config[name].radius)-1));
+	    let x=(pos.x-obs.x);
+	    let y=(pos.y-obs.y);
+	    let z=(pos.z-obs.z);
+	    let d=Math.sqrt(x*x+y*y+z*z);
+	    body.position.set(x*scale,y*scale,z*scale);
+	    let alpha=Math.max(0.0,Math.min(1,d/(4*radius)));
 	    this.makeTransparent(state,name,scene,body,alpha);
 	    //console.log("Pos:",name,pos);
 	    let rot   = this.config[name].rotation;

@@ -266,15 +266,15 @@ function Model() {
     this.requests = { state:[{location : {latitude : 60.0,
 					 longitude: 10.0,
 					 height   : 0.0},
-			     event : 0,
-			     events : [{ reqId : 1,
-					 label: "Sunrise", 
-					 pointAt : "The Sun",
-					 viewAngle : 25.0,
-					 dtg : "2016-01-02T16:56:00Z"
-				       }
-				      ]
-			    }],
+			      event : 0,
+			      events : [{ reqId : 1,
+					  label: "Sunrise", 
+					  pointAt : "The Sun",
+					  viewAngle : 25.0,
+					  dtg : "2016-01-02T16:56:00Z"
+					}
+				       ]
+			     }],
 		      current: 0
 		    };
     // time is contained in Events: targettime=state.Events.getModelTime(state)
@@ -372,13 +372,6 @@ function Model() {
 	    state.Scene.defined=false;
 	}
     };
-    this.updateCamera = function (state) {
-	// update camera position
-	if (state.Scene.defined) {
-	    this.camera.position.copy(state.Scene.observer.position);
-	    this.camera.setUp(state.Scene.observer.zenith); // up is always towards observer zenith...
-	}
-    };
     this.play  = function (state) {
 	//this.play();
     };
@@ -465,12 +458,10 @@ function Model() {
 	} else {
 	    dtgdate=new Date();
 	};
-	var dtgs=[];
-	dtgs.push(state.Utils.addHours(state,dtgdate,-Math.round(hrs/2)).toISOString());
-	var tt;
-	for ( tt = 0; tt < hrs; tt++) {
-	    dtgs.push(state.Utils.addHours(state,dtgdate,1.0).toISOString());
-	};
+	var trg=dtgdate.toISOString();
+	var dtgs=state.Utils.addHours(state,dtgdate,hrs)
+	var epoch=dtgs.indexOf(trg);
+	//console.log("Hours:",dtgs,epoch);
 	if (dir !== undefined) { // direction in J2000 (the star coordinate system)
 	    var items=dir.split(',');
 	    if (items.length === 3) {
@@ -481,7 +472,7 @@ function Model() {
 	    }
 	}
 	var events=[];
-	for ( tt = 0; tt < dtgs.length; tt++) {
+	for ( var tt = 0; tt < dtgs.length; tt++) {
 	    events.push({reqId : tt+1,
 			 label: label,
 			 target : target,
@@ -491,12 +482,13 @@ function Model() {
 			 dtg : dtgs[tt] 
 			});
 	};
+	//epoch: dtgdate.getTime()
 	var newreq={ location : {latitude : lat,
 				 longitude : lon,
-				 height : 0.0},
-		     event : 0 ,
-		     events : events,
-		     current : 0
+				 height : 0.0
+				},
+		     event : epoch,
+		     events : events // ,current:0
 		   };
 	this.requests.state.push(newreq);
 	this.requests.current=this.requests.state.length-1;
@@ -530,7 +522,7 @@ function Model() {
 	};
 	req.addDtg(dtgs);
 	req.wipe();
-	console.log("State-request :",req);
+	//console.log("State-request :",req);
 	return req;
     };
     this.sendRequest = function(state, reqId, request, callbacks) {
@@ -575,11 +567,11 @@ function Model() {
 	//console.log(dtg+" lat:"+parseFloat(lat).toFixed(2)+" lon:"+parseFloat(lon).toFixed(2));
     };
     this.processState = function (state,result,reqId,req) {
-	//console.log("Received request '",reqId,"'");
+	console.log("Processing request '",reqId,"'",req);
 	var xmlDoc;
 	// update info
 	this.setInfo(state,
-		     req.events[req.current].dtg,
+		     req.events[req.event].dtg,
 		     req.location.latitude,
 		     req.location.longitude);
 	// update data
@@ -627,12 +619,15 @@ function Model() {
 		req["initial"][name]["rotation"]["dwdt"]=+bod.getAttribute("dwdt")*this.deg2rad;
 		req["initial"][name]["main"]=bod.getAttribute("main");
 		req["initial"][name]["xmu"]=+bod.getAttribute("xmu");
+
+		console.log("Rotation:",name,req.initial[name].rotation,bod);
+		
 	    }
 	    // store time data
 	    var tis=ss.getElementsByTagName("times")[0];
 	    var tistim=tis.getElementsByTagName("time");
 	    var tisno=tis.getAttribute("no");
-	    console.log("Times ",tisno);
+	    //console.log("Times ",tisno);
 	    for (var tt=0; tt<tisno; tt++) {
 		var tim = tistim[tt];
 		// store observer data
@@ -731,7 +726,7 @@ function Model() {
 		}
 	    }
 	    req.received= true;
-	    console.log("Received request:",req);
+	    console.log("Comleted request:",req);
 	} else {
 	    console.log("Received error:",error);
 	    // we never receive data, stop processing here...
@@ -830,13 +825,32 @@ function Model() {
 	    // 	};
 	    // 	//document.getElementById("log").innerHTML="orbit loop end";
 	    // };
+	    let request=req.events[req.event]
+	    let ttrg=request.epoch;
+	    let target=request.target;
+	    state.Events.setModelTime(state,ttrg);
+	    this.setNewTarget(state,target);
 	    req.processed = true;
 	    //console.log("Calculated orbital elements:",req);
 	    ret=true;
 	}
 	return ret;
     };
-    // update 3D config of the solar system...
+
+    this.setNewTarget=function(state,target) {
+	if ( target !== undefined) {
+	    let body=this.config.bodies[target];
+	    let origo=this.config.observer.position;
+	    if (body !== undefined && body.position !== undefined && origo !== undefined &&
+		state.React !== undefined && state.React.Model !== undefined) {
+		let x=body.position.x-origo.x;
+		let y=body.position.y-origo.y;
+		let z=body.position.z-origo.z;
+		state.React.Model.setNewTarget(state,x,y,z);
+	    };
+	};
+	// update 3D config of the solar system...
+    };
     this.configUpdate = function (state,ttrg) {
 	var ret = false;
 	var reqId = this.requests.current;

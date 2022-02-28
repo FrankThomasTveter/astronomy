@@ -1121,12 +1121,29 @@ function Utils() {
 	};
 	return ret;
     }.bind(this);
-    this.addHours=function(state,d,h) {
+    this.addHour=function(state,d,h) {
 	d.setTime(d.getTime() + (h*60*60*1000)); 
 	return d;
     };
-
-
+    this.sort_unique=function (arr) {
+	if (arr.length === 0) return arr;
+	arr = arr.sort();
+	var ret = [arr[0]];
+	for (var i = 1; i < arr.length; i++) { //Start loop at 1: arr[0] can never be a duplicate
+	    if (arr[i-1] !== arr[i]) {
+		ret.push(arr[i]);
+	    }
+	}
+	return ret;
+    };
+    this.addHours=function(state,dtgdate,hrs) {
+	var dtgs=[dtgdate.toISOString()];
+	dtgs.push(state.Utils.addHour(state,dtgdate,-Math.round(hrs/2)).toISOString());
+	for ( var tt = 0; tt < hrs; tt++) {
+	    dtgs.push(state.Utils.addHour(state,dtgdate,1.0).toISOString());
+	};
+	return this.sort_unique(dtgs);
+    };
 };
 
 

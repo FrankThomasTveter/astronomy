@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "homepage": "http://localhost/astro",
-  "proxy": "http://astro.met.no",
+  "proxy": "http://astro-test.met.no",
   "repository": {
     "type": "git",
     "url": "https://gitlab.met.no/team-frontend/react-boilerplate.git"

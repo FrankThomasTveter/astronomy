@@ -78,7 +78,7 @@ function DataRow(props) {
     var key='dataRow'+index;
     var onTime=function() {state.Events.setModelMoment(state,item[0]);};
     var onRemove=function() {state.Events.removeItem(state,item,index);};
-    var bodyFocus=function() {state.Events.bodyFocus(state,item[2]);};
+    var bodyFocus=function() {state.Events.bodyFocus(state,item);};
     //console.log("Item:",item,key);
     if (index === null || index === undefined) {
 	return (null);
