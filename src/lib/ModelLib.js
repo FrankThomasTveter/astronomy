@@ -450,7 +450,7 @@ function Model() {
 	return vars;
     };
     this.launch= function (state,lat, lon, dtg, hrs, label, target, fov, dir, con, speed) {
-	if (hrs===undefined) {hrs=1.0;};
+	if (hrs===undefined) {hrs=24.0;};
 	if (speed!==undefined) {state.Events.setSpeed(state,speed);}
 	console.log("*** launching model:",lat, lon, dtg, hrs, label, target, fov, dir, con, speed);
 	lat=(lat || 51.5);
@@ -466,7 +466,7 @@ function Model() {
 	    dtgdate=new Date();
 	};
 	var dtgs=[];
-	dtgs.push(dtgdate.toISOString());
+	dtgs.push(state.Utils.addHours(state,dtgdate,-Math.round(hrs/2)).toISOString());
 	var tt;
 	for ( tt = 0; tt < hrs; tt++) {
 	    dtgs.push(state.Utils.addHours(state,dtgdate,1.0).toISOString());

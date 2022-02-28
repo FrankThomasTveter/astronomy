@@ -54,6 +54,7 @@ function Bodies() {
     
     this.config={
 	sun  :  {
+	    fact : 1.0,
 	    scale : 0.00002,
 	    title : 'The Sun',
 	    visible: true,
@@ -71,6 +72,7 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	mercury : {
+	    fact : 1.0,
 	    scale : 0.00002,
 	    title : 'Mercury',
 	    visible: true,
@@ -86,6 +88,7 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	venus : {
+	    fact : 1.0,
 	    scale : 0.00002,
 	    title : 'Venus',
 	    visible: true,
@@ -101,7 +104,8 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	earth : {
-	    scale : 10,
+	    fact : 1.1 + 0*6371.0088*this.inflate*(Math.PI*34/(60*180)),
+	    scale : 1000,
 	    title : 'The Earth',
 	    visible: false,
 	    mass : 5.9736e24,
@@ -126,6 +130,7 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	mars : {
+	    fact : 1.0,
 	    scale : 0.00002,
 	    title : 'Mars',
 	    visible: true,
@@ -142,6 +147,7 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	jupiter : {
+	    fact : 1.0,
 	    scale : 0.000002,
 	    title : 'Jupiter',
 	    visible: true,
@@ -158,6 +164,7 @@ function Bodies() {
 	},
 	ash :{map : 'ash_uvgrid01.jpg'},
 	saturn : {
+	    fact : 1.0,
 	    scale : 0.0000001,
 	    title : 'Saturn',
 	    visible: true,
@@ -183,6 +190,7 @@ function Bodies() {
 	    position : new THREE.Vector3(),
 	},
 	uranus : {
+	    fact : 1.0,
 	    scale : 0.00000001,//000
 	    title : 'Uranus',
 	    visible: true,
@@ -206,6 +214,7 @@ function Bodies() {
 	    position : new THREE.Vector3(),
 	},
 	neptune : {
+	    fact : 1.0,
 	    scale : 0.0000002,
 	    title : 'Neptune',
 	    visible: true,
@@ -220,6 +229,7 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	pluto : {
+	    fact : 1.0,
 	    scale : 0.0000002,
 	    title : 'Pluto',
 	    visible: true,
@@ -549,7 +559,7 @@ function Bodies() {
 					 opacity:0.7,
 					 shadowSide: THREE.FrontSide});
 	//	wireframe:true,
-	var geometry	= new THREE.SphereGeometry(this.config.earth.radius*scale, 32, 32)
+	var geometry	= new THREE.SphereGeometry(this.config.earth.radius*scale, 128, 128)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="earth";
 	// mesh.rotation.x=Math.PI/2;
@@ -951,6 +961,7 @@ function Bodies() {
     this.updateScene=function(state,mainCamera,observer,name,scene,time) {
 	//console.log("UpdateScene:",name,scale);
 	let scale = this.config[name].scale;
+	let fact = this.config[name].fact;
 	this.updateCamera(state,mainCamera,observer,name,scene);
 	if (name === "saturn" || name === "uranus") {
 	    let range= this.config[name].radius*2.5;
@@ -960,10 +971,12 @@ function Bodies() {
 	    let light  = scene.getObjectByName("sunlight");
 	    let obs=observer.position;
 	    //camera.position.set(obs.x*scale,obs.y*scale,obs.z*scale);	    
-	    let x=(pos.x-obs.x)*scale;
-	    let y=(pos.y-obs.y)*scale;
-	    let z=(pos.z-obs.z)*scale;
+	    let x=(pos.x-obs.x)*scale*fact;
+	    let y=(pos.y-obs.y)*scale*fact;
+	    let z=(pos.z-obs.z)*scale*fact;
 	    group.position.set(x,y,z);
+	    let alpha=Math.max(0.5,Math.min(1,(x*x+y*y+z*z)/(4*this.config[name].radius*this.config[name].radius)));
+	    this.makeTransparent(state,name,scene,group,alpha);
 	    let rot   = this.config[name].rotation;
 	    this.setRotation(group,rot);
 	    this.direction.setFromMatrixPosition( group.matrixWorld );
@@ -983,11 +996,13 @@ function Bodies() {
 	    let body  = scene.getObjectByName(name);
 	    let light  = scene.getObjectByName("sunlight");
 	    this.updateLight(light,pos,obs,scale);
-	    let x=(pos.x-obs.x)*scale;
-	    let y=(pos.y-obs.y)*scale;
-	    let z=(pos.z-obs.z)*scale;
+	    let x=(pos.x-obs.x)*scale*fact;
+	    let y=(pos.y-obs.y)*scale*fact;
+	    let z=(pos.z-obs.z)*scale*fact;
 	    //console.log("Pos:",name,x,y,z);
 	    body.position.set(x,y,z);
+	    let alpha=Math.max(0.5,Math.min(1,(x*x+y*y+z*z)/(4*this.config[name].radius*this.config[name].radius)));
+	    this.makeTransparent(state,name,scene,body,alpha);
 	    let rot   = this.config[name].rotation;
 	    this.setRotation(body,rot);
 	} else { // sun and other planets
@@ -996,18 +1011,29 @@ function Bodies() {
 	    let body  = scene.getObjectByName(name);
 	    let light  = scene.getObjectByName("sunlight");
 	    if (light !== undefined) {this.updateLight(light,pos,obs,scale);};
-	    let x=(pos.x-obs.x)*scale;
-	    let y=(pos.y-obs.y)*scale;
-	    let z=(pos.z-obs.z)*scale;
-	    //console.log("Pos:",name,pos);
+	    let x=(pos.x-obs.x)*scale*fact;
+	    let y=(pos.y-obs.y)*scale*fact;
+	    let z=(pos.z-obs.z)*scale*fact;
 	    body.position.set(x,y,z);
+	    let alpha=Math.max(0.0,Math.min(1,(x*x+y*y+z*z)/(this.config[name].radius*this.config[name].radius)-1));
+	    this.makeTransparent(state,name,scene,body,alpha);
+	    //console.log("Pos:",name,pos);
 	    let rot   = this.config[name].rotation;
 	    this.setRotation(body,rot);
 	};
 	this.updateLabel(state,mainCamera,observer,name,scene,scale,1);
 	this.updateSatellites(state,mainCamera,observer,name,scene);
     };
-
+    this.makeTransparent=function(state,name,scene,body,alpha) {
+	let material=body.material;
+	if (material === undefined) {material=body.getObjectByName(name).material;};
+	if (alpha === 1) {
+	    material.transparent=false;
+	} else {
+	    material.transparent=true;
+	    material.opacity=1-alpha;
+	};
+    };
     this.updateSatellites = function(state,mainCamera,observer,name,scene) {
 	let satellites=this.config[name].satellites||[];
 	if (satellites === undefined) { return;};
