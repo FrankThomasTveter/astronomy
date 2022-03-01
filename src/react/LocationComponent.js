@@ -40,6 +40,7 @@ class Location extends Component {
 	if (isNaN(lat)) {lat=60.0;};
 	this.setState({lat:lat});
 	state.Events.setLat(state,this.state.lat);
+	state.Events.triggerUpdate(state);
     };
     setLon(e) {
         const { state } = this.props; // classes, layout 
@@ -48,13 +49,16 @@ class Location extends Component {
 	if (isNaN(lon)) {lon=0.0;};
 	this.setState({lon:lon});
 	state.Events.setLon(state,this.state.lon);
+	state.Events.triggerUpdate(state);
     };
     onClick(event) {
+	//console.log("Event:",event);
         const { state } = this.props; // , classes, layout
-	const { lat, lon } = event.latlon;
-	this.setState({lat:lat, lon:lon});
+	const { lat, lng } = event.latlng;
+	this.setState({lat:lat, lon:lng});
 	state.Events.setLat(state,this.state.lat);
 	state.Events.setLon(state,this.state.lon);
+	state.Events.triggerUpdate(state);
 	console.log("Click:",this.state);
     };
     render() {

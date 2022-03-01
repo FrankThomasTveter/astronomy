@@ -75,9 +75,9 @@ function File() {
 	    resolve(response);
 	});
     };
-    this.get = function(url,req) {
+    this.get = function(url,par) {
 	// Return a new promise.
-	var params=(req===undefined)?"":this.formatParams(req);
+	var params=(par===undefined)?"":this.formatParams(par);
 	return new Promise(function(resolve, reject) {
 	    // Do the usual XHR stuff
 	    var regHttp = new XMLHttpRequest();

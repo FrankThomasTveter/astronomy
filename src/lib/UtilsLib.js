@@ -1122,7 +1122,7 @@ function Utils() {
 	return ret;
     }.bind(this);
     this.addHour=function(state,d,h) {
-	d.setTime(d.getTime() + (h*60*60*1000)); 
+	d.add(h*60*60*1000,'ms'); 
 	return d;
     };
     this.sort_unique=function (arr) {

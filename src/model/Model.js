@@ -199,6 +199,7 @@ export default class Model {
 	let zen=this.Bodies.config.observer.zenith;
 	//this.mainCamera.position.set(pos.x,pos.y,pos.z);
 	this.mainCamera.position.set(0,0,0);
+	//console.log("Up:",zen.x,zen.y,zen.z);
 	this.mainCamera.up.set(zen.x,zen.y,zen.z); // up is always towards observer zenith...
 	// if (this.newTarget !== undefined) {
 	//     this.mainCamera.pointAt(this.newTarget); // up is always towards observer zenith...
@@ -217,7 +218,8 @@ export default class Model {
 	    var req = requests.state[reqId]
 	    if (false && req.play.event !== undefined) {
 		this.mainCamera.position.set(state.Model.config.state[state.Model.config.current].observer.position);
-		this.mainCamera.up.set(state.Model.config.state[state.Model.config.current].observer.zenith); // up is always towards observer zenith...
+		let zen=state.Model.config.state[state.Model.config.current].observer.zenith;
+		this.mainCamera.up.set(zen.x,zen.y,zen.z); // up is always towards observer zenith...
 		var target = requests.state[reqId]["events"][req.play.event]["target"]; // target could be mis-spelled...
 		var dir = requests.state[reqId]["events"][req.play.event]["dir"];
 		var fov = requests.state[reqId]["events"][req.play.event]["fov"];

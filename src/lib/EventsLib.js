@@ -16,6 +16,7 @@ function Events() {
     this.updateCheck=false;    // auto load data
     this.previousCheck=false;  // should we search for previous?
     this.nextCheck=false;      // should we search for next?
+    this.update=true;          // has observer changed?
     this.endDt=1;              // time difference between start and end
     this.speed=1.0;
     this.cost=0;
@@ -182,12 +183,12 @@ function Events() {
 	//state.Utils.init("Database",this);
 	this.initialised=true;
     };
-    this.launchModel=function(state,dtg) {
-	if (dtg === undefined) {
+    this.launchModel=function(state,epoch) {
+	if (epoch === undefined) {
             if (this.targetSet) {
-		dtg=new Date(this.modelTime).toISOString();
+		epoch=this.getModelTime(state)
             } else {
-		dtg = new Date().toISOString();
+		epoch=new moment().valueOf();
             }
 	}
 	var hrs;
@@ -199,7 +200,10 @@ function Events() {
 	var dir;   // direction
 	var con=0; // show contellations?
 	var speed; // speed of model, undefined => no speed
-	state.Model.launch(state,lat,lon,dtg,hrs,label,target,fov,dir,con,speed);
+	state.Model.launch(state,{lat:lat,lon:lon,epoch:epoch,hrs:hrs,label:label,target:target,fov:fov,dir:dir,con:con,speed:speed});
+    };
+    this.triggerUpdate=function(state) {
+	this.update=true;
     };
     this.updateLoop = function(state) {
 	if (this.bdeb) {console.log("Updating Event...");}
@@ -211,6 +215,10 @@ function Events() {
 	    };
 	    state.Show.showTime(state);
 	    state.Show.showEvents(state);
+	};
+	if (this.update) {
+	    state.Model.launch(state,{epoch:this.getModelTime(state), lat:this.lat, lon:this.lon, hrs:5});
+	    this.update=false;
 	};
 	setTimeout(function() {
 	    state.Events.updateLoop(state)
@@ -434,7 +442,7 @@ function Events() {
     this.bodyFocus = function(state,id) {
 	// set focus on the body i.e. sun, moon
 	console.log("Focus on id:",id);
-	var dtg=id[1];
+	var epoch=id[1];
 	var hrs;
 	var lat=this.lat;
 	var lon=this.lon;
@@ -444,7 +452,7 @@ function Events() {
 	var dir;   // direction
 	var con=0; // show contellations?
 	var speed; // speed of model, undefined => no speed
-	state.Model.launch(state,lat,lon,dtg,hrs,label,target,fov,dir,con,speed);
+	state.Model.launch(state,{lat:lat,lon:lon,epoch:epoch,hrs:hrs,label:label,target:target,fov:fov,dir:dir,con:con,speed:speed});
     };
     this.setModelClock = function(state,now) {
 	if (state.Events.isPlaying(state)) {
