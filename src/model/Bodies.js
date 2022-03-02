@@ -103,19 +103,19 @@ function Bodies() {
 	},
 	earth : {
 	    scale : 1000,
-	    ambient : 0.5,
-	    height : 0.00000001,
+	    ambient : 0.1,
+	    height : 6371.088*(1-Math.cos((31/60)*Math.PI/180.0)), // model is not perfect,
 	    title : 'The Earth',
 	    visible: false,
 	    mass : 5.9736e24,
-	    radius : 6378.0*this.inflate,
+	    radius : 6371.088*this.inflate,
 	    color : '#1F7CDA',
 	    map : 'planets/earthmap1k.jpg',
-	    bumpMap : 'planets/earthbump1k.jpg',
-	    bumpScale : 20.0,
+	    bumpMap1 : 'planets/earthbump1k.jpg',
+	    bumpScale1 : 20.0,
 	    spec : 'planets/earthspec1k.jpg',
 	    atmosphere : {
-		radius : 6381.0088,
+		radius : 6381.0088*this.inflate,
 		trans : 'planets/earthcloudmaptrans.jpg',
 		cloud : 'planets/earthcloudmap.jpg',
 	    },
@@ -364,7 +364,7 @@ function Bodies() {
     };
     this.initScenes=function(mainCamera) {
 	this.scenes={};
-	this.scenes["sun"]=     {scene: this.createScene("sun",mainCamera), distance:20,   show:true};
+	this.scenes["sun"]=     {scene: this.createScene("sun",mainCamera), distance:3,   show:true};
 	this.scenes["mercury"]= {scene: this.createScene("mercury",mainCamera),distance:9, show:true};
 	this.scenes["venus"]=   {scene: this.createScene("venus",mainCamera),distance:8,   show:true};
 	this.scenes["earth"]=   {scene: this.createScene("earth",mainCamera),distance:1,   show:true};
@@ -541,16 +541,16 @@ function Bodies() {
     };
     this.createEarthMesh	= function(){
 	var scale=this.config.earth.scale;
+	//bumpMap:this.baseURL+this.config.earth.bumpMap,
+	//bumpScale:this.config.earth.bumpScale*scale,
 	var material	= this.Material({map:this.baseURL+this.config.earth.map,
-					 bumpMap:this.baseURL+this.config.earth.bumpMap,
-					 bumpScale:this.config.earth.bumpScale*scale,
 					 specularMap:this.baseURL+this.config.earth.spec,
 					 specularColor: 'grey',
 					 transparent:true,
 					 opacity:0.9,
 					 shadowSide: THREE.FrontSide});
 	//	wireframe:true,
-	var geometry	= new THREE.SphereGeometry(this.config.earth.radius*scale, 128, 128)
+	var geometry	= new THREE.SphereGeometry(this.config.earth.radius*scale, 512, 1024);//1024
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="earth";
 	// mesh.rotation.x=Math.PI/2;
@@ -931,6 +931,7 @@ function Bodies() {
 	    let camera=scene.getObjectByName("camera");
 	    if (show && camera !== undefined) {
 		this.prepareForRender(name,scene,mainCamera,time);
+		renderer.clearDepth();      // clear depth buffer...
 		renderer.render(scene, camera);
 	    } else {
 		//console.log("Not rendering:",k);
@@ -944,13 +945,14 @@ function Bodies() {
 	    if (item.scene !== undefined) {
 		if (item.show) {
 		    //console.log("Scene:",name);
-		    this.updateScene(state,camera,observer,name,item.scene,time);
+		    item.distance=this.updateScene(state,camera,observer,name,item.scene,time);
 		};
 	    };
 	};
     };
     this.updateScene=function(state,mainCamera,observer,name,scene,time) {
 	//console.log("UpdateScene:",name,scale);
+	let dist;
 	let scale = this.config[name].scale;
 	let radius=this.config[name].radius;
 	this.updateCamera(state,mainCamera,observer,name,scene);
@@ -965,9 +967,9 @@ function Bodies() {
 	    let x=(pos.x-obs.x);
 	    let y=(pos.y-obs.y);
 	    let z=(pos.z-obs.z);
-	    let d=Math.sqrt(x*x+y*y+z*z);
+	    dist=Math.sqrt(x*x+y*y+z*z);
 	    group.position.set(x*scale,y*scale,z*scale);
-	    let alpha=Math.max(0.0,Math.min(1,d/(4*radius)));
+	    let alpha=Math.max(0.0,Math.min(1,dist/(4*radius)));
 	    this.makeTransparent(state,name,scene,group,alpha);
 	    let rot   = this.config[name].rotation;
 	    this.setRotation(group,rot);
@@ -992,16 +994,16 @@ function Bodies() {
 	    let x=(pos.x-obs.x);
 	    let y=(pos.y-obs.y);
 	    let z=(pos.z-obs.z); //*scale*fact;
-	    let d=Math.sqrt(x*x+y*y+z*z);
-	    let e=Math.max(d,height+radius);
-	    if (e>d) {
-		x=x*e/d;
-		y=y*e/d;
-		z=z*e/d;
+	    dist=Math.sqrt(x*x+y*y+z*z);
+	    let e=Math.max(dist,height+radius);
+	    if (e>dist) {
+		x=x*e/dist;
+		y=y*e/dist;
+		z=z*e/dist;
 	    };
 	    //console.log("Pos:",name,x,y,z,height,radius);
 	    body.position.set(x*scale,y*scale,z*scale);
-	    let alpha=Math.max(0.0,Math.min(0.8,d/(4*radius)));
+	    let alpha=Math.max(0.0,Math.min(0.8,dist/(4*radius)));
 	    //console.log("Transparent:",name,alpha);
 	    this.makeTransparent(state,name,scene,body,alpha);
 	    let rot   = this.config[name].rotation;
@@ -1015,9 +1017,9 @@ function Bodies() {
 	    let x=(pos.x-obs.x);
 	    let y=(pos.y-obs.y);
 	    let z=(pos.z-obs.z);
-	    let d=Math.sqrt(x*x+y*y+z*z);
+	    dist=Math.sqrt(x*x+y*y+z*z);
 	    body.position.set(x*scale,y*scale,z*scale);
-	    let alpha=Math.max(0.0,Math.min(1,d/(4*radius)));
+	    let alpha=Math.max(0.0,Math.min(1,dist/(4*radius)));
 	    this.makeTransparent(state,name,scene,body,alpha);
 	    //console.log("Pos:",name,pos);
 	    let rot   = this.config[name].rotation;
@@ -1025,6 +1027,7 @@ function Bodies() {
 	};
 	this.updateLabel(state,mainCamera,observer,name,scene,scale,1);
 	this.updateSatellites(state,mainCamera,observer,name,scene);
+	return dist;
     };
     this.makeTransparent=function(state,name,scene,body,alpha) {
 	let material=body.material;

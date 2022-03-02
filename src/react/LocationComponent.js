@@ -85,9 +85,9 @@ class Location extends Component {
 		<div onMouseDown={this.handleChildClick} style={{display:'flex', flexDirection:'column'}} className="cancel">
 		 <div style={{display:'flex', justifyContent:'flex-start'}}>
 		  <label>Latitude</label>
-		  <input type="text" value={this.state.lat} onChange={this.setLat} maxLength="5" size="5"/>
+		  <input type="text" value={this.state.lat} onChange={this.setLat} onBlur={this.setLat} maxLength="5" size="5"/>
 		  <label>Longitude</label>
-		  <input type="text" value={this.state.lon} onChange={this.setLon} maxLength="5" size="5"/>
+		  <input type="text" value={this.state.lon} onChange={this.setLon} onBlur={this.setLon} maxLength="5" size="5"/>
 	         </div>
 		<div style={{width:"100%",height:"100px"}}>
 		<Chart state={state} classes={cls}

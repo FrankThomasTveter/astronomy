@@ -159,9 +159,10 @@ function Backdrop() {
 	};
     };
     this.initScenes = function (mainCamera) {
-	this.scenes["navigation"]={scene: this.createScene("navigation",mainCamera),   show:true};
-	this.scenes["stars"]=     {scene: this.createScene("stars",mainCamera),        show:true};
-
+	this.scenes["navigation"]=   {scene: this.createScene("navigation",mainCamera),   show:true};
+	this.scenes["compass"]=      {scene: this.createScene("compass",mainCamera),      show:true};
+	this.scenes["stars"]=        {scene: this.createScene("stars",mainCamera),        show:true};
+	this.scenes["constellation"]={scene: this.createScene("constellation",mainCamera),show:true};
     }
     this.updateRaycaster=function(state,raycaster,mouse,mainCamera,objects) {
 	if (objects.length !== 0) {};
@@ -169,10 +170,12 @@ function Backdrop() {
     };
     this.updateScenes = function(state,mainCamera,observer) {
 	this.updateScene(state,mainCamera,observer,"navigation");
+	this.updateScene(state,mainCamera,observer,"compass");
 	this.updateScene(state,mainCamera,observer,"stars");
+	this.updateScene(state,mainCamera,observer,"constellation");
     };
     this.renderScenes = function(renderer,mainCamera) {
-	["stars","navigation"].forEach( (name,i)=>{
+	["stars","compass","navigation","constellation"].forEach( (name,i)=>{
 	    let k = this.scenes[name];
 	    let show=k.show;
 	    let scene=k.scene;
@@ -195,6 +198,12 @@ function Backdrop() {
 	if (name === "stars") {
 	    var stars=this.createStarsBackdrop();
 	    scene.add(stars);
+	} else if (name === "constellation") {
+	    var cons=this.createConstellationBackdrop();
+	    scene.add(cons);
+	} else if (name === "compass") {
+	    var com=this.createCompassBackdrop();
+	    scene.add(com);
 	} else if (name === "navigation") {
 	    var nav=this.createNavigationBackdrop();
 	    scene.add(nav);
@@ -211,7 +220,14 @@ function Backdrop() {
 	    camera.copy(mainCamera);
 	    if (name === "navigation") {
 		camera.position.set(0,0,0); //camera is always in center...
+	    } else if (name === "compass") {
+		camera.position.set(0,0,0); //camera is always in center...
 	    } else if (name === "stars") {
+		var x=observer.position.x*this.SCALE;
+		var y=observer.position.y*this.SCALE;
+		var z=observer.position.z*this.SCALE;
+		camera.position.set(x,y,z);
+	    } else if (name === "constellation") {
 		var x=observer.position.x*this.SCALE;
 		var y=observer.position.y*this.SCALE;
 		var z=observer.position.z*this.SCALE;
@@ -230,15 +246,26 @@ function Backdrop() {
 	    console.log("Missing camera...",name);
 	}
     };
-
     this.getScene=function(name) {
 	return this.scenes[name].scene;
     };
-    
     this.getCamera=function(scene) {
 	return scene.getObjectByName("camera");
     };
-    
+    this.createConstellationBackdrop=function(){
+	var group=new THREE.Group();
+	return group;
+    };
+    this.replaceConstellationBackdrop=function(cons) {
+	var scene=this.scenes["constellation"].scene;
+	var oldcons=scene.getObjectByName("constellation");
+	oldcons.geometry.dispose();
+	oldcons.material.dispose();
+	scene.remove(oldcons);
+	scene.add(cons);	
+    };
+    this.updateConstellationBackdrop=function() {
+    };
     this.createStarsBackdrop	= function(){
 	//https://jsfiddle.net/prisoner849/z3yfw208/
 	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true, alphaTest:0.01 }); //   alphaTest: 0.99
@@ -324,6 +351,42 @@ function Backdrop() {
 	sprites.name       = "stars";
 	this.replaceStarsBackdrop(sprites);
 	return sprites	
+    };
+    this.createCompassBackdrop=function() {
+	var group=new THREE.Group();
+	var radius=100.0;
+	var look=new THREE.Vector3(0,0,1);
+	var offset=new THREE.Vector3(0,0,0);
+	let width=2;
+	let dlon=10;
+	let size=radius*0.05;
+	let colorMinor=0x222222; let colorMinoh="#222222";
+	let colorMajor=0x222266; let colorMajoh="#229922";
+	let colorh=colorMinor;
+	let sizeh=size;
+	group.add(this.createCircleMesh(radius,look,offset,colorMajor,width));
+	for (let ilon=0;ilon<=360;ilon+=dlon) {
+	    let x=radius*Math.cos(ilon*Math.PI/180);
+	    let y=-radius*Math.sin(ilon*Math.PI/180);
+	    if (ilon%90===0) {
+		sizeh=size*2;
+		colorh=colorMajor;
+	    } else {
+		sizeh=size;
+		colorh=colorMinor;
+	    };
+	    group.add(UTILS.createTextSprite(""+ilon,{
+		font:'48px Arial',
+		//floating:true,
+		fillStyle:colorh,
+		size:sizeh,
+		cx:0.5,cy:1,
+		x:x,y:y,z:offset.z,
+		alphaTest:0.01,
+		//border:true,
+	    }));
+	};
+	return group;
     };
     this.createNavigationBackdrop=function() {
 	var group=new THREE.Group();
@@ -419,6 +482,49 @@ function Backdrop() {
 	};
 	group.renderOrder=1;
 	return group;
+    };
+    this.createLinesMesh=function(radius,look,offset,color,width) {
+	if (radius===undefined) {radius=1000;};
+	if (color===undefined) {color=0x222222;};
+	if (width===undefined) {width=3;};
+	var geometry=this.lineGeometry(radius,look,offset,color,width);
+	var material = new THREE.LineDashedMaterial( {color: color,
+						      linewidth:width,
+						      // dashSize: radius*0.009,
+						      // gapSize: radius*0.001,
+						      // vertexColors: true,
+						     } );
+	var mesh = new THREE.LineSegments( geometry, material );
+	if (offset !== undefined) {
+	    mesh.position.set(offset.x,offset.y,offset.z);
+	};
+	if (look !== undefined) {
+	    mesh.lookAt(look);
+	};
+//	mesh.computeLineDistances();
+	return mesh
+    };
+    this.lineGeometry=function(radius,height,look,offset,color,width) {
+	const geometry = new THREE.BufferGeometry();
+	//const indices = [];
+	const positions = [];
+	//const colors = [];
+	for (var ii=0; ii<360; ii=ii+10) {
+	    let x=radius*Math.cos(ii*Math.PI/180);
+	    let y=radius*Math.sin(ii*Math.PI/180);
+	    let z=0;
+	    var col=UTILS.hexToRgb(color);
+	    positions.push(x,y,z);
+	    positions.push(x,y,z+height);
+	    //colors.push(col.r,col.g,col.b,1);
+	    //colors.push(col.r,col.g,col.b,1);
+	    //indices.push(ii*2,ii*2+1);
+	};
+	//geometry.setIndex( indices );
+	geometry.setAttribute( 'position', new THREE.Float32BufferAttribute( positions, 3 ) );
+	//geometry.setAttribute( 'color', new THREE.Float32BufferAttribute( colors, 3 ) );
+	geometry.computeBoundingSphere();
+	return geometry;
     }
     this.createCircleMesh=function(radius,look,offset,color,width) {
 	if (radius===undefined) {radius=1000;};
@@ -493,6 +599,7 @@ function Backdrop() {
 				  loadDescr,processDescr,
 				  loadConst,processConst,
 				  function(state,response,callbacks) {
+				      this.updateConstellationBackdrop();
 				      this.updateStarsBackdrop();
 				      if (this.debug) {console.log("Done loading milkyway data...");}
 				  }.bind(this)]);
@@ -519,6 +626,8 @@ function Backdrop() {
 	    }
 	    return vector;
 	};
+    };
+    this.generateConstellation = function(state,json,callbacks) {
     };
     this.generateStars = function(state,json,callbacks) {
 	var stars=[];
@@ -648,6 +757,9 @@ function Backdrop() {
     this.componentToHex= function (c) {var hex = c.toString(16);return hex.length === 1 ? "0" + hex : hex;};
     this.rgbToHex = function (r, g, b) {
 	return "#" + this.componentToHex(r) + this.componentToHex(g) + this.componentToHex(b);};
+    this.drawConstellation = function(canvas,context,scene,camera){
+	console.log("Not implemented.");
+    };
     this.drawStars = function(canvas,context,scene,camera){
 	//var tnow=new Date().getTime();
 	//var phase=(tnow/this.period)*Math.PI*2;

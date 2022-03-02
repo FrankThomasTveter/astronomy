@@ -586,8 +586,6 @@ function Model() {
 	this.requests.state.push(newreq);
 	this.requests.current=this.requests.state.length-1;
     };
-    this.controlsUpdate = function (state) {
-    };
     this.requestUpdate = function (state) {
 	var ret=false;
 	var reqId=this.requests.current;
@@ -654,6 +652,8 @@ function Model() {
 	};
 	//console.log("Polygons:",JSON.stringify(state.Polygon.names));
     }.bind(this);
+    this.controlsUpdate = function (state) {
+    };
     this.setInfo = function (state,dtg,lat,lon) {
 	//var info=document.getElementById("info");
 	//info.innerHTML = dtg+" lat:"+parseFloat(lat).toFixed(2)+" lon:"+parseFloat(lon).toFixed(2);
