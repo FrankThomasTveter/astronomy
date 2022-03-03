@@ -187,7 +187,7 @@ export default class Model {
 	//console.log("UpdateScenes...");
 	// update Backdrop
 	var observer=this.Bodies.config.observer;
-	this.Backdrop.updateScenes(state,camera,observer,time);
+	this.Backdrop.updateScenes(state,camera,observer,this.Bodies.config,time);
 	this.Bodies.updateScenes(state,camera,observer,time);
     };
     setNewTarget(state,x,y,z) {

@@ -12,6 +12,7 @@ function Backdrop() {
     this.parscale=100.0; // scaled stars must be further away than bodies (1->1AU)...
     this.lightyear = 9.4605284e12; // km
     this.SCALE = this.parscale/this.parsec;
+    this.compassRadius=100;
     this.X =          0;
     this.Y =          1;
     this.Z =          2;
@@ -151,11 +152,13 @@ function Backdrop() {
     this.period=5000.0;
     this.first=undefined;
     //
-    this.prepareForRender=function(name,scene,mainCamera) {
-	var points=scene.getObjectByName("stars");
-	var camera=scene.getObjectByName("camera");
-	if (camera !== undefined && points !== undefined) {
-	    points.material.size = this.defaultSize / Math.tan( ( Math.PI / 180 ) * camera.fov / 2 );
+    this.prepareForRender=function(name,scene,camera,mainCamera) {
+	if (name === "stars") {
+	    // adjust star-flare-sprite size...
+	    var points=scene.getObjectByName("stars");
+	    if (camera !== undefined && points !== undefined) {
+		points.material.size = this.defaultSize / Math.tan( ( Math.PI / 180 ) * camera.fov / 2 );
+	    };
 	};
     };
     this.initScenes = function (mainCamera) {
@@ -168,11 +171,11 @@ function Backdrop() {
 	if (objects.length !== 0) {};
 	return objects;
     };
-    this.updateScenes = function(state,mainCamera,observer) {
-	this.updateScene(state,mainCamera,observer,"navigation");
-	this.updateScene(state,mainCamera,observer,"compass");
-	this.updateScene(state,mainCamera,observer,"stars");
-	this.updateScene(state,mainCamera,observer,"constellation");
+    this.updateScenes = function(state,mainCamera,observer,config) {
+	this.updateScene(state,mainCamera,observer,config,"navigation");
+	this.updateScene(state,mainCamera,observer,config,"compass");
+	this.updateScene(state,mainCamera,observer,config,"stars");
+	this.updateScene(state,mainCamera,observer,config,"constellation");
     };
     this.renderScenes = function(renderer,mainCamera) {
 	["stars","compass","navigation","constellation"].forEach( (name,i)=>{
@@ -181,8 +184,11 @@ function Backdrop() {
 	    let scene=k.scene;
 	    let camera=scene.getObjectByName("camera");
 	    if (show && camera !== undefined) {
-	 	this.prepareForRender(name,scene,this.mainCamera);
+	 	this.prepareForRender(name,scene,camera,this.mainCamera);
 	 	renderer.render(scene, camera);
+		//if (name === "compass") {
+		    //console.log("Rendering:",name,scene);
+		//}
 	    } else {
 	 	//console.log("Not rendering:",i);
 	     }
@@ -212,7 +218,7 @@ function Backdrop() {
 	};
 	return scene;
     };
-    this.updateScene = function(state,mainCamera,observer,name) {
+    this.updateScene = function(state,mainCamera,observer,config,name) {
 	// update camera position and orientation
 	var scene=this.getScene(name);
 	var camera=this.getCamera(scene);
@@ -221,7 +227,17 @@ function Backdrop() {
 	    if (name === "navigation") {
 		camera.position.set(0,0,0); //camera is always in center...
 	    } else if (name === "compass") {
-		camera.position.set(0,0,0); //camera is always in center...
+		var compass=scene.getObjectByName("compass");
+		var center=config["earth"]; // earth center
+		var dd= Math.max(center.radius+center.height,
+				 center.position.distanceTo(observer.position));  // distance from observer to earth center in km
+		var ang=Math.acos(center.radius/dd);
+		var hgt=-this.compassRadius*Math.tan(ang); // 1.08
+		camera.position.set(0,0,0); //camera is always in center of scene...
+		compass.lookAt(observer.zenith);
+		compass.position.set(observer.zenith.x*hgt,observer.zenith.y*hgt,observer.zenith.z*hgt);
+		//console.log("Compass:",ang,hgt,dd,center.radius,center.height);
+		compass.updateMatrixWorld(true);
 	    } else if (name === "stars") {
 		var x=observer.position.x*this.SCALE;
 		var y=observer.position.y*this.SCALE;
@@ -353,44 +369,51 @@ function Backdrop() {
 	return sprites	
     };
     this.createCompassBackdrop=function() {
+	var symbols={0:"N",90:"E",180:"S",270:"W"};
 	var group=new THREE.Group();
-	var radius=100.0;
+	var symbol;
+	var radius=this.compassRadius;
 	var look=new THREE.Vector3(0,0,1);
 	var offset=new THREE.Vector3(0,0,0);
-	let width=2;
+	let width=5;
 	let dlon=10;
 	let size=radius*0.05;
-	let colorMinor=0x222222; let colorMinoh="#222222";
-	let colorMajor=0x222266; let colorMajoh="#229922";
-	let colorh=colorMinor;
+	let colorMinor=0x222222; let colorMinoh="#229922";
+	let colorMajor=0x222266; let colorMajoh="#55ff55";
 	let sizeh=size;
-	group.add(this.createCircleMesh(radius,look,offset,colorMajor,width));
-	for (let ilon=0;ilon<=360;ilon+=dlon) {
-	    let x=radius*Math.cos(ilon*Math.PI/180);
-	    let y=-radius*Math.sin(ilon*Math.PI/180);
+	let colorh=colorMinoh;
+	console.log("Making compass circle...");
+	group.add(this.createCircleMesh(radius,look,offset,colorh,width));
+	group.add(this.createTickMesh(radius,look,offset,colorh,radius*0.01,width));
+	for (let ilon=0;ilon<360;ilon+=dlon) {
+	    let x=-radius*Math.cos(ilon*Math.PI/180);
+	    let y=radius*Math.sin(ilon*Math.PI/180);
 	    if (ilon%90===0) {
+		symbol=symbols[ilon];
 		sizeh=size*2;
-		colorh=colorMajor;
+		colorh=colorMajoh;
 	    } else {
+		symbol=""+ilon;
 		sizeh=size;
-		colorh=colorMinor;
+		colorh=colorMinoh;
 	    };
-	    group.add(UTILS.createTextSprite(""+ilon,{
+	    group.add(UTILS.createTextSprite(symbol,{
 		font:'48px Arial',
 		//floating:true,
 		fillStyle:colorh,
 		size:sizeh,
-		cx:0.5,cy:1,
-		x:x,y:y,z:offset.z,
+		cx:0.5,cy:0,
+		x:x,y:y,z:offset.z+radius*0.01,
 		alphaTest:0.01,
 		//border:true,
 	    }));
 	};
+	group.name="compass";
+	group.renderOrder=100;
 	return group;
     };
     this.createNavigationBackdrop=function() {
 	var group=new THREE.Group();
-	group.name="lines";
 	var radius=1000.0;
 	var dlat=10;
 	var dlon=10;
@@ -480,14 +503,15 @@ function Backdrop() {
 		//border:true,
 	    }));
 	};
+	group.name="lines";
 	group.renderOrder=1;
 	return group;
     };
-    this.createLinesMesh=function(radius,look,offset,color,width) {
+    this.createTickMesh=function(radius,look,offset,color,height,width) {
 	if (radius===undefined) {radius=1000;};
 	if (color===undefined) {color=0x222222;};
-	if (width===undefined) {width=3;};
-	var geometry=this.lineGeometry(radius,look,offset,color,width);
+	if (width===undefined) {width=2;};
+	var geometry=this.tickGeometry(radius,look,offset,color,height,width);
 	var material = new THREE.LineDashedMaterial( {color: color,
 						      linewidth:width,
 						      // dashSize: radius*0.009,
@@ -504,7 +528,7 @@ function Backdrop() {
 //	mesh.computeLineDistances();
 	return mesh
     };
-    this.lineGeometry=function(radius,height,look,offset,color,width) {
+    this.tickGeometry=function(radius,look,offset,color,height,width) {
 	const geometry = new THREE.BufferGeometry();
 	//const indices = [];
 	const positions = [];

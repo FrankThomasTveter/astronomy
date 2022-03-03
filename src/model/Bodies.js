@@ -13,7 +13,6 @@ function Bodies() {
     this.KM = 1000;
     this.DEG_TO_RAD = Math.PI/180;
     this.RAD_TO_DEG = 180/Math.PI;
-    this.inflate=1;
     
     this.NM_TO_KM = 1.852;
     this.LB_TO_KG = 0.453592;
@@ -76,7 +75,7 @@ function Bodies() {
 	    title : 'Mercury',
 	    visible: true,
 	    mass : 3.3022e23,
-	    radius: 2439*this.inflate,
+	    radius: 2439,
 	    color : '#588a7b',
 	    map : 'planets/mercurymap.jpg',
 	    bumpMap : 'planets/mercurybump.jpg',
@@ -91,7 +90,7 @@ function Bodies() {
 	    title : 'Venus',
 	    visible: true,
 	    mass : 4.868e24,
-	    radius : 6051*this.inflate,
+	    radius : 6051,
 	    color : '#fda700',
 	    map : 'planets/venusmap.jpg',
 	    bumpMap : 'planets/venusbump.jpg',
@@ -108,14 +107,14 @@ function Bodies() {
 	    title : 'The Earth',
 	    visible: false,
 	    mass : 5.9736e24,
-	    radius : 6371.088*this.inflate,
+	    radius : 6371.088,
 	    color : '#1F7CDA',
 	    map : 'planets/earthmap1k.jpg',
 	    bumpMap1 : 'planets/earthbump1k.jpg',
 	    bumpScale1 : 20.0,
 	    spec : 'planets/earthspec1k.jpg',
 	    atmosphere : {
-		radius : 6381.0088*this.inflate,
+		radius : 6381.0088,
 		trans : 'planets/earthcloudmaptrans.jpg',
 		cloud : 'planets/earthcloudmap.jpg',
 	    },
@@ -133,7 +132,7 @@ function Bodies() {
 	    title : 'Mars',
 	    visible: true,
 	    mass : 6.4185e23,
-	    radius : 3376*this.inflate,
+	    radius : 3376,
 	    color : '#ff3300',
 	    map : 'planets/marsmap1k.jpg',
 	    bumpMap : 'planets/marsbump1k.jpg',
@@ -149,7 +148,7 @@ function Bodies() {
 	    title : 'Jupiter',
 	    visible: true,
 	    mass : 1.8986e27,
-	    radius : 71492*this.inflate,
+	    radius : 71492,
 	    color : '#ff9932',
 	    map : 'planets/jupitermap.jpg',
 	    bumpScale : 10.0,
@@ -165,15 +164,15 @@ function Bodies() {
 	    title : 'Saturn',
 	    visible: true,
 	    mass : 5.6846e26,
-	    radius : 58232*this.inflate,
+	    radius : 58232,
 	    color : '#ffcc99',
 	    map : 'planets/saturnmap.jpg',
 	    bumpScale : 10.0,
 	    tilt : 26.7,
 	    ring : {
-		innerRadius : 74500*this.inflate,
-		outerRadius : 117580*this.inflate,
-		thickness : 1000*this.inflate,
+		innerRadius : 74500,
+		outerRadius : 117580,
+		thickness : 1000,
 		map : 'planets/saturnringcolor.jpg',
 		trans : 'planets/saturnringpattern.gif',
 		density : 0.9,
@@ -190,14 +189,14 @@ function Bodies() {
 	    title : 'Uranus',
 	    visible: true,
 	    mass : 8.6810e25,
-	    radius : 25559*this.inflate,
+	    radius : 25559,
 	    color : '#99ccff',
 	    map : 'planets/uranusmap.jpg',
 	    bumpScale : 10.0,
 	    ring : {
-		innerRadius : 54500*this.inflate,
-		outerRadius : 57580*this.inflate,
-		thickness : 1000*this.inflate,
+		innerRadius : 54500,
+		outerRadius : 57580,
+		thickness : 1000,
 		trans : 'planets/uranusringtrans.gif',
 		map : 'planets/uranusringcolour.jpg',
 		density : 0.5, // 0.5
@@ -213,7 +212,7 @@ function Bodies() {
 	    title : 'Neptune',
 	    visible: true,
 	    mass : 1.0243e26,
-	    radius : 24764*this.inflate,
+	    radius : 24764,
 	    color : '#3299ff',
 	    map : 'planets/neptunemap.jpg',
 	    bumpScale : 10.0,
@@ -227,7 +226,7 @@ function Bodies() {
 	    title : 'Pluto',
 	    visible: true,
 	    mass : 1.305e22+1.52e21,
-	    radius : 1153*this.inflate,
+	    radius : 1153,
 	    color : '#aaaaaa',
 	    map : 'planets/plutomap1k.jpg',
 	    bumpMap : 'planets/plutobump1k.jpg',
@@ -246,7 +245,7 @@ function Bodies() {
 	    label : true,
 	    visible: true,
 	    mass : 7.3477e22,
-	    radius : 1738.1*this.inflate,
+	    radius : 1738.1,
 	    color : "#ffffff",
 	    map : 'planets/moonmap1k.jpg',
 	    bumpMap : 'planets/moonbump1k.jpg',
@@ -876,8 +875,6 @@ function Bodies() {
 	sprites.name       = "stars";
 	this.replaceStarsBackdrop(sprites);
 	return sprites	
-
-
     };
     this.updateConfig = function(state,config,observer) {
 	if (config===undefined) {return;};
