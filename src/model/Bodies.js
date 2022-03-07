@@ -103,7 +103,7 @@ function Bodies() {
 	earth : {
 	    scale : 1000,
 	    ambient : 0.1,
-	    height : 6371.088*(1-Math.cos((31/60)*Math.PI/180.0)), // model is not perfect,
+	    height : 6371.088*(1-Math.cos((34/60)*Math.PI/180.0)), // model is not perfect,
 	    title : 'The Earth',
 	    visible: false,
 	    mass : 5.9736e24,
@@ -318,6 +318,9 @@ function Bodies() {
 	    visible: true,
 	    mass : 0,
 	    radius : 606,
+	    map : 'moons/charonmap.jpg',
+	    bumpMap : 'moons/charonbump.jpg',
+	    bumpScale : 0.1,
 	    color : '#ffffff',
 	    rotation : new THREE.Vector3(0,0,1),
 	    position : new THREE.Vector3()
@@ -777,11 +780,11 @@ function Bodies() {
 	var title=this.config[name].title||"Undefined-"+name;
 	var label=UTILS.createTextSprite(title,
 					 {font:'48px Arial',
-					  floating:true,
+					  sizeAttenuation:false,
 					  fillStyle:'yellow',
-					  size:200,
+					  size:1/20,    // buffer size
 					  cx:0,cy:0.5,
-					  x:0,y:0,z:0,
+					  x:0,y:0,z:0, //offset (Buffer position)
 					  alphaTest:0.01,
 					  //border:true,
 					  renderOrder:0,
@@ -861,9 +864,6 @@ function Bodies() {
 	    var dist=Math.sqrt(ss.x*ss.x+ss.y*ss.y+ss.z*ss.z); // dist is in parsec
 	    var amag=Math.max(-30,Math.min(10,ss.mag - 5.0*this.log10(dist) + 5.0));  // dist is in parsec
             sizes[i] = this.parscale*10*Math.pow(10,-amag/5.0);
-	     if (ss.pos.lab === "HIP89086") {
-		  	console.log("Mag:",ss.mag,amag,dist,this.log10(dist),sizes[i]," Cols:",ss.color,ss.pos);
-	     };
 	    //alphas[i] = 1;
 	}
 	UTILS.modifyShaders(geometry,material,sizes);
@@ -966,7 +966,7 @@ function Bodies() {
 	    let z=(pos.z-obs.z);
 	    dist=Math.sqrt(x*x+y*y+z*z);
 	    group.position.set(x*scale,y*scale,z*scale);
-	    let alpha=Math.max(0.0,Math.min(1,dist/(4*radius)));
+	    let alpha=Math.max(0.0,Math.min(1,2*radius/(dist+radius)));
 	    this.makeTransparent(state,name,scene,group,alpha);
 	    let rot   = this.config[name].rotation;
 	    this.setRotation(group,rot);
@@ -1000,7 +1000,7 @@ function Bodies() {
 	    };
 	    //console.log("Pos:",name,x,y,z,height,radius);
 	    body.position.set(x*scale,y*scale,z*scale);
-	    let alpha=Math.max(0.0,Math.min(0.8,dist/(4*radius)));
+	    let alpha=Math.max(0.0,Math.min(1,2*radius/(dist+radius)));
 	    //console.log("Transparent:",name,alpha);
 	    this.makeTransparent(state,name,scene,body,alpha);
 	    let rot   = this.config[name].rotation;
@@ -1016,7 +1016,7 @@ function Bodies() {
 	    let z=(pos.z-obs.z);
 	    dist=Math.sqrt(x*x+y*y+z*z);
 	    body.position.set(x*scale,y*scale,z*scale);
-	    let alpha=Math.max(0.0,Math.min(1,dist/(4*radius)));
+	    let alpha=Math.max(0.0,Math.min(1,2*radius/(dist+radius)));
 	    this.makeTransparent(state,name,scene,body,alpha);
 	    //console.log("Pos:",name,pos);
 	    let rot   = this.config[name].rotation;
@@ -1029,7 +1029,7 @@ function Bodies() {
     this.makeTransparent=function(state,name,scene,body,alpha) {
 	let material=body.material;
 	if (material === undefined) {material=body.getObjectByName(name).material;};
-	if (alpha === 1) {
+	if (alpha === 0) {
 	    material.transparent=false;
 	} else {
 	    material.transparent=true;
@@ -1053,9 +1053,9 @@ function Bodies() {
 		    let range=Math.max(1,Math.sqrt((spos.x-pos.x)*(spos.x-pos.x)+
 						    (spos.y-pos.y)*(spos.y-pos.y)+
 						    (spos.z-pos.z)*(spos.z-pos.z)));
-		    let dist=Math.max(1,Math.sqrt((spos.x-mainCamera.position.x)*(spos.x-mainCamera.position.x)+
-						  (spos.y-mainCamera.position.y)*(spos.y-mainCamera.position.y)+
-						  (spos.z-mainCamera.position.z)*(spos.z-mainCamera.position.z)));
+		    let dist=Math.max(1,Math.sqrt((spos.x-observer.position.x)*(spos.x-observer.position.x)+
+						  (spos.y-observer.position.y)*(spos.y-observer.position.y)+
+						  (spos.z-observer.position.z)*(spos.z-observer.position.z)));
 		    let visible=(range/dist)*180/Math.PI; // visible fov
 		    let opacity=1-Math.min(1,Math.max(0,mainCamera.fov/visible-1));
 		    //console.log("Opacity:",satellite,range,dist,range/dist,mainCamera.fov,opacity);
@@ -1128,23 +1128,46 @@ function Bodies() {
 	    let obs=observer.position;
 	    this.direction.set(pos.x-obs.x,pos.y-obs.y,pos.z-obs.z);
 	    // resize...
-	    let size=label.width*scale*this.direction.length()/500;
-	    label.material.size=size;
+	    let size=label.width*this.direction.length()/500;//500
+	    label.material.size=size*scale;
 	    label.material.opacity=opacity;
-	    //console.log("Sprite:",name,label.width,label.height);
 	    //console.log(name,label.scale,size,label);
 	    // reposition...
+	    let ff=(1+0.01*Math.sin(this.direction.length()))/100.1;
+	    //this.direction.normalize();
+	    let x=this.direction.x;
+	    let y=this.direction.y;
+	    let z=this.direction.z;
 	    this.right.crossVectors(this.direction,this.config.observer.zenith);
 	    if (this.right.length() > 0) {
 		this.right.normalize();
-		this.right.multiplyScalar(range*scale*1.1);
-		this.right.addScaledVector(pos,scale);
-		let x=this.right.x-obs.x*scale;
-		let y=this.right.y-obs.y*scale;
-		let z=this.right.z-obs.z*scale;
-		label.position.set(x,y,z);
-		//console.log("Right:",this.right,label.position);
+		this.right.multiplyScalar(range*1.1);
+		x = x + this.right.x;
+		y = y + this.right.y;
+		z = z + this.right.z;
 	    };	    
+	    //label.attributes.position.array[0]=x*scale;
+	    //label.attributes.position.array[1]=y*scale;
+	    //label.attributes.position.array[2]=z*scale;
+	    //label.geometry.attributes.position.needsUpdate=true;
+	    label.position.set(x*scale,y*scale,z*scale);
+	    var ss=mainCamera.fov/20;
+	    label.scale.set(label.width*label.size*ss,
+			    label.height*label.size*ss,
+			    label.height*label.size*ss);
+	    label.material.needsUpdate = true;
+	    label.needsUpdate = true;
+	    //label.material.needsUpdate = true;
+	    //label.material.map.needsUpdate = true;
+	    //label.size=ff*this.direction.length();
+	    //label.geometry.attributes.sizes.needsUpdate=true;
+	    //if (name === "sun") {
+		//console.log("Sprite:",name,label);
+	     	//console.log("Sprite:",name,label.width,label.height,size/this.direction.length(),x,y,z);
+		//console.log("Size:",size*scale);
+		//label.geometry.attributes.needsUpdate=true;
+		//label.geometry.needsUpdate=true;
+	    //};	    
 	} else {
 	    console.log("No label found...",name);
 	};

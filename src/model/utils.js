@@ -45,55 +45,28 @@ export function createTextSprite(text,opts) {
     texture.needsUpdate = true;
     var size=opts.size||10;
     var sprite;
-    if (opts.floating) {
-	var color=new THREE.Color(opts.color || 0x0000ff);
-	//console.log( texture.image.width, texture.image.height );
-	var options={
-	    map: texture,
-	    vertexColors: THREE.VertexColors,
-	    size:size*(opts.scale||1),
-	    transparent:true,
-	    //alphaTest:0.01,
-	    //useScreenCoordinates: true,
-	};
-	if (opts.alphaTest !== undefined) {options.alphaTest=opts.alphaTest};
-	var material = new THREE.PointsMaterial(options);
-	var geometry = new THREE.BufferGeometry();
-	geometry.setAttribute('position',new THREE.Float32BufferAttribute(
-	    new THREE.Vector3(opts.x,opts.y,opts.z).toArray(),3));
-	geometry.setAttribute('color',new THREE.Float32BufferAttribute([1,1,1],3));
-	geometry.setAttribute('alpha',new THREE.Float32BufferAttribute([1],1));
-	var sizes = new Float32Array(1);
-	sizes[0]=1;
-	modifyShaders(geometry,material, sizes);
-	sprite = new THREE.Points(geometry, material);
-	if (opts.renderOrder !== undefined) {
-	    material.depthTest=false;
-	    sprite.renderOrder=opts.renderOrder;
-	};
-	sprite.width=canvas.width;
-	sprite.height=canvas.height;
-    } else {
-	var options={
-	    map: texture,
-	    //needsUpdate:true,
-	    //useScreenCoordinates: false,
-	    sizeAttenuation:opts.sizeAttenuation||true,
-	    //alphaTest:0.01,
-	    transparent: true,
-	};
-	if (opts.alphaTest !== undefined) {options.alphaTest=opts.alphaTest};
-	var material = new THREE.SpriteMaterial(options);
-	sprite = new THREE.Sprite(material);
-	sprite.width=canvas.width;
-	sprite.height=canvas.height;
-	if (opts.size !== undefined) {
-	    sprite.scale.set(canvas.width*size/100,canvas.height*size/100,canvas.height*size/100);
-	};
-	if (opts.cx !== undefined && opts.cy !== undefined) {
-	    sprite.center.set(opts.cx,opts.cy);
-	};
-    }
+    var options={
+	map: texture,
+	sizeAttenuation:true,
+	transparent: true,
+	//alphaTest:0.01,
+	//needsUpdate:true,
+	//useScreenCoordinates: false,
+    };
+    if (opts.sizeAttenuation !== undefined) { options.sizeAttenuation=opts.sizeAttenuation ;}
+    if (opts.alphaTest !== undefined) {options.alphaTest=opts.alphaTest};
+    var material = new THREE.SpriteMaterial(options);
+    sprite = new THREE.Sprite(material);
+    //console.log("Sprite:",text,opts,options,sprite);
+    sprite.size=size/100;
+    sprite.width=canvas.width;
+    sprite.height=canvas.height;
+    if (opts.size !== undefined) {
+	sprite.scale.set(sprite.width*sprite.size,sprite.height*sprite.size,sprite.height*sprite.size);
+    };
+    if (opts.cx !== undefined && opts.cy !== undefined) {
+	sprite.center.set(opts.cx,opts.cy);
+    };
     if (sprite !== undefined) {
 	if (opts.x !== undefined && opts.y !== undefined && opts.z !== undefined) {
 	    sprite.position.set(opts.x,opts.y,opts.z);
@@ -126,26 +99,27 @@ export function getTextCanvas(text,opts) {
     canvas.width=width;
     canvas.height=height;
     var dx=0,dy=0;
-    if (opts.floating) {
-	var twidth=width;
-	var theight=height;
-	if (opts.cx !== undefined) {
-	    twidth=(width*2);
-	};
-	if (opts.cy !== undefined) {
-	    theight=(height*2);
-	};
-	var block=Math.max(theight,twidth);
-	canvas.height=block;
-	canvas.width=block;
-	if (opts.cx !== undefined) {
-	    dx=(canvas.width*0.5)-width;
-	};
-	if (opts.cy !== undefined) {
-	    dy=(canvas.height*0.5)-height;
-	};
-	opts.scale=canvas.height/lheight
-    };
+    // if (opts.floating) {
+    // 	var twidth=width;
+    // 	var theight=height;
+    // 	if (opts.cx !== undefined) {
+    // 	    twidth=(width*2);
+    // 	};
+    // 	if (opts.cy !== undefined) {
+    // 	    theight=(height*2);
+    // 	};
+    // 	var block=Math.max(theight,twidth);
+    // 	canvas.height=block;
+    // 	canvas.width=block;
+    // 	if (opts.cx !== undefined) {
+    // 	    dx=(canvas.width*0.5)-width;
+    // 	};
+    // 	if (opts.cy !== undefined) {
+    // 	    dy=(canvas.height*0.5)-height;
+    // 	};
+    // 	opts.scale=canvas.height/lheight
+    // 	//console.log("Canvas:",text,canvas,opts.scale);
+    // };
     //console.log( canvas.width, canvas.height );
     // final draw...
     if (opts.border) {

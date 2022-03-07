@@ -353,9 +353,9 @@ function Backdrop() {
 	    var dist=Math.sqrt(ss.x*ss.x+ss.y*ss.y+ss.z*ss.z); // dist is in parsec
 	    var amag=Math.max(-30,Math.min(10,ss.mag - 5.0*this.log10(dist) + 5.0));  // dist is in parsec
             sizes[i] = this.parscale*10*Math.pow(10,-amag/5.0);
-	     if (ss.pos.lab === "HIP89086") {
-		  	console.log("Mag:",ss.mag,amag,dist,this.log10(dist),sizes[i]," Cols:",ss.color,ss.pos);
-	     };
+	     //if (ss.pos.lab === "HIP89086") {
+	//	 console.log("Mag:",ss.mag,amag,dist,this.log10(dist),sizes[i]," Cols:",ss.color,ss.pos);
+	     //};
 	    //alphas[i] = 1;
 	}
 	UTILS.modifyShaders(geometry,material,sizes);
@@ -399,7 +399,6 @@ function Backdrop() {
 	    };
 	    group.add(UTILS.createTextSprite(symbol,{
 		font:'48px Arial',
-		//floating:true,
 		fillStyle:colorh,
 		size:sizeh,
 		cx:0.5,cy:0,
@@ -435,7 +434,6 @@ function Backdrop() {
 		let y=0;
 		group.add(UTILS.createTextSprite(""+ilat,{
 		    font:'48px Arial',
-		    //floating:true,
 		    fillStyle:colorh,
 		    size:size,
 		    cx:1,cy:0,
@@ -445,7 +443,6 @@ function Backdrop() {
 		}));
 		group.add(UTILS.createTextSprite(""+ilat,{
 		    font:'48px Arial',
-		    //floating:true,
 		    fillStyle:colorh,
 		    size:size,
 		    cx:1,cy:0,
@@ -455,7 +452,6 @@ function Backdrop() {
 		}));
 		group.add(UTILS.createTextSprite(""+ilat,{
 		    font:'48px Arial',
-		    //floating:true,
 		    fillStyle:colorh,
 		    size:size,
 		    cx:1,cy:0,
@@ -465,7 +461,6 @@ function Backdrop() {
 		}));
 		group.add(UTILS.createTextSprite(""+ilat,{
 		    font:'48px Arial',
-		    //floating:true,
 		    fillStyle:colorh,
 		    size:size,
 		    cx:1,cy:0,
@@ -486,7 +481,6 @@ function Backdrop() {
 	    let y=radius*Math.sin(ilon*Math.PI/180);
 	    group.add(UTILS.createTextSprite(""+(360+180-ilon)%360,{
 		font:'48px Arial',
-		//floating:true,
 		fillStyle:colorh,
 		size:size,
 		cx:0,cy:0,
@@ -495,7 +489,6 @@ function Backdrop() {
 	    }));
 	    group.add(UTILS.createTextSprite(""+(360-ilon)%360,{
 		font:'48px Arial',
-		//floating:true,
 		fillStyle:colorh,
 		size:size,
 		cx:0,cy:0,
