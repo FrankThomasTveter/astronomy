@@ -20,7 +20,8 @@ class Location extends Component {
 	super(props);
         const {state} = props;
 	state.React.Location=this;
-	this.state={lat:state.Events.getLat(state),lon:state.Events.getLon(state)};
+	this.state={lat:state.Events.getLat(state),lon:state.Events.getLon(state),
+		    ilat:state.Events.getLat(state),ilon:state.Events.getLon(state)};
 	this.show=this.show.bind(this);
 	this.setLat=this.setLat.bind(this);
 	this.setLon=this.setLon.bind(this);
@@ -36,30 +37,33 @@ class Location extends Component {
     setLat(e) {
         const { state } = this.props; // , classes, layout
 	//console.log("Changed lat:",e.target.value);
-	var lat=parseFloat(e.target.value);
-	if (isNaN(lat)) {lat=60.0;};
-	this.setState({lat:lat});
-	state.Events.setLat(state,this.state.lat);
+	var lat=parseFloat(e.target.value) || 0.0;
+	if (isNaN(lat)){lat=0.0;};
+	this.setState({lat:e.target.value,ilat:lat});
+	state.Events.setLat(state,lat);
+	state.React.Chart.flyTo(state.Events.getLat(state),state.Events.getLon(state));
 	state.Events.triggerUpdate(state);
     };
     setLon(e) {
         const { state } = this.props; // classes, layout 
 	//console.log("Changed lon:",e.target.value);
-	var lon=parseFloat(e.target.value);
-	if (isNaN(lon)) {lon=0.0;};
-	this.setState({lon:lon});
-	state.Events.setLon(state,this.state.lon);
+	this.setState({lon:e.target.value});
+	var lon=parseFloat(e.target.value) || 0.0;
+	if (isNaN(lon)){lon=0.0;};
+	this.setState({lon:e.target.value,ilon:lon});
+	state.Events.setLon(state,lon);
+	state.React.Chart.flyTo(state.Events.getLat(state),state.Events.getLon(state));
 	state.Events.triggerUpdate(state);
     };
     onClick(event) {
 	//console.log("Event:",event);
         const { state } = this.props; // , classes, layout
 	const { lat, lng } = event.latlng;
-	this.setState({lat:lat, lon:lng});
+	this.setState({lat:lat, lon:lng, ilat:lat, ilon:lng});
 	state.Events.setLat(state,this.state.lat);
 	state.Events.setLon(state,this.state.lon);
 	state.Events.triggerUpdate(state);
-	console.log("Click:",this.state);
+	//console.log("Click:",this.state);
     };
     render() {
         const { classes, state } = this.props; // , layout
@@ -85,13 +89,13 @@ class Location extends Component {
 		<div onMouseDown={this.handleChildClick} style={{display:'flex', flexDirection:'column'}} className="cancel">
 		 <div style={{display:'flex', justifyContent:'flex-start'}}>
 		  <label>Latitude</label>
-		  <input type="text" value={this.state.lat} onChange={this.setLat} onBlur={this.setLat} maxLength="5" size="5"/>
+		  <input type="text" value={this.state.lat} onChange={this.setLat} onBlur={this.setLat} maxLength="10" size="5"/>
 		  <label>Longitude</label>
-		  <input type="text" value={this.state.lon} onChange={this.setLon} onBlur={this.setLon} maxLength="5" size="5"/>
+		  <input type="text" value={this.state.lon} onChange={this.setLon} onBlur={this.setLon} maxLength="10" size="5"/>
 	         </div>
 		<div style={{width:"100%",height:"100px"}}>
 		<Chart state={state} classes={cls}
-	           position={[this.state.lat,this.state.lon]}
+	           position={[this.state.ilat,this.state.ilon]}
 	           onClick={this.onClick}/>
 	         </div>
 	        </div>
@@ -101,7 +105,7 @@ class Location extends Component {
     };
 }
 // disabled={false}
-
+// this.state.lat,this.state.lon
 
 Location.propTypes = {
     classes: PropTypes.object.isRequired,

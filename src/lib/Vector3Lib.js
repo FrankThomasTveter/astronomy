@@ -432,7 +432,7 @@ function Vector3( x, y, z ) {
     this.angleTo= function ( v ) {
 	var theta = this.dot( v ) / ( this.length() * v.length() );
 	// clamp, to handle numerical problems
-	return Math.acos( Math.clamp( theta, - 1, 1 ) );
+	return Math.acos( Math.min( Math.max(theta, - 1), 1 ) );
     };
     this.distanceTo= function ( v ) {
 	return Math.sqrt( this.distanceToSquared( v ) );

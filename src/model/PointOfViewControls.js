@@ -26,6 +26,7 @@ var PointOfViewControls = function ( object, domElement, model ) {
 	this.zoomSpeed = 1.2;
 	this.panSpeed = 0.3;
         this.minfov=0.0001;
+        this.maxfov=90.0;
     
 	this.noRotate = false;
 	this.noZoom = false;
@@ -215,7 +216,7 @@ var PointOfViewControls = function ( object, domElement, model ) {
 			factor = _touchZoomDistanceStart / _touchZoomDistanceEnd;
 			_touchZoomDistanceStart = _touchZoomDistanceEnd;
 			//_eye.multiplyScalar( factor );
-		    this.object.fov=Math.max(this.minfov,Math.min(45,THREE.Math.radToDeg(2*Math.atan(
+		    this.object.fov=Math.max(this.minfov,Math.min(this.maxfov,THREE.Math.radToDeg(2*Math.atan(
 			Math.tan(THREE.Math.degToRad(this.object.fov)*0.5)*factor))));
                     this.object.updateProjectionMatrix();
 		} else {
@@ -225,7 +226,7 @@ var PointOfViewControls = function ( object, domElement, model ) {
 			if ( factor !== 1.0 && factor > 0.0 ) {
 
 				//_eye.multiplyScalar( factor );
-			    this.object.fov=Math.max(this.minfov,Math.min(45.0,THREE.Math.radToDeg(2.0*Math.atan(
+			    this.object.fov=Math.max(this.minfov,Math.min(this.maxfov,THREE.Math.radToDeg(2.0*Math.atan(
 				Math.tan(THREE.Math.degToRad(this.object.fov)*0.5)*factor))));
 			    this.object.updateProjectionMatrix();
 				if ( _this.staticMoving ) {

@@ -1,17 +1,3 @@
-//
-// The chain runs continuously.
-// The "run" subroutine calls sub-processes for
-//  * input,
-//  * server-requests, 
-//  * config-update, 
-//  * 3D-configling and 
-//  * display. 
-// The "run" subroutine finally re-calls itself.
-// Some chain - elements are called every time the
-// "run" subroutine is called, while some are only
-// called at certain "step"s (like the orbit update).
-//
-
 //import Vector2 from './Vector2Lib';
 import Vector3 from './Vector3Lib';
 //import * as TWEEN from './tween';
@@ -33,7 +19,6 @@ function Model() {
     // other data...
     this.deg2rad = Math.PI/180.0;
     this.controlsRedraw=false; 
-    this.configRedraw=false; 
     this.redraw = true;
     // update 3D model of the solar system...
     this.scenes={};
@@ -42,19 +27,17 @@ function Model() {
     this.consReq = 0;
     this.lastCon = 0;
     this.lastTime = (new moment().valueOf())-10000.0;
-    this.reqId=undefined;
     this.seq=0;
     // new requests are pushed to "this.requests", this.requests.state[id] is updated async with body state
     this.requests = { state:[{location : {latitude : 60.0,
 					 longitude: 10.0,
 					 height   : 0.0},
-			      sent: false,
-			      received: false,
-			      processed: false,
-			      asked: new moment().valueOf(), // when request was sent
-			      used:  new moment().valueOf(),  // when last used
-			      seq:  this.seq,                 // sequence number
-			      event : 0, // start event index
+			      sent:      undefined,
+			      received:  undefined,
+			      processed: undefined,
+			      used:      new moment().valueOf(),  // when last used
+			      seq:       this.seq,                 // sequence number
+			      event :    0, // start event index
 			      events : [{ reqId : 1,
 					  label: "Sunrise", 
 					  target : "sun",
@@ -319,7 +302,7 @@ function Model() {
 	//this.requestAnimFrame(this.update);
 	var config=undefined;
 	this.nowMsec=new moment().valueOf();
-	if (this.lastMsec === undefined) {this.lastTimeMsec=this.nowMsec;};
+	//if (this.lastMsec === undefined) {this.lastTime=this.nowMsec;};
 	//var deltaMsec   = Math.min(200, this.nowMsec - this.lastMsec)
 	if (this.tweentime > this.nowMsec) {
 	    //TWEEN.update();
@@ -338,25 +321,14 @@ function Model() {
 	};
 	//if (this.step === 0) {
 	this.configUpdate(state,ttrg);
-	//     if (this.configRedraw) {
-	// 	this.redraw=true;
-	// 	this.configRedraw=false;
-	//     };
-	//     //this.updateScene(state);
-	// };
-	// this.lastTimeMsec= this.nowMsec;
-	// var speed=state.Events.getSpeed(state);
-	// if (this.reqId !== -1 && speed > 0) {
-	//     this.step=(this.step+1)%2;    
-	// } else {
-	//     this.step=(this.step+1)%100;    
-	// };
-
-
-	 if (this.reqId !== -1 && state.React !== undefined && state.React.Model !== undefined) {
+	 if (state.React !== undefined && state.React.Model !== undefined) {
 	     config=this.config;
 	 };
 	//console.log("Config:",ttrg,JSON.stringify(config));
+	//var dir=config.observer.zenith;
+	//if (dir !== undefined) {
+	//    console.log("Zenith:",dir.x,dir.y,dir.z);
+	//};
 	return  config;
     };
     this.offzoom = function (delta) {
@@ -371,7 +343,7 @@ function Model() {
     };
     this.updateScene = function (state) {
 	// update position of all bodies
-	if (this.reqId !== -1 && state.React !== undefined && state.React.Model !== undefined) {
+	if (state.React !== undefined && state.React.Model !== undefined) {
 	    console.log("Update scene..");
 	    state.Scene.defined=true;
 	} else {
@@ -470,15 +442,15 @@ function Model() {
 	this.requests.state.forEach((req,id) => {
 	    var other1=this.requests.current !== id;
 	    var other2=iid !== id;
-	    //console.log("Cleaning:",id,other,now-req.asked,now-req.used,req.sent,req.received,req.processed);
-	    if (other1 && other2 && 
-		now-req.asked > 6*1000 &&
-		(req.sent===undefined || ! req.sent) && 
-		(req.received === undefined || ! req.received)) {
+	    //console.log("Cleaning:",id,other,now-req.sent,now-req.used,req.sent,req.received,req.processed);
+	    if (other1 && other2 &&
+		req.sent !== undefined && 
+		now-req.sent > 6*1000 &&
+		req.received === undefined) {
 		//console.log("Stale request found:",id);
 	    } else if (other1 && other2 &&
 		now-req.used > 6*1000 &&
-		(req.processed!==undefined || req.processed)) {
+		req.processed!==undefined) {
 		//console.log("Inactive request found:",id);
 	    } else {
 		state.push(req);
@@ -514,7 +486,9 @@ function Model() {
 	    // 		cfg.fov===rr.fov,
 	    // 		cfg.dir===rr.dir,
 	    // 		cfg.con===rr.con,ll,rr,cfg);
-	    if (req.sent && req.received && req.processed &&
+	    if (req.sent !== undefined &&
+		req.received !== undefined &&
+		req.processed !== undefined &&
 		cfg.lat===ll.latitude &&
 		cfg.lon===ll.longitude &&
 		cfg.epoch===rr.epoch &&
@@ -525,7 +499,7 @@ function Model() {
 	       ) {
 		req.used= new moment().valueOf();
 		req.seq=++this.seq;
-		console.log("Found match...",id,cfg);
+		//console.log("Found match...",id,cfg);
 		reqId=id;
 	    };
 	});
@@ -538,8 +512,10 @@ function Model() {
 	reqId=this.cleanRequests(state,reqId);
 	if (reqId !== undefined) { 
 	    let req=this.getRequest(state,reqId);
-	    if (req !== undefined && req.sent && req.processed) {
-		req.processed=false;
+	    if (req !== undefined &&
+		req.sent !== undefined &&
+		req.processed === undefined) {
+		req.processed=new moment().valueOf();
 		this.requests.current=reqId;
 		return; // use old request...
 	    };
@@ -577,7 +553,9 @@ function Model() {
 				 longitude : cfg.lon,
 				 height : 0.0
 				},
-		     asked: new moment().valueOf(), // when request was sent
+		     sent: undefined,
+		     received: undefined,
+		     processed: undefined,
 		     used:  new moment().valueOf(),  // when last used
 		     seq:  ++this.seq,                 // sequence number
 		     event : epoch,
@@ -590,10 +568,10 @@ function Model() {
 	var ret=false;
 	var reqId=this.requests.current;
 	var req = this.getRequest(state,reqId);
-	if ( ! req.sent) { // we have a new target
+	if (req.sent == undefined) { // we have a new target
 	    if (this.bdeb) {console.log("Sending new request.",reqId);}
 	    this.sendRequest(state,req,[]);
-	    req.sent= true;
+	    req.sent= new moment().valueOf();
 	}
 	return ret;
     };
@@ -818,7 +796,7 @@ function Model() {
 		    });
 		}
 	    }
-	    req.received= true;
+	    req.received= new moment().valueOf();
 	    if (this.bdeb) {console.log("Completed request:",req);};
 	} else {
 	    console.log("Received error:",error);
@@ -892,13 +870,14 @@ function Model() {
 	var ret=false;
 	var reqId=this.requests.current;
 	var req = this.getRequest(state,reqId);
-	if ( req.received && ! req.processed) { // we have a new target
+	if ( req.received !== undefined &&
+	     req.processed === undefined) { // we have a new target
 	    let request=req.events[req.event]
 	    let ttrg=request.epoch;
 	    let target=request.target;
 	    state.Events.setModelTime(state,ttrg);
 	    this.setNewTarget(state,target);
-	    req.processed = true;
+	    req.processed = new moment().valueOf();
 	    //console.log("Calculated orbital elements:",req);
 	    ret=true;
 	}
@@ -923,7 +902,7 @@ function Model() {
 	var ret = false;
 	var reqId = this.requests.current;
 	var req = this.getRequest(state,reqId);
-	if (req.processed & this.config.reqId !== reqId ) { // process new request
+	if (req.processed !== undefined && this.config.reqId !== reqId ) { // process new request
 	    //console.log("Constructing config from orbital elements.");
 	    // get times
 	    this.config.epochs = [];
@@ -933,41 +912,21 @@ function Model() {
 	    if (req.event !== undefined) { this.config.event=req.event;};
 	    //this.config.young=(this.config.current+1)%2;
 	    if (this.getState(state,req,this.config,ttrg)) { //
-		//this.config.old=this.config.current;
-		//this.config.current=this.config.young;
-		//if (this.config["bodies"] !== undefined) {
-		    // "tween" config from oldState to newState
-		//};
 		//  point camera
 		if (req.event !== undefined) {
 		    //this.config.dtg = new moment(ttrg).toISOString();
 		    if (this.bdeb) {console.log("Dtg:",ttrg,this.config.dtg);};
 		    this.config.newTarget=true;
 		}
-		// // delete old requests
-		// for (var ii=0; ii < this.requests.state.length; ii++) {
-		//     var req=this.requests.state[ii];
-		//     if (req["events"] !== undefined) {
-		// 	// delete this.requests.state[key];			    
-		//     }
-		// }
  		this.config.reqId=reqId;
 	    };
-	    //req.orbit = false;
-            // this.setInfo(state,this.config.dtg,
-	    // 		 this.config.lat,
-	    // 		 this.config.lon);
-	    this.configRedraw=true;
-	} else if (req.processed) { // time lapse...
+	} else if (req.processed !== undefined) { // time lapse...
 	    //console.log("Time lapse.");
 	    // this.config.young=(this.config.current+1)%2;
 	    if (this.getState(state,req, this.config,ttrg)) {
 		// this.setInfo(state,this.config.dtg,
 		// 	     this.config.lat,
 		// 	     this.config.lon);
-		//this.config.old=this.config.current;
-		//this.config.current=this.config.young;
-		this.configRedraw=true;
 	    }
 	    //    } else {
 	    //	console.log("Nothing to do:",req.processed);
@@ -977,7 +936,7 @@ function Model() {
     };
     this.getState = function (state,req,config,ttrg){
 	var ret=false;
-	if (! req.processed) {return ret;};
+	if (req.processed===undefined) {return ret;};
 	config.lat=req.location.latitude;
 	config.lon=req.location.longitude;
 	let first=-1;
@@ -1012,19 +971,28 @@ function Model() {
 	    var dt0 = nextEpoch - prevEpoch;
 	    var f = dt/Math.max(1e-10,dt0);
 	    ret=true;
+	    // should we send a new request?
+	    if (prev===0) {
+		console.log("Send prev request...");
+	    } else if (next === req.events.length) {
+		console.log("Send next request...");
+	    };
 	} else if (prev !== -1 ) {  // found epoch before, but not after
 	    next=first;
 	    prev=first;
 	    f=0.0;
+	    // stop clock, set clock to first time
 	    ret=true;
 	} else if (next !== -1) {  // found epoch after, but not before
 	    next=last;
 	    prev=last;
 	    f=0.0;
+	    // stop clock, set clock to last time
 	    ret=true;
 	} else {
 	    //console.log("Times:",+ttrg,"|",+e0 ,"|",+speed, "|",+m0);
 	    console.log("Unable to find interval:",+ttrg,prev,next,req["events"]);
+	    // send new request if we have a timeoout...
 	    ret=false;
 	}
 	if (ret) {
@@ -1089,6 +1057,13 @@ function Model() {
     this.intlin = function (p,n,f) { // linear interpolation
 	return ( p + (n-p)*f );
     };
+    // this.intsph = function (trg,p,n,f) { // spherical interpolation
+    // 	if (this.work===undefined) {this.work=new THREE.Vector3();};
+    // 	this.work.crossVectors(p,n).normalize();
+    // 	var angle=p.angleTo(n)*f;
+    // 	trg.set(p.x,p.y,p.z);
+    // 	trg.applyAxisAngle(this.work,angle);
+    // };
     this.int2pi = function (p,n,f,t) { // targetted cyclic interpolation
 	if (t === undefined) { t=0.0; };
 	var diff = (n-p)%(2.0*Math.PI);
@@ -1137,13 +1112,15 @@ function Model() {
 	    configObserver.position.slerpVectors(reqPrev.position, reqNext.position, f);
 	    configObserver.position.add(configBodies[reqOrigo].position);
 	}
-	 configObserver.zenith.slerpVectors(reqPrev.zenith,reqNext.zenith,f);
-
+	configObserver.zenith.slerpVectors(reqPrev.zenith,reqNext.zenith,f);
 	configObserver.zenith.normalize();
-	 configObserver.i.slerpVectors(reqPrev.i,reqNext.i,f);
-	 configObserver.j.slerpVectors(reqPrev.j,reqNext.j,f);
-	 configObserver.k.slerpVectors(reqPrev.k,reqNext.k,f);
-
+	configObserver.i.slerpVectors(reqPrev.i,reqNext.i,f);
+	configObserver.i.normalize();
+	configObserver.j.slerpVectors(reqPrev.j,reqNext.j,f);
+	configObserver.j.normalize();
+	configObserver.k.slerpVectors(reqPrev.k,reqNext.k,f);
+	configObserver.k.normalize();
+	
 	// console.log("Zenith:",JSON.stringify(configObserver)," prev:",JSON.stringify(reqPrev)," next:",JSON.stringify(reqNext));
 
 	//console.log("setting axis:", configObserver.i.x,configObserver.i.y,configObserver.i.z);

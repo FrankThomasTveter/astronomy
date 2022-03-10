@@ -61,12 +61,18 @@ class GeoJsonMap extends Component {
     constructor(props) {
 	super(props);
 	const {state} = props;
+	this.state={map:null};
 	this.icon=new Icon({iconUrl: markerIconPng,
 			    iconSize: [25, 41],
 			    iconAnchor: [12, 41]});
 	this.update=this.update.bind(this);
 	state.React.Chart=this;
-    };    
+    };
+    flyTo(lat,lon,zoom){
+	if (zoom===undefined) {zoom=this.state.map.getZoom();};
+	//console.log("Flyto:",lat,lon,zoom);
+	this.state.map.flyTo([lat, lon],zoom,{animate:true,duration:0.5});
+    };
     update() {
 	this.forceUpdate();
     };
@@ -75,6 +81,7 @@ class GeoJsonMap extends Component {
 	//var markFunction= (mark) => {      };
 	//console.log("Onclick:",onClick);
 	return (<MapContainer className={classes.map}
+		    whenCreated={map => this.setState({ map })}
                     center={position}
                     zoom={2}
                     maxZoom={10}
