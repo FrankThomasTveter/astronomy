@@ -1,4 +1,5 @@
 //console.log("Loading UtilsLib.js");
+import Vector3 from './Vector3Lib';
 		    
 function Utils() {
     this.version="1";
@@ -270,9 +271,11 @@ function Utils() {
             return obj;
 	var temp;
 	if (obj instanceof Date) {
-	    temp = new obj.constructor(); //or new Date(obj);
+	    temp = new obj.constructor(); //or new Date(obj), Vector3 etc...;
+	} else if ( obj instanceof Vector3) {
+	    temp = new Vector3();
 	} else {
-	    temp = obj.constructor();
+	    temp=obj.constructor();
 	};
 	for (var key in obj) {
             if (Object.prototype.hasOwnProperty.call(obj, key)) {
@@ -1136,11 +1139,18 @@ function Utils() {
 	}
 	return ret;
     };
-    this.addHours=function(state,dtgdate,hrs) {
+    this.addHours=function(state,dtgdate,hrs,prev,next) {
 	var dtgs=[dtgdate.toISOString()];
-	dtgs.push(state.Utils.addHour(state,dtgdate,-Math.round(hrs/2)).toISOString());
-	for ( var tt = 0; tt < hrs; tt++) {
-	    dtgs.push(state.Utils.addHour(state,dtgdate,1.0).toISOString());
+	var steps= Math.max(1,Math.round(hrs/2));
+	if (prev !== undefined && prev) { // move back starting point...
+	    dtgs.push(state.Utils.addHour(state,dtgdate,-steps*2).toISOString());
+	} else if (next!== undefined && next) {
+	    // do nothing
+	} else {
+	    dtgs.push(state.Utils.addHour(state,dtgdate,-steps).toISOString());
+	}
+	for ( var tt = 0; tt < steps*2; tt++) {
+	    dtgs.push(state.Utils.addHour(state,dtgdate,1).toISOString());
 	};
 	return this.sort_unique(dtgs);
     };

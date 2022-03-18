@@ -28,33 +28,19 @@ function Model() {
     this.lastCon = 0;
     this.lastTime = (new moment().valueOf())-10000.0;
     this.seq=0;
-    // new requests are pushed to "this.requests", this.requests.state[id] is updated async with body state
-    this.requests = { state:[{location : {latitude : 60.0,
-					 longitude: 10.0,
-					 height   : 0.0},
-			      sent:      undefined,
-			      received:  undefined,
-			      processed: undefined,
-			      used:      new moment().valueOf(),  // when last used
-			      seq:       this.seq,                 // sequence number
-			      event :    0, // start event index
-			      events : [{ reqId : 1,
-					  label: "Sunrise", 
-					  target : "sun",
-					  //pointAt : "The Sun",
-					  dir: undefined,
-					  fov: 1.0,
-					  con: false,
-					  dtg : "2016-01-02T16:56:00Z"
-					}]
-			     }],
-		      current: 0 // last request pushed to stack
-		    };
     // time is contained in Events: targettime=state.Events.getModelTime(state)
+    // new requests are pushed to "this.requests"
+    // events are updated async with body state
+    // downloaded events are put into the stack
+    // the config contains the state interpolated from the stack
+    this.requests = {state:[],current:undefined};
+    this.stack={};
     this.config = { reqId : -1,
 		    event : 0,
 		    bodies:{},
 		    observer:{},
+		    epochs:[],
+		    dtgs:[],
 		    newTarget : false,
 		  };
     this.AU = 149597870;
@@ -320,7 +306,7 @@ function Model() {
 	    this.step=0;
 	};
 	//if (this.step === 0) {
-	this.configUpdate(state,ttrg);
+	this.updateConfig(state,ttrg);
 	 if (state.React !== undefined && state.React.Model !== undefined) {
 	     config=this.config;
 	 };
@@ -363,7 +349,8 @@ function Model() {
     this.toggleFullScreen  = function () {
 	var pos=0;
 	if (!document.fullscreenElement &&    // alternative standard method
-	    !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement ) {  // current working methods
+	    !document.mozFullScreenElement && !document.webkitFullscreenElement &&
+	    !document.msFullscreenElement ) {  // current working methods
 	    if (document.documentElement.requestFullscreen) {
 		document.documentElement.requestFullscreen();
 		pos=1;
@@ -421,6 +408,7 @@ function Model() {
 	return vars;
     };
     this.setDefaults=function(state,cfg) {
+	if (cfg===undefined){cfg={};};
 	cfg.lat=cfg.lat || 59.0;
 	cfg.lon=cfg.lon || 9.0;
 	cfg.epoch=cfg.epoch;
@@ -431,6 +419,27 @@ function Model() {
 	cfg.dir=cfg.dir;
 	cfg.con=cfg.con || 0;
 	cfg.speed=cfg.speed;	
+	return cfg;
+    };
+    this.cleanStack=function(state,stack,epoch) {
+	var ttrg=state.Events.getModelTime(state); // current target time
+	let events=stack.events.filter(function (event) {
+	    return (event.epoch > ttrg - 86400*1000 && event.epoch < ttrg + 86400*1000);
+	});
+	events.sort(function(a, b) {
+	    return a.epoch - b.epoch;
+	});
+	var index=-1;
+	stack.dtgs=[];
+	stack.epochs=[];
+	events.forEach( (event,ind) => {
+	    stack.dtgs.push(event.dtg);
+	    stack.epochs.push(event.epoch);
+	    if (event.epoch === epoch) {index=stack.epochs.length-1;}
+	});
+	stack.events=events;
+	stack.epoch=epoch;
+	stack.event=stack.epochs.indexOf(epoch);
     };
     this.cleanRequests=function(state,iid) {
 	var now=new moment().valueOf();
@@ -506,7 +515,7 @@ function Model() {
 	return reqId;
     };
     this.launch= function (state,cfg) {
-	this.setDefaults(state,cfg);
+	cfg=this.setDefaults(state,cfg);
 	// check if request is already launched...
 	var reqId=this.getRequestId(state,cfg);
 	reqId=this.cleanRequests(state,reqId);
@@ -520,13 +529,19 @@ function Model() {
 		return; // use old request...
 	    };
 	};
+	if (cfg.lat===undefined) {cfg.lat=state.Events.getLat(state);}
+	if (cfg.lon===undefined) {cfg.lat=state.Events.getLon(state);}
+	if (cfg.epoch===undefined) {cfg.epoch=state.Events.getModelTime(state);}
 	if (cfg.speed!==undefined) {state.Events.setSpeed(state,cfg.speed);}
-	if (this.bdeb) {console.log("*** launching model:",cfg.lat, cfg.lon, cfg.dtg, cfg.hrs, cfg.label, cfg.target, cfg.fov, cfg.dir, cfg.con, cfg.speed);};
+	//if (this.bdeb) {
+	console.log("*** launching model:",cfg.lat, cfg.lon, (new moment(cfg.epoch)).toISOString(), 
+		    cfg.hrs, cfg.label,cfg.target, cfg.fov, cfg.dir, cfg.con, cfg.speed);
+	//};
 	var dtgdate=new moment(cfg.epoch);
 	var trg=dtgdate.toISOString();
-	var dtgs=state.Utils.addHours(state,dtgdate,cfg.hrs)
-	var epoch=dtgs.indexOf(trg);
-	//console.log("Hours:",dtgs,epoch);
+	var dtgs=state.Utils.addHours(state,dtgdate,cfg.hrs,cfg.prev,cfg.next)
+	var event=dtgs.indexOf(trg);
+	//console.log("Hours:",dtgs,event);
 	var dir=cfg.dir;
 	if (dir !== undefined) { // direction in J2000 (the star coordinate system)
 	    var items=dir.split(',');
@@ -538,15 +553,19 @@ function Model() {
 	    }
 	}
 	var events=[];
+	var epochs=[];
 	for ( var tt = 0; tt < dtgs.length; tt++) {
+	    let epoch=(new moment(dtgs[tt])).valueOf();
 	    events.push({reqId : tt+1,
 			 label: cfg.label,
 			 target : cfg.target,
 			 dir : dir,
 			 fov : cfg.fov,
 			 con : cfg.con,
-			 dtg : dtgs[tt]
+			 dtg : dtgs[tt],
+			 epoch:epoch
 			});
+	    epochs.push(epoch);
 	};
 	//epoch: dtgdate.getTime()
 	var newreq={ location : {latitude : cfg.lat,
@@ -558,7 +577,10 @@ function Model() {
 		     processed: undefined,
 		     used:  new moment().valueOf(),  // when last used
 		     seq:  ++this.seq,                 // sequence number
-		     event : epoch,
+		     epochs: epochs,
+		     event : event,
+		     prev  : cfg.prev,
+		     next  : cfg.next,
 		     events : events // ,current:0
 		   };
 	this.requests.state.push(newreq);
@@ -606,7 +628,7 @@ function Model() {
 		}
 	    ).then(
 		function(result) {
-		    this.processState(state,result,req);
+		    this.processResult(state,result,req);
 		}.bind(this)
 	    ).catch(
 		function(err) {
@@ -637,7 +659,7 @@ function Model() {
 	//info.innerHTML = dtg+" lat:"+parseFloat(lat).toFixed(2)+" lon:"+parseFloat(lon).toFixed(2);
 	//console.log(dtg+" lat:"+parseFloat(lat).toFixed(2)+" lon:"+parseFloat(lon).toFixed(2));
     };
-    this.processState = function (state,result,req) {
+    this.processResult = function (state,result,req) {
 	if (this.bdeb) {console.log("Processing request ",req);};
 	var xmlDoc;
 	// update info
@@ -655,7 +677,7 @@ function Model() {
 		var parser = new DOMParser();
 		xmlDoc = parser.parseFromString(result, "text/xml");
 		try {
-		    this.dataToRequest(state,xmlDoc,req);
+		    this.pushToStack(state,xmlDoc,req);
 		    //console.log("Loaded state data:",result);
 		} catch (err) {
 		    console.log(err);
@@ -667,7 +689,7 @@ function Model() {
 	    console.log("Error while loading state of solar system.");
 	};
     };
-    this.dataToRequest=function(state,data,req) {
+    this.pushToStack=function(state,data,req) {
 	var ss=data.getElementsByTagName("solarsystem")[0];
 	var error=ss.getElementsByTagName("Error");
 	if (error.length === 0) {
@@ -677,24 +699,27 @@ function Model() {
 	    var ini=ss.getElementsByTagName("initial")[0];
 	    var inibod=ini.getElementsByTagName("body");
 	    var inino=ini.getAttribute("no");
-	    req["initial"]={};
+	    var stack=this.getStack(state,req);
+	    // work on copy in case other thread is using it
+	    stack["initial"]={};
+	    var changed=false;
 	    var ii;
-	    for (ii=0; ii<inino; ii++) {
+	    for (ii=0; ii<inino; ii++) { // this does not change....
 		let bod=inibod[ii];
 		let name=bod.getAttribute("name");
-		req["initial"][name]={};
-		req["initial"][name]["rotation"]={};
-		req["initial"][name]["rotation"]["ra"]=+bod.getAttribute("ra");
-		req["initial"][name]["rotation"]["dec"]=+bod.getAttribute("dec");
-		req["initial"][name]["rotation"]["w"]=+bod.getAttribute("w")*this.deg2rad;
-		req["initial"][name]["rotation"]["dwdt"]=+bod.getAttribute("dwdt")*this.deg2rad;
-		req["initial"][name]["main"]=bod.getAttribute("main");
-		req["initial"][name]["xmu"]=+bod.getAttribute("xmu");
-
+		stack["initial"][name]={};
+		stack["initial"][name]["rotation"]={};
+		stack["initial"][name]["rotation"]["ra"]=+bod.getAttribute("ra");
+		stack["initial"][name]["rotation"]["dec"]=+bod.getAttribute("dec");
+		stack["initial"][name]["rotation"]["w"]=+bod.getAttribute("w")*this.deg2rad;
+		stack["initial"][name]["rotation"]["dwdt"]=+bod.getAttribute("dwdt")*this.deg2rad;
+		stack["initial"][name]["main"]=bod.getAttribute("main");
+		stack["initial"][name]["xmu"]=+bod.getAttribute("xmu");
 		//console.log("Rotation:",name,req.initial[name].rotation,bod);
-		
 	    }
 	    // store time data
+	    var event=req.event; // target event
+	    var epoch=req.epochs[req.event];
 	    var tis=ss.getElementsByTagName("times")[0];
 	    var tistim=tis.getElementsByTagName("time");
 	    var tisno=tis.getAttribute("no");
@@ -704,99 +729,130 @@ function Model() {
 		// store observer data
 		var dtg  = tim.getAttribute("dtg");
 		var dtg_ = req["events"][tt]["dtg"];
-		if (dtg !== dtg_) { // check if dtg in reply matches dtg in request
+		var epoch_=(new moment(dtg_)).valueOf();// get epoch
+		var epoch=req.events[tt].epoch;
+		if (dtg !== dtg_ || epoch !== epoch_) { // check if dtg in reply matches dtg in request
 		    console.log("Date mismatch: ",dtg," !== ",dtg_);
-		} else {
-		    req["events"][tt]["epoch"]=(new moment(dtg_)).valueOf();// get epoch
+		} else if (stack.epochs.indexOf(epoch) === -1 ) { // does not exist already
+		    changed=true;
+		    if (stack.epochs.length > 0) {
+			if (epoch < stack.epochs[0]) {stack.prev = undefined;}
+			if (epoch > stack.epochs[stack.epochs.length-1]) {stack.next = undefined;}
+		    };
+		    if (req.prev !== undefined) {stack.prev = undefined;}
+		    if (req.next !== undefined) {stack.next = undefined;}
+		    var ss= stack.epochs.length;
+		    if (stack.epochs.length !== stack.events.length) {
+			console.log("Invalid stack:",stack,JSON.stringify(stack));
+		    };
+		    stack.epochs.push(epoch); // append to last
+		    stack.events.push({}); // new dtg...
+		    stack.events[ss].dtg=dtg;
+		    stack.events[ss].epoch=epoch;
 		    var jd2000=tim.getAttribute("jd2000");
+		    // check if epoch already exists, otherwise push and later sort the stack
 		    var obs=tim.getElementsByTagName("observer")[0];
 		    var obsi=obs.getElementsByTagName("i")[0];
 		    var obsj=obs.getElementsByTagName("j")[0];
 		    var obsk=obs.getElementsByTagName("k")[0];
 		    var obsloc=obs.getElementsByTagName("location")[0];
 		    var obszen=obs.getElementsByTagName("zenith")[0];
-		    req["events"][tt]["observer"]={};
-		    req["events"][tt]["observer"]["i"]=new Vector3();
-		    req["events"][tt]["observer"]["i"]["x"]=+obsi.getAttribute("x");
-		    req["events"][tt]["observer"]["i"]["y"]=+obsi.getAttribute("y");
-		    req["events"][tt]["observer"]["i"]["z"]=+obsi.getAttribute("z");
-		    req["events"][tt]["observer"]["j"]=new Vector3();
-		    req["events"][tt]["observer"]["j"]["x"]=+obsj.getAttribute("x");
-		    req["events"][tt]["observer"]["j"]["y"]=+obsj.getAttribute("y");
-		    req["events"][tt]["observer"]["j"]["z"]=+obsj.getAttribute("z");
-		    req["events"][tt]["observer"]["k"]=new Vector3();
-		    req["events"][tt]["observer"]["k"]["x"]=+obsk.getAttribute("x");
-		    req["events"][tt]["observer"]["k"]["y"]=+obsk.getAttribute("y");
-		    req["events"][tt]["observer"]["k"]["z"]=+obsk.getAttribute("z");
-		    req["events"][tt]["observer"]["position"]=new Vector3();
-		    req["events"][tt]["observer"]["position"]["x"]=+obsloc.getAttribute("x");
-		    req["events"][tt]["observer"]["position"]["y"]=+obsloc.getAttribute("y");
-		    req["events"][tt]["observer"]["position"]["z"]=+obsloc.getAttribute("z");
-		    req["events"][tt]["observer"]["position"]["origo"]=obsloc.getAttribute("origo");
-		    req["events"][tt]["observer"]["zenith"]=new Vector3();
-		    req["events"][tt]["observer"]["zenith"]["x"]=+obszen.getAttribute("x");
-		    req["events"][tt]["observer"]["zenith"]["y"]=+obszen.getAttribute("y");
-		    req["events"][tt]["observer"]["zenith"]["z"]=+obszen.getAttribute("z");
+		    var obs={};
+		    obs["i"]=new Vector3();
+		    obs["i"]["x"]=+obsi.getAttribute("x");
+		    obs["i"]["y"]=+obsi.getAttribute("y");
+		    obs["i"]["z"]=+obsi.getAttribute("z");
+		    obs["j"]=new Vector3();
+		    obs["j"]["x"]=+obsj.getAttribute("x");
+		    obs["j"]["y"]=+obsj.getAttribute("y");
+		    obs["j"]["z"]=+obsj.getAttribute("z");
+		    obs["k"]=new Vector3();
+		    obs["k"]["x"]=+obsk.getAttribute("x");
+		    obs["k"]["y"]=+obsk.getAttribute("y");
+		    obs["k"]["z"]=+obsk.getAttribute("z");
+		    obs["position"]=new Vector3();
+		    obs["position"]["x"]=+obsloc.getAttribute("x");
+		    obs["position"]["y"]=+obsloc.getAttribute("y");
+		    obs["position"]["z"]=+obsloc.getAttribute("z");
+		    obs["position"]["origo"]=obsloc.getAttribute("origo");
+		    obs["zenith"]=new Vector3();
+		    obs["zenith"]["x"]=+obszen.getAttribute("x");
+		    obs["zenith"]["y"]=+obszen.getAttribute("y");
+		    obs["zenith"]["z"]=+obszen.getAttribute("z");
+		    stack["events"][ss]["observer"]=obs;
 		    var pointAt = req["events"][tt]["pointAt"];
-		    req["events"][tt]["pointId"] = -1;
+		    stack.events[ss].pointId = -1;
 		    var sta=tim.getElementsByTagName("state")[0];
 		    var stabod=sta.getElementsByTagName("body");
 		    var stano=sta.getAttribute("no");
-		    req["events"][tt]["state"]={};
+		    stack.events[ss].state={};
 		    for (ii=0; ii<stano; ii++) {
 			let bod=stabod[ii];
 			let name=bod.getAttribute("name");
-			if (name === pointAt) {req["events"][tt]["pointId"] = ii;}
+			if (name === pointAt) {stack["events"][ss]["pointId"] = ii;}
 			//console.log("Added state for ",name," at ",dtg);
-			req["events"][tt]["state"][name]={"position":new Vector3(),"rotation":new Vector3()};
-			req["events"][tt]["state"][name]["position"]["x"]=+bod.getAttribute("x");
-			req["events"][tt]["state"][name]["position"]["y"]=+bod.getAttribute("y");
-			req["events"][tt]["state"][name]["position"]["z"]=+bod.getAttribute("z");
-			req["events"][tt]["state"][name]["position"]["vx"]=+bod.getAttribute("vx");
-			req["events"][tt]["state"][name]["position"]["vy"]=+bod.getAttribute("vy");
-			req["events"][tt]["state"][name]["position"]["vz"]=+bod.getAttribute("vz");
-			req["events"][tt]["state"][name]["rotation"]["ra"]=+req["initial"][name]["rotation"]["ra"]; 
-			req["events"][tt]["state"][name]["rotation"]["dec"]=+req["initial"][name]["rotation"]["dec"]; 
-			req["events"][tt]["state"][name]["rotation"]["w"]=+req["initial"][name]["rotation"]["w"]
-			    + req["initial"][name]["rotation"]["dwdt"] * jd2000;
-			req["events"][tt]["state"][name]["name"]=name;
+			let body={"position":new Vector3(),"rotation":new Vector3()};
+			body["position"]["x"]=+bod.getAttribute("x");
+			body["position"]["y"]=+bod.getAttribute("y");
+			body["position"]["z"]=+bod.getAttribute("z");
+			body["position"]["vx"]=+bod.getAttribute("vx");
+			body["position"]["vy"]=+bod.getAttribute("vy");
+			body["position"]["vz"]=+bod.getAttribute("vz");
+			body["rotation"]["ra"]=+stack["initial"][name]["rotation"]["ra"]; 
+			body["rotation"]["dec"]=+stack["initial"][name]["rotation"]["dec"]; 
+			body["rotation"]["w"]=+stack["initial"][name]["rotation"]["w"]
+			    + stack["initial"][name]["rotation"]["dwdt"] * jd2000;
+			body["name"]=name;
+			stack["events"][ss]["state"][name]=body;
+
 		    };
 		    // add analytical orbits for satellites...
 		    this.orbits.forEach( (sat,ind) => {
-			if (req["events"][tt]["state"][sat.name]===undefined) { // no orbit yet
+			if (stack.events[ss].state[sat.name]===undefined) { // no orbit yet
 			    var around=sat.orbit.around;
 			    if (around === undefined) { around="sun";};
-			    let ref=req["events"][tt]["state"][around];
-			    let mu = this.MU[around];
-			    let reqstate=req["events"][tt]["state"];
-			    reqstate[sat.name]={"position":new Vector3(),"rotation":new Vector3()};
-			    let trg=reqstate[sat.name];
+			    stack.events[ss].target=req.events[tt].around;
+			    stack.events[ss].state[sat.name]={"position":new Vector3(),"rotation":new Vector3()};
+			    //console.log("Around:",around,req,stack);
+			    let mainbody=stack.events[ss].state[around];
+			    let body=stack.events[ss].state[sat.name];
 			    let orbit=sat.orbit;
 			    let rotation=sat.rotation;
 			    if (sat.orbit.x !== undefined && sat.orbit.y !== undefined && sat.orbit.z !== undefined) {
-				trg["position"].x=sat.orbit.x + ref.position.x;
-				trg["position"].y=sat.orbit.y + ref.position.y;
-				trg["position"].z=sat.orbit.z + ref.position.z;
-				trg["position"].vx=0.0;
-				trg["position"].vy=0.0;
-				trg["position"].vz=0.0;
-			    } else if (trg !== undefined && ref !== undefined){ // sat.orbital elements
+				body["position"].x=sat.orbit.x + mainbody.position.x;
+				body["position"].y=sat.orbit.y + mainbody.position.y;
+				body["position"].z=sat.orbit.z + mainbody.position.z;
+				body["position"].vx=0.0;
+				body["position"].vy=0.0;
+				body["position"].vz=0.0;
+			    } else if (body !== undefined && mainbody !== undefined){ // sat.orbital elements
 				// get mean motion
+				let mu = this.MU[around];
 				sat.orbit.n=state.Orbit.getMeanMotion(sat.orbit.a,mu);
 				sat.orbit.m = sat.orbit.m0 + jd2000 * sat.orbit.n;
 				state.Orbit.anomalies2elements(sat.orbit); // get v and c
-				state.Orbit.elements2state(trg["position"],sat.orbit,ref["position"],mu);
-				//console.log("Orbit:",sat.name,around,sat,jd2000,trg.position);
+				state.Orbit.elements2state(body["position"],sat.orbit,mainbody["position"],mu);
+				//console.log("Orbit:",sat.name,around,sat,jd2000,body.position);
 			    }
-			    trg["rotation"]["ra"]=+rotation.ra;
-			    trg["rotation"]["dec"]=+rotation.dec
-			    trg["rotation"]["w"]=+rotation.w0+rotation.dwdt*jd2000;
-			    trg.name=sat.name;
+			    body["rotation"]["ra"]=+rotation.ra;
+			    body["rotation"]["dec"]=+rotation.dec
+			    body["rotation"]["w"]=+rotation.w0+rotation.dwdt*jd2000;
+			    body.name=sat.name;
 			};
 		    });
-		}
-	    }
+		};
+	    };
 	    req.received= new moment().valueOf();
+	    if (changed && stack !== undefined) {
+		// sort stack
+		this.cleanStack(state,stack,epoch);
+		stack.received= req.received;
+		this.stack=stack;
+		console.log("Stack changed...",dtg,this.stack.prev, this.stack.next,req.prev,req.next,
+			    JSON.stringify(this.stack.dtgs));
+	    } else {
+		console.log("Stack did not change...",dtg,this.stack.prev, this.stack.next);
+	    };
 	    if (this.bdeb) {console.log("Completed request:",req);};
 	} else {
 	    console.log("Received error:",error);
@@ -804,70 +860,32 @@ function Model() {
 	}
 	//console.log("Requests:",JSON.stringify(this.requests));
     };
+    this.getStack=function(state,req){
+	var stack;
+	if (this.stack.location !== undefined &&
+	    this.stack.location.latitude===req.location.latitude &&
+	    this.stack.location.longitude===req.location.longitude) {
+	    stack= state.Utils.cp(this.stack);
+	} else {
+	    var stack=state.Utils.cp(req);
+	    stack.epoch=undefined;
+	    stack.epochs=[];
+	    stack.events=[];
+	}
+	return stack
+    };
     this.standardOrbit=function(state,sat) {
 	var around=sat.orbit.around;
 	if (around === undefined) { around="sun";};
 	state.Orbit.standardOrbit(sat.orbit,sat.cydrift,this.MU[around]);
     }
-    // this.pushUrl = function (state) {
-    // 	var reqId=this.requests.current;
-    // 	var req = this.getRequest(state,reqId);
-    // 	if ( req.processed) { // we have a target
-    // 	    var reqLocation=this.requests.state[reqId]["location"];
-    // 	    if (reqLocation !== undefined && this.config !== undefined) { //
-    // 		var lat=reqLocation.latitude;
-    // 		var lon=reqLocation.longitude;
-    // 		var dtg=this.config.dtg; //
-    // 		var dir=this.camera.getDir();
-    // 		var fov=this.camera.getFovX();
-    // 		var con=this.consReq;
-    // 		var speed=state.Events.getSpeed(state);
-    // 		var hrs=(this.config.hrs||1);
-    // 		//var lab="";
-    // 		var url="sky.html";
-    // 		var first=true;
-    // 		if (dir !== undefined) {
-    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-    // 		    url=url + "dir=" + parseFloat(dir.x).toFixed(5)
-    // 			+","+parseFloat(dir.y).toFixed(5)
-    // 			+","+parseFloat(dir.z).toFixed(5);
-    // 		}
-    // 		if (fov !== undefined) {
-    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-    // 		    url=url + "fov=" + parseFloat(fov).toFixed(4);
-    // 		}
-    // 		if (lat !== undefined) {
-    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-    // 		    url=url + "lat=" + parseFloat(+lat).toFixed(3);
-    // 		}
-    // 		if (lon !== undefined) {
-    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-    // 		    url=url + "lon=" + parseFloat(+lon).toFixed(3);
-    // 		}
-    // 		if (dtg !== undefined) {
-    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-    // 		    url=url + "dtg=" + dtg;
-    // 		}
-    // 		if (hrs !== undefined) {
-    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-    // 		    url=url + "hrs=" + hrs;
-    // 		}
-    // 		if (speed !== undefined) {
-    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-    // 		    url=url + "speed=" + speed;
-    // 		}
-    // 		if (con !== undefined) {
-    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
-    // 		    url=url + "con=" + con;
-    // 		}
-    // 		console.log("Setting URL to:",url);
-    // 		window.history.replaceState("", "js", url);
-    // 	    }
-    // 	}
-    // };
     // check if we have a new request to process.
     this.processNewRequests = function (state) {
 	var ret=false;
+	if (this.requests.current===undefined) {
+	    this.launch(state);
+	    console.log("Making default request...",this.request);
+	};
 	var reqId=this.requests.current;
 	var req = this.getRequest(state,reqId);
 	if ( req.received !== undefined &&
@@ -875,9 +893,11 @@ function Model() {
 	    let request=req.events[req.event]
 	    let ttrg=request.epoch;
 	    let target=request.target;
+	    //console.log("Setting time:",ttrg,target,req);
 	    state.Events.setModelTime(state,ttrg);
 	    this.setNewTarget(state,target);
 	    req.processed = new moment().valueOf();
+	    this.stack.processed=req.processed;
 	    //console.log("Calculated orbital elements:",req);
 	    ret=true;
 	}
@@ -896,49 +916,53 @@ function Model() {
 		state.React.Model.setNewTarget(state,x,y,z);
 	    };
 	};
-	// update 3D config of the solar system...
     };
-    this.configUpdate = function (state,ttrg) {
+    // update 3D config of the solar system...
+    this.updateConfig = function (state,ttrg) {
 	var ret = false;
-	var reqId = this.requests.current;
-	var req = this.getRequest(state,reqId);
-	if (req.processed !== undefined && this.config.reqId !== reqId ) { // process new request
+	var stack=this.stack;
+	var reqId=stack.current;
+	if (stack.processed !== undefined && this.config.reqId !== reqId ) { // process new request
 	    //console.log("Constructing config from orbital elements.");
 	    // get times
+	    this.config.dtgs = [];
 	    this.config.epochs = [];
-	    for ( var tt = 0; tt < req["events"].length; tt++) {
-		this.config.epochs[tt]=req["events"][tt]["epoch"];
+	    for ( var tt = 0; tt < stack["events"].length; tt++) {
+		this.config.dtgs[tt]=stack["events"][tt]["dtg"];
+		this.config.epochs[tt]=stack["events"][tt]["epoch"];
 	    };
-	    if (req.event !== undefined) { this.config.event=req.event;};
+	    if (stack.event !== undefined) { this.config.event=stack.event;};
 	    //this.config.young=(this.config.current+1)%2;
-	    if (this.getState(state,req,this.config,ttrg)) { //
+	    if (this.makeConfig(state,this.stack,this.config,ttrg)) { //
+		//console.log("Config:",this.config);
 		//  point camera
-		if (req.event !== undefined) {
+		if (stack.event !== undefined) {
 		    //this.config.dtg = new moment(ttrg).toISOString();
-		    if (this.bdeb) {console.log("Dtg:",ttrg,this.config.dtg);};
+		    if (this.bdeb) {console.log("Dtg:",ttrg,this.config.dtg,this.config.dtgs);};
 		    this.config.newTarget=true;
 		}
  		this.config.reqId=reqId;
 	    };
-	} else if (req.processed !== undefined) { // time lapse...
+	} else if (stack.processed !== undefined) { // time lapse...
 	    //console.log("Time lapse.");
 	    // this.config.young=(this.config.current+1)%2;
-	    if (this.getState(state,req, this.config,ttrg)) {
+	    if (this.makeConfig(state,this.stack, this.config,ttrg)) {
 		// this.setInfo(state,this.config.dtg,
 		// 	     this.config.lat,
 		// 	     this.config.lon);
 	    }
 	    //    } else {
-	    //	console.log("Nothing to do:",req.processed);
+	    //	console.log("Nothing to do:",stack.processed);
 	}
 	//console.log("Config:",ttrg,ret);
 	return ret;
     };
-    this.getState = function (state,req,config,ttrg){
+    this.makeConfig = function (state,stack,config,ttrg){
 	var ret=false;
-	if (req.processed===undefined) {return ret;};
-	config.lat=req.location.latitude;
-	config.lon=req.location.longitude;
+	if (stack===undefined) {return ret;};
+	config.lat=stack.location.latitude;
+	config.lon=stack.location.longitude;
+	var now = (new moment().valueOf());
 	let first=-1;
 	let last=-1;
 	var firstEpoch=0;
@@ -948,67 +972,107 @@ function Model() {
 	var prevEpoch=0;
 	var nextEpoch=0;
 	// find correct epoch
-	for ( var tt = 0; tt < req["events"].length; tt++) {
-	    if ((first < 0 || req["events"][tt]["epoch"] >=  firstEpoch)) {
+	for ( var tt = 0; tt < stack["events"].length; tt++) {
+	    if ((first < 0 || stack["events"][tt]["epoch"] >=  firstEpoch)) {
 		first=tt;
 	    };
-	    if ((last < 0 || req["events"][tt]["epoch"] <=  lastEpoch)) {
+	    if ((last < 0 || stack["events"][tt]["epoch"] <=  lastEpoch)) {
 		last=tt;
 	    };
-	    if (req["events"][tt]["epoch"] <= ttrg &  
-		(prev < 0 || req["events"][tt]["epoch"] >=  prevEpoch)) {
+	    if (stack["events"][tt]["epoch"] <= ttrg &  
+		(prev < 0 || stack["events"][tt]["epoch"] >=  prevEpoch)) {
 		prev=tt;
-		prevEpoch=req["events"][prev]["epoch"];
+		prevEpoch=stack["events"][prev]["epoch"];
 	    };
-	    if (req["events"][tt]["epoch"] >= ttrg &  
-		(next < 0 || req["events"][tt]["epoch"] <=  nextEpoch)) {
+	    if (stack["events"][tt]["epoch"] >= ttrg &  
+		(next < 0 || stack["events"][tt]["epoch"] <=  nextEpoch)) {
 		next=tt;
-		nextEpoch=req["events"][next]["epoch"];
+		nextEpoch=stack["events"][next]["epoch"];
 	    };
 	};
-	if (prev !== -1 & next !== -1) { // success!
+	//console.log("Dtg:",ttrg,new moment(ttrg).toISOString(),JSON.stringify(this.config.epochs),
+	//		f,prev,next,stack.events.length-1,stack.prev,stack.next,
+	//		JSON.stringify(this.config.dtgs));
+	if (prev !== -1 && next !== -1) { // success!
 	    var dt = ttrg-prevEpoch;
 	    var dt0 = nextEpoch - prevEpoch;
 	    var f = dt/Math.max(1e-10,dt0);
 	    ret=true;
-	    // should we send a new request?
-	    if (prev===0) {
-		console.log("Send prev request...");
-	    } else if (next === req.events.length) {
-		console.log("Send next request...");
+	    if (dt0 > 1.5*3600*1000.0) { // to big skip 1.5 hours...
+		if (f < 0.5 && stack.next === undefined) {
+		    stack.next=(new moment().valueOf());
+		    console.log("Send next request...",dt,dt0,f);
+		    this.launch(state,{epoch:ttrg,hrs:24,next:true});
+		} else if (f >= 0.5 && stack.prev === undefined) {
+		    stack.prev=(new moment().valueOf());
+		    console.log("Send prev request...",dt,dt0,f);
+		    this.launch(state,{epoch:ttrg,hrs:24,prev:true});
+		};
+	    } else {
+		// should we send a new stackuest?
+		if (prev===0 && stack.prev === undefined) {
+		    stack.prev=(new moment().valueOf());
+		    console.log("Send prev request...");
+		    this.launch(state,{epoch:ttrg,hrs:24,prev:true});
+		} else if (next === stack.events.length-1 && stack.next === undefined) {
+		    stack.next=(new moment().valueOf());
+		    console.log("Send next request...");
+		    this.launch(state,{epoch:ttrg,hrs:24,next:true});
+		};
 	    };
 	} else if (prev !== -1 ) {  // found epoch before, but not after
+	    if (stack.next === undefined) {
+		stack.next=(new moment().valueOf());
+		console.log("Send prev request...");
+		this.launch(state,{epoch:ttrg,hrs:24,next:true});
+	    };
 	    next=first;
 	    prev=first;
 	    f=0.0;
 	    // stop clock, set clock to first time
 	    ret=true;
 	} else if (next !== -1) {  // found epoch after, but not before
+	    if (stack.prev === undefined) {
+		stack.prev=(new moment().valueOf());
+		console.log("Send prev request...");
+		this.launch(state,{epoch:ttrg,hrs:24,prev:true});
+	    };
 	    next=last;
 	    prev=last;
 	    f=0.0;
 	    // stop clock, set clock to last time
 	    ret=true;
-	} else {
+	} else if (now-stack.sent<1000) {
+	    stack.sent=now;
 	    //console.log("Times:",+ttrg,"|",+e0 ,"|",+speed, "|",+m0);
-	    console.log("Unable to find interval:",+ttrg,prev,next,req["events"]);
+	    console.log("Unable to find interval:",+ttrg,prev,next,stack["events"]);
 	    // send new request if we have a timeoout...
+	    this.launch(state,{epoch:ttrg,hrs:24});
 	    ret=false;
 	}
 	if (ret) {
+
+	    
+	    //console.log("Before:",JSON.stringify(stack.events[prev].observer.position));
+
 	    //console.log("F:",f,prev,next);
-	    this.interpolateBodies(state,req["events"][prev],
-				   req["events"][next],
+	    this.interpolateBodies(state,stack["events"][prev],
+				   stack["events"][next],
 				   f,config.bodies);
-	    this.interpolateObserver(state,req["events"][prev],
-				     req["events"][next],
+	    this.interpolateObserver(state,stack["events"][prev],
+				     stack["events"][next],
 				     f,config.observer,config.bodies);
 	    config.epoch = ttrg;
 	    config.dtg=new moment(config.epoch).toISOString();
+
+
+	    //console.log("After:",JSON.stringify(stack.events[prev].observer.position));
+
+
 	    //console.log("Config:",JSON.stringify(config.observer));
 	    //console.log("Config match:",config.epoch,config.dtg,config);
 	}
-	//console.log("Pos:",+ttrg,req["events"][0]," REQ:",prev,next," DTG:",config.dtg,prev,next);
+	//console.log("Pos:",+ttrg,stack["events"][0]," STACK:",prev,next," DTG:",config.dtg,prev,next);
 	//console.log("******************getState: ",ttrg);//config
 	return ret;
     };
@@ -1300,6 +1364,62 @@ function Model() {
 		window.setTimeout(callback, 1000 / 30);
 	    };
     })();
+    // this.pushUrl = function (state) {
+    // 	var reqId=this.requests.current;
+    // 	var req = this.getRequest(state,reqId);
+    // 	if ( req.processed) { // we have a target
+    // 	    var reqLocation=this.requests.state[reqId]["location"];
+    // 	    if (reqLocation !== undefined && this.config !== undefined) { //
+    // 		var lat=reqLocation.latitude;
+    // 		var lon=reqLocation.longitude;
+    // 		var dtg=this.config.dtg; //
+    // 		var dir=this.camera.getDir();
+    // 		var fov=this.camera.getFovX();
+    // 		var con=this.consReq;
+    // 		var speed=state.Events.getSpeed(state);
+    // 		var hrs=(this.config.hrs||1);
+    // 		//var lab="";
+    // 		var url="sky.html";
+    // 		var first=true;
+    // 		if (dir !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "dir=" + parseFloat(dir.x).toFixed(5)
+    // 			+","+parseFloat(dir.y).toFixed(5)
+    // 			+","+parseFloat(dir.z).toFixed(5);
+    // 		}
+    // 		if (fov !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "fov=" + parseFloat(fov).toFixed(4);
+    // 		}
+    // 		if (lat !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "lat=" + parseFloat(+lat).toFixed(3);
+    // 		}
+    // 		if (lon !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "lon=" + parseFloat(+lon).toFixed(3);
+    // 		}
+    // 		if (dtg !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "dtg=" + dtg;
+    // 		}
+    // 		if (hrs !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "hrs=" + hrs;
+    // 		}
+    // 		if (speed !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "speed=" + speed;
+    // 		}
+    // 		if (con !== undefined) {
+    // 		    if (first) {url=url+"?";first=false;} else {url=url+"&";};
+    // 		    url=url + "con=" + con;
+    // 		}
+    // 		console.log("Setting URL to:",url);
+    // 		window.history.replaceState("", "js", url);
+    // 	    }
+    // 	}
+    // };
 };
 
 export default Model;
