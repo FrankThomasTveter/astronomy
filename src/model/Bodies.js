@@ -41,6 +41,7 @@ function Bodies() {
     this.NMAG = 10;
 
     this.direction=new THREE.Vector3();
+    this.cameradir=new THREE.Vector3();
     this.right=new THREE.Vector3();
     this.location=new THREE.Vector3();
     this.offset=new THREE.Vector3();
@@ -399,6 +400,20 @@ function Bodies() {
 	    trg.rotation.ra=src.rotation.ra;
 	    trg.rotation.dec=src.rotation.dec;
 	    trg.rotation.w=src.rotation.w;
+	};
+    };
+    this.getTarget = function (name) {
+	var body;
+	if (name === undefined) {name=this.targetname;};
+	if (name !== undefined && this.config[name]!==undefined) {
+	    let scene=this.scenes[name].scene;
+	    if (name === "saturn" || name === "uranus") {
+		body  = scene.getObjectByName("group");
+	    } else {
+		body  = scene.getObjectByName(name);
+	    };
+	    //console.log("Target:",body.position);
+	    return body.position;
 	};
     };
     this.createScene = function (name,mainCamera) { // 
@@ -936,6 +951,10 @@ function Bodies() {
 	});	
     };
     this.updateScenes=function(state,camera,observer,time) {
+	// set camera look direction...
+	let targetangle;
+	let targetname;
+	this.cameradir = this.cameraLookDir(camera,this.cameradir);
 	// loop over Bodies scenes
 	for (var name in this.scenes) {
 	    var item=this.scenes[name];
@@ -943,9 +962,15 @@ function Bodies() {
 		if (item.show) {
 		    //console.log("Scene:",name);
 		    item.distance=this.updateScene(state,camera,observer,name,item.scene,time);
+		    if (targetangle === undefined || targetangle > item.scene.cameraAngle) {
+			targetangle=item.scene.cameraAngle;
+			targetname=name;
+		    }
 		};
 	    };
 	};
+	this.targetname=targetname;
+	//console.log("Pointing at:",targetname,targetangle);
     };
     this.updateScene=function(state,mainCamera,observer,name,scene,time) {
 	//console.log("UpdateScene:",name,scale);
@@ -979,6 +1004,7 @@ function Bodies() {
 		helper.camera.copy(light.shadow.camera);
 		helper.update();
 	    };
+	    scene.cameraAngle=this.cameradir.angleTo(group.position);
 	    //console.log(name,scene);
 	    //console.log(name,this.direction,scene);
 	} else if (name === "earth") { // sun and other planets
@@ -1005,6 +1031,11 @@ function Bodies() {
 	    this.makeTransparent(state,name,scene,body,alpha);
 	    let rot   = this.config[name].rotation;
 	    this.setRotation(body,rot);
+	    if (alpha < 0.5) {
+		scene.cameraAngle=this.cameradir.angleTo(body.position);
+	    } else {
+		scene.cameraAngle=999.99;
+	    };
 	} else { // sun and other planets
 	    let pos   = this.config[name].position;
 	    let obs=observer.position;
@@ -1021,8 +1052,11 @@ function Bodies() {
 	    //console.log("Pos:",name,pos);
 	    let rot   = this.config[name].rotation;
 	    this.setRotation(body,rot);
+	    scene.cameraAngle=this.cameradir.angleTo(body.position);
 	};
-	this.updateLabel(state,mainCamera,observer,name,scene,scale,1);
+	//console.log("Angle:",name,scene.cameraAngle,mainCamera.fov);
+	let highlight=(name === this.targetname);
+	this.updateLabel(state,mainCamera,observer,name,scene,scale,1,time,highlight);
 	this.updateSatellites(state,mainCamera,observer,name,scene);
 	return dist;
     };
@@ -1118,7 +1152,8 @@ function Bodies() {
 	};
     };
 
-    this.updateLabel=function(state,mainCamera,observer,name,scene,scale,opacity) {
+    this.updateLabel=function(state,mainCamera,observer,name,scene,scale,opacity,time,highlight) {
+	if (highlight===undefined) {highlight=false;};
 	var label=scene.getObjectByName("label"+name);
 	if (label !== undefined) {
 	    var range=this.config[name].radius;
@@ -1152,6 +1187,9 @@ function Bodies() {
 	    //label.geometry.attributes.position.needsUpdate=true;
 	    label.position.set(x*scale,y*scale,z*scale);
 	    var ss=mainCamera.fov/20;
+	    if (highlight) {
+		ss=ss*(50+Math.sin(time/100))/50;
+	    };
 	    label.scale.set(label.width*label.size*ss,
 			    label.height*label.size*ss,
 			    label.height*label.size*ss);
@@ -1513,6 +1551,20 @@ function Bodies() {
 	    console.log("*** Attempt to rotate undefined body.");
 	};
 	return bdy;
+    }
+    this.cameraLookDir=function(camera,vector) {
+	if (vector===undefined) {
+	    vector = new THREE.Vector3(0, 0, -1);
+	} else {
+	    vector.setX(0);
+	    vector.setY(0);
+	    vector.setZ(-1);
+	}
+        vector.applyEuler(camera.rotation, camera.rotationOrder);
+        return vector;
+    };
+    this.getAngle=function(dir1,dir2) {
+	return dir1.angleTo(dir2);
     }
  };
 

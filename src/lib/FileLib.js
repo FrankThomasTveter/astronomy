@@ -84,7 +84,7 @@ function File() {
 	    regHttp.responseType="";
 	    //regHttp.overrideMimeType("text/text");
 	    var path=process.env.PUBLIC_URL+"/"+url+params;
-	    //console.log("Http url:",JSON.stringify(path));
+	    console.log("Http url:",JSON.stringify(path));
 	    regHttp.open('GET', path, true);
 	    regHttp.setRequestHeader('cache-control', 'no-cache, must-revalidate, post-check=0, pre-check=0');
 	    regHttp.setRequestHeader('cache-control', 'max-age=0');

@@ -33,7 +33,7 @@ function Model() {
     // events are updated async with body state
     // downloaded events are put into the stack
     // the config contains the state interpolated from the stack
-    this.requests = {state:[],current:undefined};
+    this.requests = {state:[]};
     this.stack={};
     this.config = { reqId : -1,
 		    event : 0,
@@ -300,11 +300,12 @@ function Model() {
 	    // 	this.redraw=true;
 	    // };
 	}
-	if (this.requestUpdate(state)) { this.step=0;};
-	if (this.processNewRequests(state)) { 
+	this.sendRequests(state);
+	if (this.completeRequests(state)) { 
 	    this.offzoom(0.5);
 	    this.step=0;
 	};
+	this.cleanRequests(state);	
 	//if (this.step === 0) {
 	this.updateConfig(state,ttrg);
 	 if (state.React !== undefined && state.React.Model !== undefined) {
@@ -409,8 +410,8 @@ function Model() {
     };
     this.setDefaults=function(state,cfg) {
 	if (cfg===undefined){cfg={};};
-	cfg.lat=cfg.lat || 59.0;
-	cfg.lon=cfg.lon || 9.0;
+	cfg.lat=cfg.lat || state.Events.getLat(state);
+	cfg.lon=cfg.lon || state.Events.getLon(state);
 	cfg.epoch=cfg.epoch;
 	cfg.hrs=Math.max(0,Math.min(24,(cfg.hrs || 24)));
 	cfg.label=cfg.label || "";
@@ -421,10 +422,11 @@ function Model() {
 	cfg.speed=cfg.speed;	
 	return cfg;
     };
-    this.cleanStack=function(state,stack,epoch) {
+    this.cleanStack=function(state,stack,target) {
 	var ttrg=state.Events.getModelTime(state); // current target time
 	let events=stack.events.filter(function (event) {
-	    return (event.epoch > ttrg - 86400*1000 && event.epoch < ttrg + 86400*1000);
+	    return (Math.abs(event.epoch - target) < 86400*1000 ||  // new time
+		    Math.abs(event.epoch - ttrg)  < 86400*1000 );  // old time
 	});
 	events.sort(function(a, b) {
 	    return a.epoch - b.epoch;
@@ -435,43 +437,35 @@ function Model() {
 	events.forEach( (event,ind) => {
 	    stack.dtgs.push(event.dtg);
 	    stack.epochs.push(event.epoch);
-	    if (event.epoch === epoch) {index=stack.epochs.length-1;}
+	    if (event.epoch === target) {index=stack.epochs.length-1;}
 	});
 	stack.events=events;
-	stack.epoch=epoch;
-	stack.event=stack.epochs.indexOf(epoch);
+	stack.epoch=target;
+	stack.event=stack.epochs.indexOf(target);
     };
-    this.cleanRequests=function(state,iid) {
+    this.cleanRequests=function(state) {
+	// remove garbage from request queue, keep current and target, returns new target
 	var now=new moment().valueOf();
-	if (iid===undefined) {iid=-1;};
 	var state=[];
 	var current=undefined;
-	var ret=undefined;
-	//console.log("Cleaning all:",this.requests.state);
+	//console.log("Cleaning all:",this.requests.state.length);
 	this.requests.state.forEach((req,id) => {
-	    var other1=this.requests.current !== id;
-	    var other2=iid !== id;
+	    var iscurrent= (this.requests.current === id);
 	    //console.log("Cleaning:",id,other,now-req.sent,now-req.used,req.sent,req.received,req.processed);
-	    if (other1 && other2 &&
-		req.sent !== undefined && 
+	    if (req.sent !== undefined && 
 		now-req.sent > 6*1000 &&
 		req.received === undefined) {
-		//console.log("Stale request found:",id);
-	    } else if (other1 && other2 &&
-		now-req.used > 6*1000 &&
-		req.processed!==undefined) {
-		//console.log("Inactive request found:",id);
+		console.log("Stale request found:",id,now-req.sent);
+	    } else if (req.processed!==undefined) {
+		//console.log("Inactive request found:",id,now-req.used);
 	    } else {
+		//console.log("Found valid request:",id,now-req.used, req.received,req.processed);
 		state.push(req);
-		if (! other1) {current=state.length-1;};
-		if (! other2) {ret=state.length-1;};
+		if (iscurrent) {current=state.length-1;};
 	    }
 	});
-	if (current !== undefined) {
-	    this.requests.state=state;
-	    this.requests.current=current;
-	};
-	return ret;
+	this.requests.state=state;
+	this.requests.current=current;
     };
     this.getRequest=function(state,reqId) {
 	if (this.requests.state !== undefined && reqId !== undefined && reqId >= 0 )  {
@@ -484,41 +478,42 @@ function Model() {
     this.getRequestId=function(state,cfg) {
 	var reqId=undefined;
 	// check if there is a request with similar config...
-	this.requests.state.forEach((req,id) => {
-	    var ll=req.location;
-	    var rr=req.events[req.event];
-	    // console.log("Checking...",id,		
-	    // 		cfg.lat===ll.latitude,
-	    // 		cfg.lon===ll.longitude,
-	    // 		cfg.epoch===rr.epoch,
-	    // 		cfg.target===rr.target,
-	    // 		cfg.fov===rr.fov,
-	    // 		cfg.dir===rr.dir,
-	    // 		cfg.con===rr.con,ll,rr,cfg);
-	    if (req.sent !== undefined &&
-		req.received !== undefined &&
-		req.processed !== undefined &&
-		cfg.lat===ll.latitude &&
-		cfg.lon===ll.longitude &&
-		cfg.epoch===rr.epoch &&
-		cfg.target===rr.target &&
-		cfg.fov===rr.fov &&
-		cfg.dir===rr.dir &&
-		cfg.con===rr.con
-	       ) {
-		req.used= new moment().valueOf();
-		req.seq=++this.seq;
-		//console.log("Found match...",id,cfg);
-		reqId=id;
-	    };
-	});
+	if (this.requests.state !== undefined) {
+	    this.requests.state.forEach((req,id) => {
+		var ll=req.location;
+		var rr=req.events[req.event];
+		// console.log("Checking...",id,		
+		// 		cfg.lat===ll.latitude,
+		// 		cfg.lon===ll.longitude,
+		// 		cfg.epoch===rr.epoch,
+		// 		cfg.target===rr.target,
+		// 		cfg.fov===rr.fov,
+		// 		cfg.dir===rr.dir,
+		// 		cfg.con===rr.con,ll,rr,cfg);
+		if (req.sent !== undefined &&
+		    req.received !== undefined &&
+		    req.processed !== undefined &&
+		    cfg.lat===ll.latitude &&
+		    cfg.lon===ll.longitude &&
+		    cfg.epoch===rr.epoch &&
+		    cfg.target===rr.target &&
+		    cfg.fov===rr.fov &&
+		    cfg.dir===rr.dir &&
+		    cfg.con===rr.con
+		   ) {
+		    req.used= new moment().valueOf();
+		    req.seq=++this.seq;
+		    //console.log("Found match...",id,cfg);
+		    reqId=id;
+		};
+	    });
+	};
 	return reqId;
     };
     this.launch= function (state,cfg) {
 	cfg=this.setDefaults(state,cfg);
 	// check if request is already launched...
 	var reqId=this.getRequestId(state,cfg);
-	reqId=this.cleanRequests(state,reqId);
 	if (reqId !== undefined) { 
 	    let req=this.getRequest(state,reqId);
 	    if (req !== undefined &&
@@ -533,13 +528,10 @@ function Model() {
 	if (cfg.lon===undefined) {cfg.lat=state.Events.getLon(state);}
 	if (cfg.epoch===undefined) {cfg.epoch=state.Events.getModelTime(state);}
 	if (cfg.speed!==undefined) {state.Events.setSpeed(state,cfg.speed);}
-	//if (this.bdeb) {
-	console.log("*** launching model:",cfg.lat, cfg.lon, (new moment(cfg.epoch)).toISOString(), 
-		    cfg.hrs, cfg.label,cfg.target, cfg.fov, cfg.dir, cfg.con, cfg.speed);
-	//};
+	this.seq=this.seq+1;
 	var dtgdate=new moment(cfg.epoch);
 	var trg=dtgdate.toISOString();
-	var dtgs=state.Utils.addHours(state,dtgdate,cfg.hrs,cfg.prev,cfg.next)
+	var dtgs=state.Utils.addHours(state,dtgdate,cfg.hrs,cfg.dir)
 	var event=dtgs.indexOf(trg);
 	//console.log("Hours:",dtgs,event);
 	var dir=cfg.dir;
@@ -572,30 +564,37 @@ function Model() {
 				 longitude : cfg.lon,
 				 height : 0.0
 				},
+		     requested  : new moment().valueOf(),
 		     sent: undefined,
 		     received: undefined,
 		     processed: undefined,
 		     used:  new moment().valueOf(),  // when last used
-		     seq:  ++this.seq,                 // sequence number
+		     seq:  this.seq,                 // sequence number
 		     epochs: epochs,
 		     event : event,
-		     prev  : cfg.prev,
-		     next  : cfg.next,
+		     type  : cfg.type,
 		     events : events // ,current:0
 		   };
 	this.requests.state.push(newreq);
 	this.requests.current=this.requests.state.length-1;
+	//if (this.bdeb) {
+	//console.log("*** launching model:",this.seq,(new moment(cfg.epoch)).toISOString(), 
+	//	    JSON.stringify(cfg),event);
+	//};
     };
-    this.requestUpdate = function (state) {
-	var ret=false;
-	var reqId=this.requests.current;
-	var req = this.getRequest(state,reqId);
-	if (req.sent == undefined) { // we have a new target
-	    if (this.bdeb) {console.log("Sending new request.",reqId);}
-	    this.sendRequest(state,req,[]);
-	    req.sent= new moment().valueOf();
-	}
-	return ret;
+    this.sendRequests = function (state) {
+	// if (this.requests.state===undefined) {
+	//     this.requests.state=[];
+	//     this.launch(state);
+	//     console.log("Making default request...",this.request);
+	// };
+	this.requests.state.forEach((req,id) => {
+	    if (req !== undefined && req.sent == undefined) { // we have a new target
+		if (this.bdeb) {console.log("Sending new request.",req.seq);}
+		this.sendRequest(state,req,[]);
+		req.sent= new moment().valueOf();
+	    }
+	});
     };
     this.getRequestPar=function(state,request) {
 	// send server request for data
@@ -719,7 +718,7 @@ function Model() {
 	    }
 	    // store time data
 	    var event=req.event; // target event
-	    var epoch=req.epochs[req.event];
+	    var target=req.epochs[req.event];
 	    var tis=ss.getElementsByTagName("times")[0];
 	    var tistim=tis.getElementsByTagName("time");
 	    var tisno=tis.getAttribute("no");
@@ -735,12 +734,6 @@ function Model() {
 		    console.log("Date mismatch: ",dtg," !== ",dtg_);
 		} else if (stack.epochs.indexOf(epoch) === -1 ) { // does not exist already
 		    changed=true;
-		    if (stack.epochs.length > 0) {
-			if (epoch < stack.epochs[0]) {stack.prev = undefined;}
-			if (epoch > stack.epochs[stack.epochs.length-1]) {stack.next = undefined;}
-		    };
-		    if (req.prev !== undefined) {stack.prev = undefined;}
-		    if (req.next !== undefined) {stack.next = undefined;}
 		    var ss= stack.epochs.length;
 		    if (stack.epochs.length !== stack.events.length) {
 			console.log("Invalid stack:",stack,JSON.stringify(stack));
@@ -845,13 +838,20 @@ function Model() {
 	    req.received= new moment().valueOf();
 	    if (changed && stack !== undefined) {
 		// sort stack
-		this.cleanStack(state,stack,epoch);
+		this.cleanStack(state,stack,target);
 		stack.received= req.received;
 		this.stack=stack;
-		console.log("Stack changed...",dtg,this.stack.prev, this.stack.next,req.prev,req.next,
-			    JSON.stringify(this.stack.dtgs));
+		// console.log("Stack changed...",new moment(target).toISOString(),stack.event,this.stack.dtgs.length-1);
+		// for (var ii=0; ii < stack.dtgs.length;ii=ii+5) {
+		//     var ss="";
+		//     for (var jj=0; jj<Math.min(5,stack.dtgs.length-ii);jj++) {
+		// 	var pp=ii + jj;
+		// 	ss=ss+"   "+stack.dtgs[pp];
+		//     };
+		//     console.log("    ",ii,ss);
+		// };
 	    } else {
-		console.log("Stack did not change...",dtg,this.stack.prev, this.stack.next);
+		console.log("Stack did not change...",dtg);
 	    };
 	    if (this.bdeb) {console.log("Completed request:",req);};
 	} else {
@@ -880,30 +880,25 @@ function Model() {
 	state.Orbit.standardOrbit(sat.orbit,sat.cydrift,this.MU[around]);
     }
     // check if we have a new request to process.
-    this.processNewRequests = function (state) {
+    this.completeRequests = function (state) {
 	var ret=false;
-	if (this.requests.current===undefined) {
-	    this.launch(state);
-	    console.log("Making default request...",this.request);
-	};
-	var reqId=this.requests.current;
-	var req = this.getRequest(state,reqId);
-	if ( req.received !== undefined &&
-	     req.processed === undefined) { // we have a new target
-	    let request=req.events[req.event]
-	    let ttrg=request.epoch;
-	    let target=request.target;
-	    //console.log("Setting time:",ttrg,target,req);
-	    state.Events.setModelTime(state,ttrg);
-	    this.setNewTarget(state,target);
-	    req.processed = new moment().valueOf();
-	    this.stack.processed=req.processed;
-	    //console.log("Calculated orbital elements:",req);
-	    ret=true;
-	}
+	this.requests.state.forEach((req,id) => {
+	    if ( req.received !== undefined &&
+		 req.processed === undefined) { // we have a new target
+		let request=req.events[req.event]
+		let ttrg=request.epoch;
+		let target=request.target;
+		//console.log("Setting model time:",ttrg,target,req,new moment(ttrg).toISOString());
+		state.Events.setModelTime(state,ttrg);
+		this.setNewTarget(state,target);
+		req.processed = new moment().valueOf();
+		this.stack.processed=req.processed;
+		//console.log("Calculated orbital elements:",req);
+		ret=true;
+	    };
+	});
 	return ret;
     };
-
     this.setNewTarget=function(state,target) {
 	if ( target !== undefined) {
 	    let body=this.config.bodies[target];
@@ -922,14 +917,16 @@ function Model() {
 	var ret = false;
 	var stack=this.stack;
 	var reqId=stack.current;
-	if (stack.processed !== undefined && this.config.reqId !== reqId ) { // process new request
+	if (stack.events !== undefined &&
+	    stack.processed !== undefined &&
+	    this.config.reqId !== reqId ) { // process new request
 	    //console.log("Constructing config from orbital elements.");
 	    // get times
 	    this.config.dtgs = [];
 	    this.config.epochs = [];
-	    for ( var tt = 0; tt < stack["events"].length; tt++) {
-		this.config.dtgs[tt]=stack["events"][tt]["dtg"];
-		this.config.epochs[tt]=stack["events"][tt]["epoch"];
+	    for ( var tt = 0; tt < stack.events.length; tt++) {
+		this.config.dtgs[tt]=stack.events[tt].dtg;
+		this.config.epochs[tt]=stack.events[tt].epoch;
 	    };
 	    if (stack.event !== undefined) { this.config.event=stack.event;};
 	    //this.config.young=(this.config.current+1)%2;
@@ -955,6 +952,18 @@ function Model() {
 	    //	console.log("Nothing to do:",stack.processed);
 	}
 	//console.log("Config:",ttrg,ret);
+	return ret;
+    };
+    this.isExpanding=function(state) {
+	var ret=false;
+	this.requests.state.every(req => {
+	    if (req.type === "expanding") {
+		ret=true;
+		return false; // stop checking
+	    } else {
+		return true;  // check next
+	    };
+	});
 	return ret;
     };
     this.makeConfig = function (state,stack,config,ttrg){
@@ -991,40 +1000,37 @@ function Model() {
 	    };
 	};
 	//console.log("Dtg:",ttrg,new moment(ttrg).toISOString(),JSON.stringify(this.config.epochs),
-	//		f,prev,next,stack.events.length-1,stack.prev,stack.next,
+	//		f,prev,next,stack.events.length-1,
 	//		JSON.stringify(this.config.dtgs));
-	if (prev !== -1 && next !== -1) { // success!
+	if (prev !== -1 && next !== -1) { // success!!!! ... or?
 	    var dt = ttrg-prevEpoch;
 	    var dt0 = nextEpoch - prevEpoch;
 	    var f = dt/Math.max(1e-10,dt0);
 	    ret=true;
-	    if (dt0 > 1.5*3600*1000.0) { // to big skip 1.5 hours...
-		if (f < 0.5 && stack.next === undefined) {
-		    stack.next=(new moment().valueOf());
-		    console.log("Send next request...",dt,dt0,f);
-		    this.launch(state,{epoch:ttrg,hrs:24,next:true});
-		} else if (f >= 0.5 && stack.prev === undefined) {
-		    stack.prev=(new moment().valueOf());
-		    console.log("Send prev request...",dt,dt0,f);
-		    this.launch(state,{epoch:ttrg,hrs:24,prev:true});
-		};
-	    } else {
-		// should we send a new stackuest?
-		if (prev===0 && stack.prev === undefined) {
-		    stack.prev=(new moment().valueOf());
-		    console.log("Send prev request...");
-		    this.launch(state,{epoch:ttrg,hrs:24,prev:true});
-		} else if (next === stack.events.length-1 && stack.next === undefined) {
-		    stack.next=(new moment().valueOf());
-		    console.log("Send next request...");
-		    this.launch(state,{epoch:ttrg,hrs:24,next:true});
+	    if (dt0 > 1.5*3600*1000.0) { // to big skip (max is 1.5 hours)...
+		if (! this.isExpanding(state)) { // check if we are already expanding
+		    if (f < 0.5 && dt < 1.0*3600*1000.0) { // expand 
+			console.log("Send next request A...",dt,dt0,f);
+			this.launch(state,{epoch:ttrg,hrs:24,dir:"next",type:"expanding"});
+		    } else if (f >= 0.5  && dt0-dt < 1.0*3600*1000.0) {
+			console.log("Send prev request A...",dt,dt0,f);
+			this.launch(state,{epoch:ttrg,hrs:24,dir:"prev",type:"expanding"});
+		    } else {
+			console.log("Send center request A...",dt,dt0,f);
+			this.launch(state,{epoch:ttrg,hrs:24,dir:"center",type:"expanding"});
+		    };
 		};
 	    };
 	} else if (prev !== -1 ) {  // found epoch before, but not after
-	    if (stack.next === undefined) {
-		stack.next=(new moment().valueOf());
-		console.log("Send prev request...");
-		this.launch(state,{epoch:ttrg,hrs:24,next:true});
+	    var dt = ttrg-prevEpoch;
+	    if (! this.isExpanding(state)) {
+		if (dt < 1.0*3600*1000.0) {
+		    console.log("Send next request C...",dt);
+		    this.launch(state,{epoch:ttrg,hrs:24,xdir:"next",type:"expanding"});
+		} else {
+		    console.log("Send center request C...",dt);
+		    this.launch(state,{epoch:ttrg,hrs:24,xdir:"center",type:"expanding"});
+		};
 	    };
 	    next=first;
 	    prev=first;
@@ -1032,24 +1038,29 @@ function Model() {
 	    // stop clock, set clock to first time
 	    ret=true;
 	} else if (next !== -1) {  // found epoch after, but not before
-	    if (stack.prev === undefined) {
-		stack.prev=(new moment().valueOf());
-		console.log("Send prev request...");
-		this.launch(state,{epoch:ttrg,hrs:24,prev:true});
+	    var dt = nextEpoch-ttrg;
+	    if (! this.isExpanding(state)) {
+		if (dt > 1.0*3600*1000.0) {
+		    console.log("Send prev request D...",dt);
+		    this.launch(state,{epoch:ttrg,hrs:24,xdir:"prev",type:"expanding"});
+		} else {
+		    console.log("Send center request D...",dt);
+		    this.launch(state,{epoch:ttrg,hrs:24,xdir:"center",type:"expanding"});
+		};
 	    };
 	    next=last;
 	    prev=last;
 	    f=0.0;
 	    // stop clock, set clock to last time
 	    ret=true;
-	} else if (now-stack.sent<1000) {
+	} else if (now-stack.sent<1000) { // (prev==-1 && next===-1) re-send original request in case of timeout...
+	    // send new request if we have a timeoout...
 	    stack.sent=now;
 	    //console.log("Times:",+ttrg,"|",+e0 ,"|",+speed, "|",+m0);
 	    console.log("Unable to find interval:",+ttrg,prev,next,stack["events"]);
-	    // send new request if we have a timeoout...
 	    this.launch(state,{epoch:ttrg,hrs:24});
 	    ret=false;
-	}
+	};
 	if (ret) {
 
 	    
@@ -1070,7 +1081,7 @@ function Model() {
 
 
 	    //console.log("Config:",JSON.stringify(config.observer));
-	    //console.log("Config match:",config.epoch,config.dtg,config);
+	    //console.log("Config:",prev,next,f,stack.events.length,config.epoch,config.dtg,JSON.stringify(stack.events[prev]));
 	}
 	//console.log("Pos:",+ttrg,stack["events"][0]," STACK:",prev,next," DTG:",config.dtg,prev,next);
 	//console.log("******************getState: ",ttrg);//config

@@ -1139,12 +1139,12 @@ function Utils() {
 	}
 	return ret;
     };
-    this.addHours=function(state,dtgdate,hrs,prev,next) {
+    this.addHours=function(state,dtgdate,hrs,dir) {
 	var dtgs=[dtgdate.toISOString()];
 	var steps= Math.max(1,Math.round(hrs/2));
-	if (prev !== undefined && prev) { // move back starting point...
+	if (dir !== undefined && dir==="prev") { // move back starting point...
 	    dtgs.push(state.Utils.addHour(state,dtgdate,-steps*2).toISOString());
-	} else if (next!== undefined && next) {
+	} else if (dir!== undefined && dir==="next") {
 	    // do nothing
 	} else {
 	    dtgs.push(state.Utils.addHour(state,dtgdate,-steps).toISOString());

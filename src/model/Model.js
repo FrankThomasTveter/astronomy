@@ -156,6 +156,9 @@ export default class Model {
 
 	// update scenes
 	this.updateScenes(this.state,this.mainCamera,time);
+
+	// update the control-target
+	this.controls.setReference(this.Bodies.getTarget());
     };
 
     updateRaycaster (state) {
@@ -201,10 +204,10 @@ export default class Model {
 	this.mainCamera.position.set(0,0,0);
 	//console.log("Up:",zen.x,zen.y,zen.z);
 	this.mainCamera.up.set(zen.x,zen.y,zen.z); // up is always towards observer zenith...
-	// if (this.newTarget !== undefined) {
-	//     this.mainCamera.pointAt(this.newTarget); // up is always towards observer zenith...
-	//     this.newTarget=undefined;
-	// };
+	if (this.newTarget !== undefined) {
+	     //this.mainCamera.pointAt(this.newTarget); // point to new target...
+	     this.newTarget=undefined;
+	};
 	//this.mainCamera.updateMatrixWorld(true);
 	//this.mainCamera.updateProjectionMatrix();
     }
