@@ -51,11 +51,11 @@ function Bodies() {
     
     this.near=147;// 1
     this.far=149;//1000000000
-    
+
     this.config={
 	sun  :  {
 	    scale : 0.00002,
-	    ambient : 1000,
+	    //ambient : 1000,
 	    title : 'The Sun',
 	    visible: true,
 	    mass : 1.9891e30,
@@ -72,7 +72,7 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	mercury : {
-	    scale : 0.00002,
+	    scale : 0.000001,
 	    title : 'Mercury',
 	    visible: true,
 	    mass : 3.3022e23,
@@ -87,7 +87,7 @@ function Bodies() {
 	    position : new THREE.Vector3()
 	},
 	venus : {
-	    scale : 0.00002,
+	    scale : 0.000001,
 	    title : 'Venus',
 	    visible: true,
 	    mass : 4.868e24,
@@ -109,6 +109,7 @@ function Bodies() {
 	    visible: false,
 	    mass : 5.9736e24,
 	    radius : 6371.088,
+	    shadow : {length: 500000.0, width: 10000.0},
 	    color : '#1F7CDA',
 	    map : 'planets/earthmap1k.jpg',
 	    bumpMap1 : 'planets/earthbump1k.jpg',
@@ -150,6 +151,7 @@ function Bodies() {
 	    visible: true,
 	    mass : 1.8986e27,
 	    radius : 71492,
+	    shadow : {length: 100000.0, width: 100000.0},
 	    color : '#ff9932',
 	    map : 'planets/jupitermap.jpg',
 	    bumpScale : 10.0,
@@ -161,11 +163,12 @@ function Bodies() {
 	},
 	ash :{map : 'ash_uvgrid01.jpg'},
 	saturn : {
-	    scale : 0.0000001,
+	    scale : 0.00000001,
 	    title : 'Saturn',
 	    visible: true,
 	    mass : 5.6846e26,
 	    radius : 58232,
+	    shadow : {length: 150000.0, width: 150000.0},
 	    color : '#ffcc99',
 	    map : 'planets/saturnmap.jpg',
 	    bumpScale : 10.0,
@@ -177,7 +180,7 @@ function Bodies() {
 		map : 'planets/saturnringcolor.jpg',
 		trans : 'planets/saturnringpattern.gif',
 		density : 0.9,
-		color : '#aa8866'
+		color : '#ff8866' //#aa8866
 	    },
 	    satellites :["deathstar"],
 	    mg : -0.49, // at opposition
@@ -191,16 +194,17 @@ function Bodies() {
 	    visible: true,
 	    mass : 8.6810e25,
 	    radius : 25559,
+	    shadow : {length: 75000.0, width: 75000.0},
 	    color : '#99ccff',
 	    map : 'planets/uranusmap.jpg',
 	    bumpScale : 10.0,
 	    ring : {
 		innerRadius : 54500,
 		outerRadius : 57580,
-		thickness : 1000,
-		trans : 'planets/uranusringtrans.gif',
+		thickness : 100,
 		map : 'planets/uranusringcolour.jpg',
-		density : 0.5, // 0.5
+		trans : 'planets/uranusringtrans.gif',
+		density : 0.1, // 0.5
 		color : '#6688aa'
 	    },
 	    mg : 5.32, // closest to earth
@@ -228,6 +232,7 @@ function Bodies() {
 	    visible: true,
 	    mass : 1.305e22+1.52e21,
 	    radius : 1153,
+	    shadow : {length: 2000.0, width: 2000.0},
 	    color : '#aaaaaa',
 	    map : 'planets/plutomap1k.jpg',
 	    bumpMap : 'planets/plutobump1k.jpg',
@@ -335,8 +340,7 @@ function Bodies() {
 	    zenith : new THREE.Vector3(0,0,1)
 	}
     };
-    
-    this.baseURL = process.env.PUBLIC_URL+'/media/';             // from http://planetpixelemporium.com/
+    // from http://planetpixelemporium.com/
     //
     //////////////////////////////////////////////////////////////////////////////////
     //
@@ -402,7 +406,7 @@ function Bodies() {
 	    trg.rotation.w=src.rotation.w;
 	};
     };
-    this.getTarget = function (name) {
+    this.getBody = function (name) {
 	var body;
 	if (name === undefined) {name=this.targetname;};
 	if (name !== undefined && this.config[name]!==undefined) {
@@ -412,10 +416,25 @@ function Bodies() {
 	    } else {
 		body  = scene.getObjectByName(name);
 	    };
+	};
+	return body;
+    };
+    this.getTarget = function (name) {
+	var body=this.getBody(name);
+	if (body !== undefined) {
 	    //console.log("Target:",body.position);
 	    return body.position;
 	};
     };
+    this.getFov = function (name) {
+	var body=this.getBody(name);
+	if (body !== undefined) {
+	    //console.log("Target:",body.position);
+	    var dist= Math.max(0.0001,body.position.length());
+	    var rad=body.radius;
+	    return rad/dist;
+	};
+    }
     this.createScene = function (name,mainCamera) { // 
 	var size=48;
 	var font='48px Arial';
@@ -433,8 +452,9 @@ function Bodies() {
 	    scene.add(light);
 	};
 	scene.add(mesh);
-	scene.add(this.createLight(mesh,name));
+	scene.add(this.createLight(mesh,name,scene));
 	scene.add(this.createLabel(name));
+	scene.add(this.createFlare(name));
 	return scene;
     };
 
@@ -485,22 +505,37 @@ function Bodies() {
 	} else if (name === "jupiter") {
 	    return this.createJupiterMesh();
 	} else if (name === "saturn") {
-	    var group = new THREE.Object3D();
+	    let group = new THREE.Object3D();
+	    let saturn=this.createSaturnMesh();
+	    let ring=this.createSaturnRingMesh();
+	    //let plane=this.createPlane(name);
+	    let front=this.createSaturnRingMesh(THREE.FrontSide);
+	    let back=this.createSaturnRingMesh(THREE.BackSide);
 	    group.name="group";
-	    group.add(this.createSaturnMesh());
-	    group.add(this.createSaturnRingMesh(THREE.FrontSide));
-	    group.add(this.createSaturnRingMesh(THREE.BackSide));
+	    group.add(saturn);
+	    //group.add(plane);
+	    //group.add(ring);
+	    group.add(front);
+	    group.add(back);
 	    group.castShadow = true;
 	    group.receiveShadow = true;
+	    group.radius=ring.radius;
+	    console.log("Saturn:",group);
 	    return group;
 	} else if (name === "uranus") {
-	    var group = new THREE.Object3D();
+	    let group = new THREE.Object3D();
+	    let uranus=this.createUranusMesh();
+	    let ring=this.createUranusRingMesh();
+	    //let front=this.createUranusRingMesh(THREE.FrontSide);
+	    //let back=this.createUranusRingMesh(THREE.BackSide);
 	    group.name="group";
-	    group.add(this.createUranusMesh());
-	    group.add(this.createUranusRingMesh(THREE.FrontSide));
-	    group.add(this.createUranusRingMesh(THREE.BackSide));
+	    group.add(uranus);
+	    group.add(ring);
+	    //group.add(front);
+	    //group.add(back);
 	    group.castShadow = true;
 	    group.receiveShadow = true;
+	    group.radius=ring.radius;
 	    return group;
 	} else if (name === "neptune") {
 	    return this.createNeptuneMesh();
@@ -521,78 +556,89 @@ function Bodies() {
 
     this.createSunMesh	= function(){
 	var scale=this.config.sun.scale;
-	var material	= this.Material({map:this.baseURL+this.config.sun.map});
-	var geometry	= new THREE.SphereGeometry(this.config.sun.radius*scale, 32, 32)
+	var radius=this.config.sun.radius*scale
+	var material	= this.Material({map:UTILS.getURL('/media/'+this.config.sun.map)});
+	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="sun";
 	// mesh.rotation.x=Math.PI/2;
+	mesh.radius=radius;
 	return mesh	
     };
     this.createMercuryMesh	= function(){
 	var scale=this.config.mercury.scale;
-	var material	= this.Material({map:this.baseURL+this.config.mercury.map,
-					 bumpMap:this.baseURL+this.config.mercury.bumpMap,
+	var radius=this.config.mercury.radius*scale
+	var material	= this.Material({map:UTILS.getURL('/media/'+this.config.mercury.map),
+					 bumpMap:UTILS.getURL('/media/'+this.config.mercury.bumpMap),
 					 bumpScale:this.config.mercury.bumpScale*scale,
 					 shadowSide: THREE.FrontSide});
-	var geometry	= new THREE.SphereGeometry(this.config.mercury.radius*scale, 32, 32)
+	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="mercury";
 	// mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
+	mesh.radius=radius;
 	return mesh	
     };
     this.createVenusMesh	= function(){
 	var scale=this.config.venus.scale;
-	var material	= this.Material({map:this.baseURL+this.config.venus.map,
-					 bumpMap:this.baseURL+this.config.venus.bumpMap,
+	var radius=this.config.venus.radius*scale
+	var material	= this.Material({map:UTILS.getURL("/media/"+this.config.venus.map),
+					 bumpMap:UTILS.getURL("/media/"+this.config.venus.bumpMap),
 					 bumpScale: this.config.venus.bumpScale*scale,
 					 shadowSide: THREE.FrontSide});
-	var geometry	= new THREE.SphereGeometry(this.config.venus.radius*scale, 32, 32)
+	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="venus";
 	// mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
+	mesh.radius=radius;
 	return mesh	
     };
     this.createEarthMesh	= function(){
 	var scale=this.config.earth.scale;
-	//bumpMap:this.baseURL+this.config.earth.bumpMap,
+	var radius=this.config.earth.radius*scale;
+	//bumpMap:UTILS.getURL("/media/"+this.config.earth.bumpMap),
 	//bumpScale:this.config.earth.bumpScale*scale,
-	var material	= this.Material({map:this.baseURL+this.config.earth.map,
-					 specularMap:this.baseURL+this.config.earth.spec,
+	var material	= this.Material({map:UTILS.getURL("/media/"+this.config.earth.map),
+					 specularMap:UTILS.getURL("/media/"+this.config.earth.spec),
 					 specularColor: 'grey',
 					 transparent:true,
 					 opacity:0.9,
 					 shadowSide: THREE.FrontSide});
 	//	wireframe:true,
-	var geometry	= new THREE.SphereGeometry(this.config.earth.radius*scale, 512, 1024);//1024
+	var geometry	= new THREE.SphereGeometry(radius, 64, 64);//1024
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="earth";
 	// mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
+	mesh.radius=radius;
 	return mesh	
     };
     this.createMoonMesh	= function(){
 	var scale=this.config.earth.scale;
-	var material	= this.Material({map: this.baseURL+this.config.moon.map,
-					 bumpMap: this.baseURL+this.config.moon.bumpMap,
+	var radius=this.config.moon.radius*scale;
+	var material	= this.Material({map: UTILS.getURL("/media/"+this.config.moon.map),
+					 bumpMap: UTILS.getURL("/media/"+this.config.moon.bumpMap),
 					 bumpScale: this.config.moon.bumpScale*scale,
 					 shadowSide: THREE.FrontSide});
-	var geometry	= new THREE.SphereGeometry(this.config.moon.radius*scale, 32, 32)
+	var geometry	= new THREE.SphereGeometry(radius, 64, 64)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="moon";
 	// mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
+	mesh.radius=radius;
 	return mesh	
     };
     this.createMarsMesh	= function(){
 	var scale=this.config.mars.scale;
-	var material	= this.Material({map: this.baseURL+this.config.mars.map,
-					 bumpMap: this.baseURL+this.config.mars.bumpMap,
+	var radius=this.config.sun.radius*scale
+	var material	= this.Material({map: UTILS.getURL("/media/"+this.config.mars.map),
+					 bumpMap: UTILS.getURL("/media/"+this.config.mars.bumpMap),
 					 bumpScale: this.config.mars.bumpScale*scale,
 					 shadowSide: THREE.FrontSide});
 	var geometry	= new THREE.SphereGeometry(this.config.mars.radius*scale, 32, 32)
@@ -601,48 +647,67 @@ function Bodies() {
 	// mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
+	mesh.radius=radius;
 	return mesh	
     };
     this.createJupiterMesh= function(){
 	var scale=this.config.jupiter.scale;
-	var material    = this.Material({map:this.baseURL+this.config.jupiter.map,
-					 bumpMap:this.baseURL+this.config.jupiter.map,
+	var radius=this.config.jupiter.radius*scale
+	var material    = this.Material({map:UTILS.getURL("/media/"+this.config.jupiter.map),
+					 bumpMap:UTILS.getURL("/media/"+this.config.jupiter.map),
 					 bumpScale: this.config.jupiter.bumpScale*scale,
 					 shadowSide: THREE.FrontSide});
-	var geometry	= new THREE.SphereGeometry(this.config.jupiter.radius*scale, 32, 32)
+	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="jupiter";
 	//mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
+	mesh.radius=radius;
 	return mesh	
+    };
+    this.createPlane= function(name){
+	var scale=this.config[name].scale;
+	var radius=this.config[name].radius;
+	var met=radius*scale;
+	var mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 5*met, 5*met ),
+				   new THREE.MeshPhongMaterial( { color: 0x999999 } ) );//, depthWrite: false
+	//mesh.rotation.y = - Math.PI / 4;
+	mesh.position.set(20000*scale,20000*scale,50000*scale);
+	mesh.receiveShadow = true;
+	mesh.name="plane";
+	return mesh;
     };
     this.createSaturnMesh= function(){
 	var scale=this.config.saturn.scale;
-	var material	= this.Material({map:this.baseURL+this.config.saturn.map,
-					 bumpMap	: this.baseURL+this.config.saturn.map,
+	var radius=this.config.saturn.radius*scale
+	var material	= this.Material({map:UTILS.getURL("/media/"+this.config.saturn.map),
+					 bumpMap	: UTILS.getURL("/media/"+this.config.saturn.map),
 					 bumpScale: this.config.saturn.bumpScale*scale,
 					 shadowSide: THREE.FrontSide});
-	var geometry	= new THREE.SphereGeometry(this.config.saturn.radius*scale, 32, 32);
+	var geometry	= new THREE.SphereGeometry(radius, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material);
 	mesh.name       = "saturn";
 	//// mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
+	mesh.radius=radius;
 	return mesh	
     };
     this.createSaturnRingMesh	= function(side){
 	var scale=this.config.saturn.scale;
+	var radius=this.config.saturn.ring.outerRadius*scale
 	if (side === undefined) { side= THREE.DoubleSide;}
 	//THREE.DoubleSide,THREE.FrontSide,THREE.BackSide,
 	var material;
-	material    = this.Material({map:this.baseURL+this.config.saturn.ring.map,
-				     transMap:this.baseURL+this.config.saturn.ring.trans,
+	material    = this.Material({map:UTILS.getURL("/media/"+this.config.saturn.ring.map),
+				     transMap:UTILS.getURL("/media/"+this.config.saturn.ring.trans),
 				     side:side,
-				     transparent:false,
+				     transparent:true,
 				     opacity:0.9,
 				    });
-	var geometry	= this.RingGeometry(this.config.saturn.ring.innerRadius*scale, this.config.saturn.ring.outerRadius*scale, 128);
+	var geometry	= this.RingGeometry(this.config.saturn.ring.innerRadius*scale,
+					    this.config.saturn.ring.outerRadius*scale, 128, true);
 	var mesh	= new THREE.Mesh(geometry, material);
 	var normal=new THREE.Vector3(0,0,1).normalize();
 	var offset;
@@ -654,38 +719,46 @@ function Bodies() {
 	} else {
 	    mesh.name       = "saturnring";
 	};
-	mesh.castShadow = true;
-	mesh.receiveShadow = true;
+	///////////////////////////////////
+	// NB: The ring may cast shadow onto itself making it very dark (do not cast and receive shadow...)
+	//mesh.castShadow = true;
+	mesh.receiveShadow = true; // this makes the ring much darker for some reason...
+	/////////////////////////////
 	offset=normal.clone().multiplyScalar(this.config.saturn.ring.thickness*scale); // offset so shadow is not messed up...
 	mesh.position.set(offset.x,offset.y,offset.z);
 	mesh.lookAt(normal);
 	mesh.rotation.x=Math.PI/2;
+	mesh.radius=radius;
 	return mesh	
     };
     this.createUranusMesh	= function(){
 	var scale=this.config.uranus.scale;
-	var material    = this.Material({ map:this.baseURL+this.config.uranus.map,
-					  bumpMap:this.baseURL+this.config.uranus.map,
+	var radius=this.config.uranus.radius*scale
+	var material    = this.Material({ map:UTILS.getURL("/media/"+this.config.uranus.map),
+					  bumpMap:UTILS.getURL("/media/"+this.config.uranus.map),
 					  bumpScale:this.config.uranus.bumpScale*scale,
 					  shadowSide: THREE.FrontSide});
-	var geometry	= new THREE.SphereGeometry(this.config.uranus.radius*scale, 32, 32);
+	var geometry	= new THREE.SphereGeometry(radius, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material);
 	mesh.name="uranus";
 	//mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
+	mesh.radius=radius;
 	return mesh	
     };
     this.createUranusRingMesh	= function(side){
 	var scale=this.config.uranus.scale;
+	var radius=this.config.uranus.ring.outerRadius*scale
 	var material;
-	material    = this.Material({map:this.baseURL+this.config.uranus.ring.map,
-					 transMap:this.baseURL+this.config.uranus.ring.trans,
+	material    = this.Material({map:UTILS.getURL("/media/"+this.config.uranus.ring.map),
+				     transMap:UTILS.getURL("/media/"+this.config.uranus.ring.trans),
 					 side:THREE.FrontSide,
 					 transparent:true,
-					 opacity:0.9,
+					 opacity:0.2,
 					});
-	var geometry	= this.RingGeometry(this.config.uranus.ring.innerRadius*scale, this.config.uranus.ring.outerRadius*scale, 128);
+	var geometry	= this.RingGeometry(this.config.uranus.ring.innerRadius*scale,
+					    this.config.uranus.ring.outerRadius*scale, 128, true);
 	var mesh	= new THREE.Mesh(geometry, material);
 	var normal=new THREE.Vector3(0,0,1).normalize();
 	var offset;
@@ -703,74 +776,83 @@ function Bodies() {
 	mesh.position.set(offset.x,offset.y,offset.z);
 	mesh.lookAt(normal);
 	mesh.rotation.x=Math.PI/2;
+	mesh.radius=radius;
 	return mesh	
     };
     this.createNeptuneMesh	= function(){
 	var scale=this.config.neptune.scale;
-	var material	= this.Material({map:this.baseURL+this.config.neptune.map,
-					 bumpMap:this.baseURL+this.config.neptune.map,
+	var radius=this.config.neptune.radius*scale
+	var material	= this.Material({map:UTILS.getURL("/media/"+this.config.neptune.map),
+					 bumpMap:UTILS.getURL("/media/"+this.config.neptune.map),
 					 bumpScale:this.config.neptune.bumpScale*scale,
 					 shadowSide: THREE.FrontSide});
-	var geometry	= new THREE.SphereGeometry(this.config.neptune.radius*scale, 32, 32);
+	var geometry	= new THREE.SphereGeometry(radius, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = "neptune";
 	// mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
+	mesh.radius=radius;
 	return mesh	
     };
     this.createPlutoMesh	= function(){
 	var scale=this.config.pluto.scale;
-	var material	= this.Material({map:this.baseURL+this.config.pluto.map,
-					 bumpMap:this.baseURL+this.config.pluto.bumpMap,
+	var radius=this.config.pluto.radius*scale
+	var material	= this.Material({map:UTILS.getURL("/media/"+this.config.pluto.map),
+					 bumpMap:UTILS.getURL("/media/"+this.config.pluto.bumpMap),
 					 bumpScale: this.config.pluto.bumpScale*scale,
-					 displacementMap:this.baseURL+this.config.pluto.dispMap,
+					 displacementMap:UTILS.getURL("/media/"+this.config.pluto.dispMap),
 					 displacementScale: this.config.pluto.dispScale*scale,
 					 shadowSide: THREE.FrontSide});
-	var geometry	= new THREE.SphereGeometry(this.config.pluto.radius*scale, 32, 32)
+	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = "pluto";
 	// mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
+	mesh.radius=radius;
 	return mesh	
     };
     this.createDeathStarMesh	= function(scale){
 	if (scale===undefined) {scale=this.config.saturn.scale;}
-	var material	= this.Material({map:this.baseURL+this.config.deathstar.map,
-					 bumpMap:this.baseURL+this.config.deathstar.bumpMap,
+	var radius=this.config.deathstar.radius*scale
+	var material	= this.Material({map:UTILS.getURL("/media/"+this.config.deathstar.map),
+					 bumpMap:UTILS.getURL("/media/"+this.config.deathstar.bumpMap),
 					 bumpScale:this.config.deathstar.bumpScale*scale,
 					 shadowSide: THREE.FrontSide});
-	var geometry	= new THREE.SphereGeometry(this.config.deathstar.radius*scale, 32, 32)
+	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = "deathstar";
-	// mesh.rotation.x=Math.PI/2;
+	mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
+	mesh.radius=radius;
 	return mesh	
     };
     this.createAsteroideMesh	= function(name,scale){
 	if (scale===undefined) {scale=this.config.saturn.scale;}
 	var opts={shadowSide: THREE.FrontSide};
 	var trg=this.config[name];
-	var radius=trg.radius;
-	if (radius===undefined) {radius=this.config.saturn.radius*0.1;};
+	var radius_=trg.radius;
+	if (radius_===undefined) {radius=this.config.saturn.radius*0.1;};
+	var radius=radius_*scale
 	if (trg.map !== undefined) {
-	    opts.map=this.baseURL+trg.map;
+	    opts.map=UTILS.getURL("/media/"+trg.map);
 	} else {
-	    opts.map=this.baseURL+"moons/asteroide.jpeg";
+	    opts.map=UTILS.getURL("/media/"+"moons/asteroide.jpeg");
 	};
-	if (trg.bumpMap !== undefined) { opts.bumpMap=this.baseURL+trg.bumpMap;};
+	if (trg.bumpMap !== undefined) { opts.bumpMap=UTILS.getURL("/media/"+trg.bumpMap);};
 	if (trg.bumpScale !== undefined) { opts.bumpScale=trg.bumpScale*scale;};
 	var material	= this.Material(opts);
-	var geometry	= new THREE.SphereGeometry(radius*scale, 32, 32)
+	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = name;
 	// mesh.rotation.x=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
+	mesh.radius=radius;
 	return mesh	
-    };
+};
     this.createLight    = function(target,name,scene) {
 	if (name === "sun") {
 	    return new THREE.AmbientLight('#ffff88',1000);
@@ -779,9 +861,9 @@ function Bodies() {
 	    light.position.set(0,0,0);
 	    light.target                = target;
 	    light.castShadow            = true;
-	    light.shadow.mapSize.width  = 1048; // default
-	    light.shadow.mapSize.height =  1048; // default
-	    if (scene!==undefined) {scene.add(this.createShadowCameraOutline(light));};
+	    light.shadow.mapSize.width  = 512; // default 1024
+	    light.shadow.mapSize.height =  512; // default
+	    //if (scene!==undefined) {scene.add(this.createShadowCameraOutline(light));}; // add helper to see shadow
 	}
 	light.name                  = "sunlight";
 	return light;
@@ -792,24 +874,28 @@ function Bodies() {
 	return helper;
     };
     this.createLabel = function (name) {
+	//var path=UTILS.getURL("/media/stars/flare.png");
 	var title=this.config[name].title||"Undefined-"+name;
-	var label=UTILS.createTextSprite(title,
-					 {font:'48px Arial',
-					  sizeAttenuation:false,
-					  fillStyle:'yellow',
-					  size:1/20,    // buffer size
-					  cx:0,cy:0.5,
-					  x:0,y:0,z:0, //offset (Buffer position)
-					  alphaTest:0.01,
-					  //border:true,
-					  renderOrder:0,
-					  name:"label"+name,
-					 });
+	var label=UTILS.createSprite(
+	    {//path:path,
+	     text:title,
+	     font:'48px Arial',
+	     sizeAttenuation:false,
+	     fillStyle:'yellow',
+	     size:1/20,    // buffer size
+	     cx:0,cy:0.5,
+	     x:0,y:0,z:0, //offset (Buffer position)
+	     alphaTest:0.01,
+	     //border:true,
+	     renderOrder:0,
+	     name:"label"+name,
+	    });
 	if (this.config[name].visible) {
 	    label.visible=true;
 	} else {
 	    label.visible=false;
 	}
+	//console.log("Label:",name,label);
 	return label;
     }
     this.getMagnitude=function(name) {
@@ -841,56 +927,28 @@ function Bodies() {
 	    // get size
 	};
     }
-
-
-    this.createAura=function(name) {
-	// get sun position
-	let spos=this.config.sun.position;
-	if (name === "sun") {
-
-	} else {
-	    // get body position
-	    let bpos=this.config[name].position;
-	    
-	    // get size
-	};
-
-	//https://jsfiddle.net/prisoner849/z3yfw208/
-	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true, alphaTest:0.01 }); //   alphaTest: 0.99
-	//var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
-	//UTILS.addTextureMap(material,this.fullStarsURL + "ball.png");
-	UTILS.addTextureMap(material,this.fullStarsURL + this.sprites[0]);
-	var geometry = new THREE.InstancedBufferGeometry();
-	//var geometry = new THREE.BufferGeometry();
-	var ll=this.starList.length;
-	var positions = new Float32Array(ll*3);
-	var colors = new Float32Array(ll*3);
-	var sizes = new Float32Array(ll);
-	var alphas = new Float32Array(ll);
-	for (let i = 0; i < ll; i++) {
-	    let ss=this.starList[i];
-	    //console.log("ss:",ss);
-            positions[i * 3 + 0] = ss.x * this.parscale;
-            positions[i * 3 + 1] = ss.y * this.parscale;
-            positions[i * 3 + 2] = ss.z * this.parscale;
-            colors[i * 3 + 0] = ss.color.r/255;
-            colors[i * 3 + 1] = ss.color.g/255;
-            colors[i * 3 + 2] = ss.color.b/255;
-	    var dist=Math.sqrt(ss.x*ss.x+ss.y*ss.y+ss.z*ss.z); // dist is in parsec
-	    var amag=Math.max(-30,Math.min(10,ss.mag - 5.0*this.log10(dist) + 5.0));  // dist is in parsec
-            sizes[i] = this.parscale*10*Math.pow(10,-amag/5.0);
-	    //alphas[i] = 1;
-	}
-	UTILS.modifyShaders(geometry,material,sizes);
-	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-	geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
-	//geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
-	var sprites = new THREE.Points( geometry, material );
-	//var sprites = new THREE.Sprite( geometry, material );
-	sprites.name       = "stars";
-	this.replaceStarsBackdrop(sprites);
-	return sprites	
-    };
+    this.createFlare=function(name) {
+	// "flare" is visible when body is not...
+	var path=UTILS.getURL("/media/stars/flare.png");
+	var title=this.config[name].title||"Undefined-"+name;
+	var flare=UTILS.createSprite(
+	    {path:path,
+	     font:'48px Arial',
+	     fillStyle:'yellow',
+	     size:200,    // buffer size
+	     cx:0.5,cy:0.5,
+	     x:0,y:0,z:0, //offset (Buffer position)
+	     alphaTest:0.01,
+	     //border:true,
+	     renderOrder:0,
+	     sizeAttenuation:false,
+	     name:"flare"+name,
+	    });
+	flare.visible=true;
+	flare.mg=this.config[name].mg;
+	flare.md=this.config[name].md;
+	return flare;
+    }
     this.updateConfig = function(state,config,observer) {
 	if (config===undefined) {return;};
 	this.copyObserver( config.observer, this.config.observer);
@@ -901,8 +959,6 @@ function Bodies() {
 	    }
 	});
 	//console.log("Updated config",this.config);
-    };
-    this.updateAura=function(name) {
     };
     this.updateRaycaster=function(state,raycaster,mouse,mainCamera,objects) {
 	// loop over Bodies scenes
@@ -916,7 +972,7 @@ function Bodies() {
 		    const intersects = raycaster.intersectObjects( item.scene.children,true );
 		    var cnt=intersects.length;
 		    for ( let i = 0; i < intersects.length; i ++ ) {
-			console.log(">>>>> Pointing at:",cnt,i,intersects[ i ].object.name,item.scene,mouse);
+			//console.log(">>>>> Pointing at:",cnt,i,intersects[ i ].object.name,item.scene,mouse);
 			objects.push(intersects[i].object);
 			//intersects[ i ].object.material.color.set( 0xff0000 );
 		    };
@@ -975,16 +1031,16 @@ function Bodies() {
     this.updateScene=function(state,mainCamera,observer,name,scene,time) {
 	//console.log("UpdateScene:",name,scale);
 	let dist;
+	let pos   = this.config[name].position;
+	let body  = scene.getObjectByName(name);
+	let obs=observer.position;
 	let scale = this.config[name].scale;
 	let radius=this.config[name].radius;
 	this.updateCamera(state,mainCamera,observer,name,scene);
+	let light  = scene.getObjectByName("sunlight");
+	let shadow= this.config[name].shadow || {length:radius*1.5, width:radius*1.5};
 	if (name === "saturn" || name === "uranus") {
-	    let range= this.config[name].radius*2.5;
-	    let pos   = this.config[name].position;
 	    let group = scene.getObjectByName("group");
-	    let body  = scene.getObjectByName(name);
-	    let light  = scene.getObjectByName("sunlight");
-	    let obs=observer.position;
 	    //camera.position.set(obs.x*scale,obs.y*scale,obs.z*scale);	    
 	    let x=(pos.x-obs.x);
 	    let y=(pos.y-obs.y);
@@ -997,23 +1053,13 @@ function Bodies() {
 	    this.setRotation(group,rot);
 	    this.direction.setFromMatrixPosition( group.matrixWorld );
 	    this.location.setFromMatrixPosition( body.matrixWorld );
-	    this.updateShadowCamera(light,pos,obs,scale,range);
-	    let helper  = scene.getObjectByName("helper");
-	    if (helper !== undefined) {
-		//console.log(helper);
-		helper.camera.copy(light.shadow.camera);
-		helper.update();
-	    };
+	    this.updateLight(light,pos,obs,scale);
+	    this.updateShadowCamera(light,pos,obs,scale,shadow);
 	    scene.cameraAngle=this.cameradir.angleTo(group.position);
 	    //console.log(name,scene);
 	    //console.log(name,this.direction,scene);
 	} else if (name === "earth") { // sun and other planets
 	    let height = this.config[name].height;
-	    let pos   = this.config[name].position;
-	    let obs=observer.position;
-	    let body  = scene.getObjectByName(name);
-	    let light  = scene.getObjectByName("sunlight");
-	    this.updateLight(light,pos,obs,scale);
 	    let x=(pos.x-obs.x);
 	    let y=(pos.y-obs.y);
 	    let z=(pos.z-obs.z); //*scale*fact;
@@ -1026,6 +1072,8 @@ function Bodies() {
 	    };
 	    //console.log("Pos:",name,x,y,z,height,radius);
 	    body.position.set(x*scale,y*scale,z*scale);
+	    this.updateLight(light,pos,obs,scale);
+	    this.updateShadowCamera(light,pos,obs,scale,shadow);
 	    let alpha=Math.max(0.0,Math.min(1,2*radius/(dist+radius)));
 	    //console.log("Transparent:",name,alpha);
 	    this.makeTransparent(state,name,scene,body,alpha);
@@ -1037,16 +1085,15 @@ function Bodies() {
 		scene.cameraAngle=999.99;
 	    };
 	} else { // sun and other planets
-	    let pos   = this.config[name].position;
-	    let obs=observer.position;
-	    let body  = scene.getObjectByName(name);
-	    let light  = scene.getObjectByName("sunlight");
-	    if (light !== undefined) {this.updateLight(light,pos,obs,scale);};
 	    let x=(pos.x-obs.x);
 	    let y=(pos.y-obs.y);
 	    let z=(pos.z-obs.z);
 	    dist=Math.sqrt(x*x+y*y+z*z);
 	    body.position.set(x*scale,y*scale,z*scale);
+	    if (light !== undefined) {
+		this.updateLight(light,pos,obs,scale);
+		this.updateShadowCamera(light,pos,obs,scale,shadow);
+	    };
 	    let alpha=Math.max(0.0,Math.min(1,2*radius/(dist+radius)));
 	    this.makeTransparent(state,name,scene,body,alpha);
 	    //console.log("Pos:",name,pos);
@@ -1054,9 +1101,18 @@ function Bodies() {
 	    this.setRotation(body,rot);
 	    scene.cameraAngle=this.cameradir.angleTo(body.position);
 	};
+	// update light-helper and light position
+	let helper  = scene.getObjectByName("helper");
+	if (helper !== undefined) {
+	    //console.log(helper);
+	    helper.camera.copy(light.shadow.camera);
+	    helper.update();
+	};
+	this.updateLight(light,pos,obs,scale);
 	//console.log("Angle:",name,scene.cameraAngle,mainCamera.fov);
 	let highlight=(name === this.targetname);
 	this.updateLabel(state,mainCamera,observer,name,scene,scale,1,time,highlight);
+	this.updateFlare(state,mainCamera,observer,name,scene,scale,time,highlight);
 	this.updateSatellites(state,mainCamera,observer,name,scene);
 	return dist;
     };
@@ -1109,34 +1165,35 @@ function Bodies() {
 	let x = -obs.x;
 	let y = -obs.y;
 	let z = -obs.z;
-	light.position.x=x*scale;
-	light.position.y=y*scale;
-	light.position.z=z*scale;
+	//light.position.set(x*scale,y*scale,z*scale);
+	//light.position.needsUpdate=true;
     };
-    this.updateShadowCamera=function(light,pos,obs,scale,range) {
+    this.updateShadowCamera=function(light,pos,obs,scale,shadow) {
 	let x = pos.x;
 	let y = pos.y;
 	let z = pos.z;
 	let d=Math.max(Math.sqrt(x*x+y*y+z*z),1);
-	let metric= range*scale;
-	let near= 10*metric;
-	let far = near + 2*metric
-	x=-(metric+near)*x/d + (pos.x-obs.x)*scale;
-	y=-(metric+near)*y/d + (pos.y-obs.y)*scale;
-	z=-(metric+near)*z/d + (pos.z-obs.z)*scale;
-	light.position.x=x;
-	light.position.y=y;
-	light.position.z=z;
+	let width= shadow.width*scale;
+	let length= shadow.length*scale;
+	let distance= width + length;
+	let near= width
+	let far = width + 2*length;
+	//console.log("Pos x:",pos.x, obs.x, scale, (pos.x-obs.x)*scale,metric);
+	x=-(distance)*x/d + (pos.x-obs.x)*scale;
+	y=-(distance)*y/d + (pos.y-obs.y)*scale;
+	z=-(distance)*z/d + (pos.z-obs.z)*scale;
+	light.position.set(x,y,z);
+	light.shadow.camera.position.set(x,y,z);
 	light.shadow.camera.near    = near;
 	light.shadow.camera.far     = far;
-	light.shadow.camera.left = -range*scale;
-	light.shadow.camera.right = range*scale;
-	light.shadow.camera.top = -range*scale;
-	light.shadow.camera.bottom = range*scale;
-	// light.shadow.camera.updateProjectionMatrix();
+	light.shadow.camera.left = -width;
+	light.shadow.camera.right = width;
+	light.shadow.camera.top = -width;
+	light.shadow.camera.bottom = width;
+	light.shadow.camera.updateProjectionMatrix();
 	light.shadow.camera.updateMatrixWorld(true);
-	// light.shadow.camera.needsUpdate=true;
-	// light.shadow.camera.matrixWorldNeedsUpdate=true;
+	//light.shadow.camera.needsUpdate=true;
+	//light.shadow.camera.matrixWorldNeedsUpdate=true;
 	//console.log("Updating light:",light.shadow.camera);
     };
 
@@ -1211,6 +1268,49 @@ function Bodies() {
 	};
     };
     
+    this.updateFlare=function(state,mainCamera,observer,name,scene,scale,time,highlight) {
+	if (highlight===undefined) {highlight=false;};
+	var flare=scene.getObjectByName("flare"+name);
+	if (flare !== undefined) {
+	    var radius=this.config[name].radius;
+	    if (name==="saturn" || name==="uranus") {radius=2*radius;} // make room for rings
+	    this.direction.set();
+	    let pos=this.config[name].position;
+	    let obs=observer.position;
+	    this.direction.set(pos.x-obs.x,pos.y-obs.y,pos.z-obs.z);
+	    // resize...
+	    let dist=this.direction.length();
+	    this.direction.normalize();
+	    let size=0.01*dist;
+	    flare.size=size*scale;
+	    //flare.material.size=size*scale;
+	    let omega= Math.max(0,Math.min(1,(50*90*radius)/(dist*mainCamera.fov)))
+	    flare.material.opacity=1-omega*omega;
+	    //if (name === "saturn") {console.log(name,size/dist,radius/dist);} //saturn 0.04 0.00007365623774267448
+	    // reposition...
+	    let ff=(1+0.01*Math.sin(this.direction.length()))/100.1;
+	    //this.direction.normalize();
+	    let x=this.direction.x*(dist+10*radius);
+	    let y=this.direction.y*(dist+10*radius);
+	    let z=this.direction.z*(dist+10*radius);
+	    flare.position.set(x*scale,y*scale,z*scale);
+	    var ss=mainCamera.fov/20;
+	    if (highlight) {
+		ss=ss*(50+Math.sin(time/100))/50;
+	    };
+	    flare.scale.set(flare.width*flare.size*ss,
+			    flare.height*flare.size*ss,
+			    flare.height*flare.size*ss);
+	    //flare.scale.set(flare.width*flare.size*ss,
+	    //		    flare.height*flare.size*ss,
+	    //		    flare.height*flare.size*ss);
+	    flare.material.needsUpdate = true;
+	    flare.needsUpdate = true;
+	} else {
+	    console.log("No flare found...",name);
+	};
+    };
+    
     //////////////////////////////////////////////////////////////////////////////////
     //		Texture functions					//
     //////////////////////////////////////////////////////////////////////////////////
@@ -1220,12 +1320,12 @@ function Bodies() {
      * @author Kaleb Murphy
      * @author jerome etienne
      */
-    this.RingGeometry = function ( innerRadius, outerRadius, thetaSegments, flip ) {
+    this.RingGeometry = function ( innerRadius, outerRadius, thetaSegments, flip, flop ) {
 	const geometry = new THREE.RingBufferGeometry(innerRadius, outerRadius, thetaSegments);
-	this.adjustRingGeometry2(geometry, innerRadius, outerRadius, thetaSegments, flip);
+	this.adjustRingGeometry2(geometry, innerRadius, outerRadius, thetaSegments, flip, flop);
 	return geometry;
     };
-    this.adjustRingGeometry2=function (geometry, innerRadius, outerRadius, thetaSegments,flip) {
+    this.adjustRingGeometry2=function (geometry, innerRadius, outerRadius, thetaSegments,flip, flop) {
 	// each vertex has a U anv V coordinate that points to (U,V) in the texture.
 	var pos  = geometry.attributes.position;
 	var tcnt = pos.count;
@@ -1247,15 +1347,16 @@ function Bodies() {
 	    };
 	    var rr=v3.length();               // distance from center
 	    var uu=(rr-rmin)/rdel;            // distance grid location
+	    if (flip) {uu=1-uu;};
 	    var vv=this.getKAngle(vi,vj,vk,v3)/(2 * Math.PI); // angle grid location
 	    //console.log("RingGeometry:",i,uu,vv,rr,rmin,rdel);
 	    let u =geometry.attributes.uv.getX(i);  // original U coordinate
 	    let v =geometry.attributes.uv.getY(i);  // original V coordinate
 	    //console.log("RingGeometry:",i,v3,uu,vv," org:",u,v);
-	    if (flip) {
-		geometry.attributes.uv.setXY(i, Math.max(0,Math.min(1,vv)), Math.max(0,Math.min(1,uu))); // assign new coordinates
+	    if (flop) {
+		geometry.attributes.uv.setXY(i, Math.max(0,Math.min(1,vv)), Math.max(0,Math.min(1,uu)));
 	    } else {
-		geometry.attributes.uv.setXY(i, Math.max(0,Math.min(1,uu)), Math.max(0,Math.min(1,vv))); // assign new coordinates
+		geometry.attributes.uv.setXY(i, Math.max(0,Math.min(1,uu)), Math.max(0,Math.min(1,vv)));
 	    }
 	}
     };
@@ -1285,7 +1386,7 @@ function Bodies() {
     };
     this.Material = function (opt) {
 	if (opt===undefined) {opt={};};
-	var material= new THREE.MeshPhongMaterial();
+	var material= new THREE.MeshPhongMaterial({shininess:10});
 	// load map
 	if (opt.map !== undefined && opt.transMap !== undefined) {
 	    this.addTransparentMap(material,opt.map, opt.transMap);
@@ -1416,12 +1517,18 @@ function Bodies() {
 		var dataResult		= contextResult.createImageData(canvasResult.width, canvasResult.height)
 		for(var y = 0, offset = 0; y < imageMap.height; y++){
 		    for(var x = 0; x < imageMap.width; x++, offset += 4){
-			dataResult.data[offset+0]	= dataMap.data[offset+0]
-			dataResult.data[offset+1]	= dataMap.data[offset+1]
-			dataResult.data[offset+2]	= dataMap.data[offset+2]
-			dataResult.data[offset+3]	= 255 - dataTrans.data[offset+0]/4
+			var r=dataMap.data[offset+0];
+			var g=dataMap.data[offset+1];
+			var b=dataMap.data[offset+2];
+			var a=dataTrans.data[offset+0];
+			var m=Math.max(1,Math.max(Math.max(r,g),b))/255;
+			dataResult.data[offset+0]	= Math.min(255,r/m)
+			dataResult.data[offset+1]	= Math.min(255,g/m)
+			dataResult.data[offset+2]	= Math.min(255,b/m)
+			dataResult.data[offset+3]	= a; // 255 -  /4
 		    }
 		}
+		//console.log("Trans:",dataResult);
 		// update texture with result
 		contextResult.putImageData(dataResult,0,0)	
 		material.map=new THREE.Texture(canvasResult);

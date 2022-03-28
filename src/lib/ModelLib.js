@@ -260,7 +260,7 @@ function Model() {
 	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:-0.001},
 	 orbit:{
 	     around:"saturn",
-	     x:60000,
+	     x:-100000,
 	     y:20000,
 	     z:20000}}
     ];

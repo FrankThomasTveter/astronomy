@@ -377,7 +377,7 @@ var PointOfViewControls = function ( object, domElement, model ) {
 
 	_eye.subVectors( _this.object.position, _this.target );
 
-	var fov=Math.max(0.001,this.object.fov);
+	var fov=Math.max(this.minfov,this.object.fov);
 	var angle = this.getAngle(fov);
 	
 	if ( ! _this.noRotate ) {
@@ -402,7 +402,7 @@ var PointOfViewControls = function ( object, domElement, model ) {
 
 	_this.checkDistances();
 
-	var nfov=Math.max(0.001,this.object.fov);
+	var nfov=Math.max(this.minfov,this.object.fov);
 	this.correctAngle(nfov,fov,angle);
 
 	_this.object.lookAt( _this.target );

@@ -39,41 +39,96 @@ export function tween(from, to, animationDuration, easingFunction, onUpdate, onE
         .on('complete', onEnd)
         .start();
 }
-export function createTextSprite(text,opts) {
-    var canvas=getTextCanvas(text,opts);
-    var texture=new THREE.Texture(canvas);
-    texture.needsUpdate = true;
+
+export function getURL(file) {
+    return process.env.PUBLIC_URL+file; //"/media/stars/flare.png"
+}
+
+export function createSprite(opts) {
+    var texture,canvas;
+    if (opts.text !== undefined) {
+	canvas=getTextCanvas(opts.text,opts);
+	texture=new THREE.Texture(canvas);
+    };
+    if (texture !== undefined) {texture.needsUpdate = true;};
     var size=opts.size||10;
     var sprite;
     var options={
-	map: texture,
 	sizeAttenuation:true,
 	transparent: true,
 	//alphaTest:0.01,
 	//needsUpdate:true,
 	//useScreenCoordinates: false,
     };
+    if (texture !== undefined)              { options.map= texture;};
     if (opts.sizeAttenuation !== undefined) { options.sizeAttenuation=opts.sizeAttenuation ;}
-    if (opts.alphaTest !== undefined) {options.alphaTest=opts.alphaTest};
+    if (opts.alphaTest !== undefined)       { options.alphaTest=opts.alphaTest};
     var material = new THREE.SpriteMaterial(options);
+    if (opts.path !== undefined) {this.addTextureMap(material,opts.path);};
     sprite = new THREE.Sprite(material);
-    //console.log("Sprite:",text,opts,options,sprite);
-    sprite.size=size/100;
-    sprite.width=canvas.width;
-    sprite.height=canvas.height;
-    if (opts.size !== undefined) {
-	sprite.scale.set(sprite.width*sprite.size,sprite.height*sprite.size,sprite.height*sprite.size);
-    };
-    if (opts.cx !== undefined && opts.cy !== undefined) {
-	sprite.center.set(opts.cx,opts.cy);
-    };
     if (sprite !== undefined) {
+	//console.log("Sprite:",opts,options,sprite);
+	sprite.size=size/100;
+	if (canvas !== undefined) {
+	    sprite.width=canvas.width;
+	    sprite.height=canvas.height;
+	} else {
+	    sprite.width=20;
+	    sprite.height=20;
+	};
+	if (opts.size !== undefined) {
+	    sprite.scale.set(sprite.width*sprite.size,sprite.height*sprite.size,sprite.height*sprite.size);
+	};
+	if (opts.cx !== undefined && opts.cy !== undefined) {
+	    sprite.center.set(opts.cx,opts.cy);
+	};
 	if (opts.x !== undefined && opts.y !== undefined && opts.z !== undefined) {
 	    sprite.position.set(opts.x,opts.y,opts.z);
 	};
 	sprite.name=opts.name || "text";
+    } else {
+	console.log("Unable to create sprite for ",JSON.stringify(opts));
     };
     return sprite;
+};
+
+export function createPoints(opts) {
+    // get sun position
+    //https://jsfiddle.net/prisoner849/z3yfw208/
+    var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true, alphaTest:0.01 }); //   alphaTest: 0.99
+    //var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
+    //this.addTextureMap(material,this.fullStarsURL + "ball.png");
+    this.addTextureMap(material,opts.path);
+    var geometry = new THREE.InstancedBufferGeometry();
+    //var geometry = new THREE.BufferGeometry();
+    var ll=this.starList.length;
+    var positions = new Float32Array(ll*3);
+    var colors = new Float32Array(ll*3);
+    var sizes = new Float32Array(ll);
+    var alphas = new Float32Array(ll);
+    for (let i = 0; i < ll; i++) {
+	let ss=this.starList[i];
+	//console.log("ss:",ss);
+        positions[i * 3 + 0] = ss.x * this.parscale;
+        positions[i * 3 + 1] = ss.y * this.parscale;
+        positions[i * 3 + 2] = ss.z * this.parscale;
+        colors[i * 3 + 0] = ss.color.r/255;
+        colors[i * 3 + 1] = ss.color.g/255;
+        colors[i * 3 + 2] = ss.color.b/255;
+	var dist=Math.sqrt(ss.x*ss.x+ss.y*ss.y+ss.z*ss.z); // dist is in parsec
+	var amag=Math.max(-30,Math.min(10,ss.mag - 5.0*this.log10(dist) + 5.0));  // dist is in parsec
+        sizes[i] = this.parscale*10*Math.pow(10,-amag/5.0);
+	//alphas[i] = 1;
+    }
+    this.modifyShaders(geometry,material,sizes);
+    geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
+    geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
+    //geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
+    var points = new THREE.Points( geometry, material );
+    //var points = new THREE.Sprite( geometry, material );
+    points.name       = "stars";
+    this.replaceStarsBackdrop(points);
+    return points	
 };
 
 export function getTextCanvas(text,opts) {
@@ -154,7 +209,7 @@ export function addTextureMap(material,map) {
 		mapTexture.center.setScalar(0.5);
 		//mapTexture.rotation= -Math.PI * 0.5;
 		material.map=mapTexture;
-		material.size=2.0;
+		material.size=2000.0;
 		material.color.setHex(0xffffff);
 		material.sizeAttenuation=true;
 		material.needsUpdate=true;

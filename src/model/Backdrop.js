@@ -47,9 +47,7 @@ function Backdrop() {
 	0xe7dbf3
     ];
     this.scenes={};
-    //this.sprites=["flare.png"];
-    this.sprites=["flare.png"];
-    this.fullStarsURL=process.env.PUBLIC_URL+"/media/stars/";
+    this.flarepath =  "/media/stars/flare.png";
     this.constellations=[];
     this.stars = {
 	'ZubenElschemali' : ['ZubenElgenubi','Brachium','gLibra'],
@@ -202,11 +200,9 @@ function Backdrop() {
 	camera.name="camera";
 	scene.add(camera);
 	if (name === "stars") {
-	    var stars=this.createStarsBackdrop();
-	    scene.add(stars);
+	    // stars are loaded from file...
 	} else if (name === "constellation") {
-	    var cons=this.createConstellationBackdrop();
-	    scene.add(cons);
+	    // constellations are loaded from file
 	} else if (name === "compass") {
 	    var com=this.createCompassBackdrop();
 	    scene.add(com);
@@ -281,70 +277,35 @@ function Backdrop() {
     };
     this.createConstellationBackdrop=function(){
 	var group=new THREE.Group();
+	group.name="constellation";
 	return group;
     };
     this.replaceConstellationBackdrop=function(cons) {
 	var scene=this.scenes["constellation"].scene;
 	var oldcons=scene.getObjectByName("constellation");
-	oldcons.geometry.dispose();
-	oldcons.material.dispose();
-	scene.remove(oldcons);
+	if (oldcons !== undefined) {
+	    oldcons.geometry.dispose();
+	    oldcons.material.dispose();
+	    scene.remove(oldcons);
+	};
 	scene.add(cons);	
-    };
-    this.updateConstellationBackdrop=function() {
-    };
-    this.createStarsBackdrop	= function(){
-	//https://jsfiddle.net/prisoner849/z3yfw208/
-	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true, alphaTest:0.01 }); //   alphaTest: 0.99
-	material.depthTest=false;
-	//var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
-	//UTILS.addTextureMap(material,this.fullStarsURL + "ball.png");
-	UTILS.addTextureMap(material,this.fullStarsURL + this.sprites[0]);
-	var geometry = new THREE.InstancedBufferGeometry();
-	//var geometry = new THREE.BufferGeometry();
-	var positions = new Float32Array(30000);
-	var colors = new Float32Array(30000);
-	var sizes = new Float32Array(10000);
-	var alphas = new Float32Array(10000);
-	for (let i = 0; i < 10000; i++) {
-            let x = 2000 * Math.random() - 1000;
-            let y = 2000 * Math.random() - 1000;
-            let z = 2000 * Math.random() - 1000;
-            positions[i * 3 + 0] = x*10;
-            positions[i * 3 + 1] = y*10;
-            positions[i * 3 + 2] = z*10;
-            
-            colors[i * 3 + 0] = 0.5+0.5*Math.random();
-            colors[i * 3 + 1] = 0.5+0.5*Math.random();
-            colors[i * 3 + 2] = 0.5+0.5*Math.random();
-            
-            sizes[i] = 10*(Math.random() * 90) + 90;
-            //alphas[i] = 1;
-	}
-	UTILS.modifyShaders(geometry,material,sizes);
-	geometry.setAttribute( 'position', new THREE.BufferAttribute( positions, 3 ) );
-	geometry.setAttribute( 'color', new THREE.BufferAttribute( colors, 3 ) );
-	//geometry.setAttribute( 'alpha', new THREE.BufferAttribute( alphas, 1 ) );
-	var sprites = new THREE.Points( geometry, material );
-	//var sprites = new THREE.Sprite( geometry, material );
-	sprites.name       = "stars";
-	sprites.renderOrder=100;
-	return sprites	
     };
     this.replaceStarsBackdrop=function(stars) {
 	var scene=this.scenes["stars"].scene;
 	var oldstars=scene.getObjectByName("stars");
-	oldstars.geometry.dispose();
-	oldstars.material.dispose();
-	scene.remove(oldstars);
+	if (oldstars !== undefined) {
+	    oldstars.geometry.dispose();
+	    oldstars.material.dispose();
+	    scene.remove(oldstars);
+	};
 	scene.add(stars);	
     };
-    this.updateStarsBackdrop=function() {
+    this.createStarsBackdrop=function() {
 	//https://jsfiddle.net/prisoner849/z3yfw208/
 	var material = new THREE.PointsMaterial({ color:0x000000, vertexColors: THREE.VertexColors, transparent:true, alphaTest:0.01 }); //   alphaTest: 0.99
 	//var material = new THREE.SpriteMaterial({ vertexColors: THREE.VertexColors, alphaTest: 0.99}); //  
-	//UTILS.addTextureMap(material,this.fullStarsURL + "ball.png");
-	UTILS.addTextureMap(material,this.fullStarsURL + this.sprites[0]);
+	//UTILS.addTextureMap(material,UTILS.getURL("/media/stars/ball.png"));
+	UTILS.addTextureMap(material,UTILS.getURL(this.flarepath));
 	var geometry = new THREE.InstancedBufferGeometry();
 	//var geometry = new THREE.BufferGeometry();
 	var ll=this.starList.length;
@@ -408,7 +369,8 @@ function Backdrop() {
 		sizeh=size;
 		colorh=colorMinoh;
 	    };
-	    group.add(UTILS.createTextSprite(symbol,{
+	    group.add(UTILS.createSprite({
+		text:symbol,
 		font:'48px Arial',
 		fillStyle:colorh,
 		size:sizeh,
@@ -445,41 +407,45 @@ function Backdrop() {
 	    //if (ilat%30 === 0.0) {
 		let x=radius*Math.cos(ilat*Math.PI/180);
 		let y=0;
-		group.add(UTILS.createTextSprite(""+ilat,{
-		    font:'48px Arial',
-		    fillStyle:colorh,
-		    size:size,
-		    cx:1,cy:0,
-		    x:x,y:y,z:offset.z,
-		    alphaTest:0.01,
-		    //border:true,
+	    group.add(UTILS.createSprite(
+		{text:""+ilat,
+		 font:'48px Arial',
+		 fillStyle:colorh,
+		 size:size,
+		 cx:1,cy:0,
+		 x:x,y:y,z:offset.z,
+		 alphaTest:0.01,
+		 //border:true,
 		}));
-		group.add(UTILS.createTextSprite(""+ilat,{
-		    font:'48px Arial',
-		    fillStyle:colorh,
-		    size:size,
-		    cx:1,cy:0,
-		    x:-x,y:y,z:offset.z,
-		    alphaTest:0.01,
-		    //border:true,
+	    group.add(UTILS.createSprite(
+		{text:""+ilat,
+		 font:'48px Arial',
+		 fillStyle:colorh,
+		 size:size,
+		 cx:1,cy:0,
+		 x:-x,y:y,z:offset.z,
+		 alphaTest:0.01,
+		 //border:true,
 		}));
-		group.add(UTILS.createTextSprite(""+ilat,{
-		    font:'48px Arial',
-		    fillStyle:colorh,
-		    size:size,
-		    cx:1,cy:0,
-		    x:0,y:-x,z:offset.z,
-		    alphaTest:0.01,
-		    //border:true,
+	    group.add(UTILS.createSprite(
+		{text:""+ilat,
+		 font:'48px Arial',
+		 fillStyle:colorh,
+		 size:size,
+		 cx:1,cy:0,
+		 x:0,y:-x,z:offset.z,
+		 alphaTest:0.01,
+		 //border:true,
 		}));
-		group.add(UTILS.createTextSprite(""+ilat,{
-		    font:'48px Arial',
-		    fillStyle:colorh,
-		    size:size,
-		    cx:1,cy:0,
-		    x:0,y:x,z:offset.z,
-		    alphaTest:0.01,
-		    //border:true,
+	    group.add(UTILS.createSprite(
+		{text:""+ilat,
+		 font:'48px Arial',
+		 fillStyle:colorh,
+		 size:size,
+		 cx:1,cy:0,
+		 x:0,y:x,z:offset.z,
+		 alphaTest:0.01,
+		 //border:true,
 		}));
 	    //};
 	};
@@ -492,22 +458,24 @@ function Backdrop() {
 	    group.add(this.createCircleMesh(radius,look,offset,color,width));
 	    let x=radius*Math.cos(ilon*Math.PI/180);
 	    let y=radius*Math.sin(ilon*Math.PI/180);
-	    group.add(UTILS.createTextSprite(""+(360+180-ilon)%360,{
-		font:'48px Arial',
-		fillStyle:colorh,
-		size:size,
-		cx:0,cy:0,
-		x:x,y:y,z:0,
-		//border:true,
-	    }));
-	    group.add(UTILS.createTextSprite(""+(360-ilon)%360,{
-		font:'48px Arial',
-		fillStyle:colorh,
-		size:size,
-		cx:0,cy:0,
-		x:-x,y:-y,z:0,
-		//border:true,
-	    }));
+	    group.add(UTILS.createSprite(
+		{text:""+(360+180-ilon)%360,
+		 font:'48px Arial',
+		 fillStyle:colorh,
+		 size:size,
+		 cx:0,cy:0,
+		 x:x,y:y,z:0,
+		 //border:true,
+		}));
+	    group.add(UTILS.createSprite(
+		{text:""+(360-ilon)%360,
+		 font:'48px Arial',
+		 fillStyle:colorh,
+		 size:size,
+		 cx:0,cy:0,
+		 x:-x,y:-y,z:0,
+		 //border:true,
+		}));
 	};
 	group.name="lines";
 	group.renderOrder=1;
@@ -629,8 +597,8 @@ function Backdrop() {
 				  loadDescr,processDescr,
 				  loadConst,processConst,
 				  function(state,response,callbacks) {
-				      this.updateConstellationBackdrop();
-				      this.updateStarsBackdrop();
+				      this.createConstellationBackdrop();
+				      this.createStarsBackdrop();
 				      if (this.debug) {console.log("Done loading milkyway data...");}
 				  }.bind(this)]);
     };
