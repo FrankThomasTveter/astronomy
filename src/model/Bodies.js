@@ -8,7 +8,7 @@ console.log("Loading BodiesLib");
 
 function Bodies() {
     this.debug=false;
-    this.AU = 149597870;
+    this.AU = 149597870;// km
     this.deg2rad = Math.PI/180.0;
     this.KM = 1000;
     this.DEG_TO_RAD = Math.PI/180;
@@ -32,6 +32,7 @@ function Bodies() {
     this.SIDERAL_DAY = 3600 * 23.9344696;
     this.parsec= 3.08567758e13;// km 
     this.lightyear = 9.4605284e12; // km
+    this.ln10=Math.log(10);
 
     this.ln10=Math.log(10);
     this.DIST = 5.0*Math.PI/180.0;
@@ -115,6 +116,8 @@ function Bodies() {
 	    bumpMap1 : 'planets/earthbump1k.jpg',
 	    bumpScale1 : 20.0,
 	    spec : 'planets/earthspec1k.jpg',
+	    mg : -3.82, // far side of sun
+	    md : 1.718,
 	    atmosphere : {
 		radius : 6381.0088,
 		trans : 'planets/earthcloudmaptrans.jpg',
@@ -371,7 +374,7 @@ function Bodies() {
     };
     this.initScenes=function(mainCamera) {
 	this.scenes={};
-	this.scenes["sun"]=     {scene: this.createScene("sun",mainCamera), distance:3,   show:true};
+	this.scenes["sun"]=     {scene: this.createScene("sun",mainCamera), distance:3,    show:true};
 	this.scenes["mercury"]= {scene: this.createScene("mercury",mainCamera),distance:9, show:true};
 	this.scenes["venus"]=   {scene: this.createScene("venus",mainCamera),distance:8,   show:true};
 	this.scenes["earth"]=   {scene: this.createScene("earth",mainCamera),distance:1,   show:true};
@@ -1220,7 +1223,9 @@ function Bodies() {
 	    let obs=observer.position;
 	    this.direction.set(pos.x-obs.x,pos.y-obs.y,pos.z-obs.z);
 	    // resize...
-	    let size=label.width*this.direction.length()/500;//500
+	    var dist=this.direction.length();
+	    range=range + 0.01*dist*Math.PI*(mainCamera.fov/180.0);
+	    let size=label.width*dist/500;//500
 	    label.material.size=size*scale;
 	    label.material.opacity=opacity;
 	    //console.log(name,label.scale,size,label);
@@ -1281,10 +1286,17 @@ function Bodies() {
 	    // resize...
 	    let dist=this.direction.length();
 	    this.direction.normalize();
-	    let size=0.01*dist;
+	    let vis=1;
+	    if (name !== "sun") {vis=(1+this.direction.dot(pos)/pos.length())/2;} // fraction of disk visible (by sun)
+	    let mg=flare.mg; // brightness at md
+	    let md=flare.md; // in AU
+	    var amag=Math.max(-6.5,Math.min(50,mg - 5.0*this.log10(md) + 5.0));  // dist is in au
+            let size = vis*dist*0.05*Math.pow(10,-amag/5)/mainCamera.fov;
+	    //console.log("Size:",name,size/(0.01*dist),dist,amag,mg,md);
+	    //size=0.01*dist;
 	    flare.size=size*scale;
 	    //flare.material.size=size*scale;
-	    let omega= Math.max(0,Math.min(1,(50*90*radius)/(dist*mainCamera.fov)))
+	    let omega= Math.max(0,Math.min(1,(10000*radius)/(dist*mainCamera.fov)))
 	    flare.material.opacity=1-omega*omega;
 	    //if (name === "saturn") {console.log(name,size/dist,radius/dist);} //saturn 0.04 0.00007365623774267448
 	    // reposition...
@@ -1673,6 +1685,9 @@ function Bodies() {
     this.getAngle=function(dir1,dir2) {
 	return dir1.angleTo(dir2);
     }
+    this.log10 = function (a) {
+	return Math.log(a)/this.ln10;
+    };
  };
 
 
