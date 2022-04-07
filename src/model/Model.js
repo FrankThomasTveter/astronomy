@@ -145,14 +145,14 @@ export default class Model {
 	// update the information sprite...
 
 	// update model config
-	var config=this.state.Model.getCurrentConfig(this.state);
+	var config=this.state.Model.getConfig(this.state);
 	this.updateConfig(this.state,config,time);
 
 	//check if we have a new config...
 	this.updateTarget(this.state,config,time);
 
 	// update main camera position (to observer)...
-	this.updateMainCamera(this.state,time);
+	this.updateMainCamera(this.state,config,time);
 
 	// update scenes
 	this.updateScenes(this.state,this.mainCamera,time);
@@ -193,23 +193,33 @@ export default class Model {
 	this.Backdrop.updateScenes(state,camera,observer,this.Bodies.config,time);
 	this.Bodies.updateScenes(state,camera,observer,time);
     };
-    setNewTarget(state,x,y,z) {
-	this.newTarget=new THREE.Vector3(x,y,z);
-    };
-    updateMainCamera(state) {
+    updateMainCamera(state,config,time) {
 	//console.log("Zenith:",this.Bodies.config.observer.zenith);
 	let pos=this.Bodies.config.observer.position;
 	let zen=this.Bodies.config.observer.zenith;
 	//this.mainCamera.position.set(pos.x,pos.y,pos.z);
 	this.mainCamera.position.set(0,0,0);
 	//console.log("Up:",zen.x,zen.y,zen.z);
-	this.mainCamera.up.set(zen.x,zen.y,zen.z); // up is always towards observer zenith...
-	if (this.newTarget !== undefined) {
-	     //this.mainCamera.pointAt(this.newTarget); // point to new target...
-	     this.newTarget=undefined;
+	if (config.newSpot !== undefined) {
+	    var spot=config.newSpot;
+	    var fov=config.newFov;
+	    var body=config.bodies[spot];
+	    var obs=config.observer;
+	    if (body !== undefined && body.position !== undefined) {
+		var x = body.position.x - obs.position.x;
+		var y = body.position.y - obs.position.y;
+		var z = body.position.z - obs.position.z;
+		this.controls.target=new THREE.Vector3(x,y,z);
+		console.log("#### New target:",config.newSpot, config.newFov, x,y,z, config.newTtrg);
+		this.mainCamera.fov=fov;
+	    } else {
+		console.log("MIssing target:",spot);
+	    };
+	    config.newSpot=undefined;
 	};
+	this.mainCamera.up.set(zen.x,zen.y,zen.z); // up is always towards observer zenith...
 	//this.mainCamera.updateMatrixWorld(true);
-	//this.mainCamera.updateProjectionMatrix();
+	this.mainCamera.updateProjectionMatrix();
     }
 
     updateTarget(state) {
@@ -245,6 +255,8 @@ export default class Model {
 		    state.Model.consReq = con;
 		};
 	    }
+	    if (state.Model.config.newSpot) {
+	    };
 	};
     };	
 

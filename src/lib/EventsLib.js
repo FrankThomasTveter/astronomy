@@ -141,7 +141,7 @@ function Events() {
 		{value: "mercSupConj",label:"Superior conjunction"},
 		{value: "mercWestElong",label:"Western elongation"},
 		{value: "mercEastElong",label:"Eastern elongation"},
-		{value: "mercTransit",label:"Transig"},
+		{value: "mercTransit",label:"Transit"},
 	    ]},
 	    { value:"venus", label:"Venus",children:[
 		{value: "venusInfConj",label:"Inferior conjunction"},
@@ -195,12 +195,12 @@ function Events() {
 	var lat=this.lat;
 	var lon=this.lon;
 	var label = "Now";
-	var target = this.getTarget(this.targetId);
+	var spot = this.getSpot(this.targetId);
 	var fov = this.getFov(this.targetId);
 	var dir;   // direction
 	var con=0; // show contellations?
 	var speed; // speed of model, undefined => no speed
-	state.Model.launch(state,{lat:lat,lon:lon,epoch:epoch,hrs:hrs,label:label,target:target,fov:fov,dir:dir,con:con,speed:speed});
+	state.Model.launch(state,{lat:lat,lon:lon,epoch:epoch,hrs:hrs,label:label,spot:spot,fov:fov,dir:dir,con:con,speed:speed});
     };
     this.triggerUpdate=function(state) {
 	this.update=true;
@@ -447,12 +447,12 @@ function Events() {
 	var lat=this.lat;
 	var lon=this.lon;
 	var label = "Now";
-	var target = this.getTarget(id[3]);
+	var spot = this.getSpot(id[3]);
 	var fov = this.getFov(this.targetId);
 	var dir;   // direction
 	var con=0; // show contellations?
 	var speed; // speed of model, undefined => no speed
-	state.Model.launch(state,{lat:lat,lon:lon,epoch:epoch,hrs:hrs,label:label,target:target,fov:fov,dir:dir,con:con,speed:speed});
+	state.Model.launch(state,{lat:lat,lon:lon,epoch:epoch,hrs:hrs,label:label,spot:spot,fov:fov,dir:dir,con:con,speed:speed});
     };
     this.setModelClock = function(state,now) {
 	if (state.Events.isPlaying(state)) {
@@ -1301,7 +1301,7 @@ function Events() {
 	    //$("#end_dt").fadeOut();
 	}
     }
-    this.getTarget = function(id) {
+    this.getSpot = function(id) {
 	var ret;
 	if ((id >= 200 && id <= 299)||
 	    (id >= 550 && id <= 570)||
@@ -1326,25 +1326,25 @@ function Events() {
     }
     this.getFov = function(id) {
 	var ret;
-	if ((id >= 200 && id <= 299)||
+	if ((id >= 200 && id <= 299)|| // moon
 	    (id >= 550 && id <= 570)||
 	    (id >= 770 && id <= 840)||
             (id >= 980 && id <= 999)) {
-	    ret=0.05;
-	} else if ((id >= 300 && id <= 330) || 
+	    ret=5.0;
+	} else if ((id >= 300 && id <= 330) ||  // mercury
 		   (id >= 500 && id <= 510)) {
-	    ret=0.01;
-	} else if ((id >= 340 && id <= 370) || 
+	    ret=0.1;
+	} else if ((id >= 340 && id <= 370) ||   // venus 
 		   (id >= 520 && id <= 530)) {
-	    ret=0.01;
-	} else if (id >= 390 && id <= 410) {
-	    ret=0.01;
-	} else if (id >= 420 && id <= 450) {
-	    ret=0.01;
-	} else if (id >= 460 && id <= 490) {
-	    ret=0.01;
-	} else {
-	    ret=0.5;
+	    ret=0.1;
+	} else if (id >= 390 && id <= 410) { // mars
+	    ret=0.1;
+	} else if (id >= 420 && id <= 450) { // jupiter
+	    ret=0.1;
+	} else if (id >= 460 && id <= 490) { // saturn
+	    ret=0.1;
+	} else {                       // sun
+	    ret=5.0;
 	}
 	return ret;
     }

@@ -480,7 +480,7 @@ function Bodies() {
 		    let ay=sat.rotation.dec||0;
 		    sat.rotation.set(Math.cos(ax)*Math.cos(ay),Math.sin(ax)*Math.cos(ay),Math.sin(ay));
 		    var body=group.getObjectByName(name);
-		    this.setRotation(body,sat.rotation);
+		    this.setRotation(body,sat.rotation,name);
 		};
 	    });
 	    
@@ -564,7 +564,7 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="sun";
-	// mesh.rotation.x=Math.PI/2;
+	mesh.rotation.y=-Math.PI/2;
 	mesh.radius=radius;
 	return mesh	
     };
@@ -578,7 +578,7 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="mercury";
-	// mesh.rotation.x=Math.PI/2;
+	mesh.rotation.y=-Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	mesh.radius=radius;
@@ -594,7 +594,7 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="venus";
-	// mesh.rotation.x=Math.PI/2;
+	mesh.rotation.y=-Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	mesh.radius=radius;
@@ -615,7 +615,7 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(radius, 64, 64);//1024
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="earth";
-	// mesh.rotation.x=Math.PI/2;
+	mesh.rotation.y=-Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	mesh.radius=radius;
@@ -631,7 +631,7 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(radius, 64, 64)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="moon";
-	// mesh.rotation.x=Math.PI/2;
+	mesh.rotation.y=-Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	mesh.radius=radius;
@@ -647,7 +647,7 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(this.config.mars.radius*scale, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="mars";
-	// mesh.rotation.x=Math.PI/2;
+	mesh.rotation.y=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	mesh.radius=radius;
@@ -663,7 +663,7 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name="jupiter";
-	//mesh.rotation.x=Math.PI/2;
+	mesh.rotation.y=Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	mesh.radius=radius;
@@ -675,7 +675,7 @@ function Bodies() {
 	var met=radius*scale;
 	var mesh = new THREE.Mesh( new THREE.PlaneBufferGeometry( 5*met, 5*met ),
 				   new THREE.MeshPhongMaterial( { color: 0x999999 } ) );//, depthWrite: false
-	//mesh.rotation.y = - Math.PI / 4;
+	// mesh.rotation.y = - Math.PI / 4;
 	mesh.position.set(20000*scale,20000*scale,50000*scale);
 	mesh.receiveShadow = true;
 	mesh.name="plane";
@@ -691,7 +691,7 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(radius, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material);
 	mesh.name       = "saturn";
-	//// mesh.rotation.x=Math.PI/2;
+	mesh.rotation.y= - Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	mesh.radius=radius;
@@ -712,7 +712,7 @@ function Bodies() {
 	var geometry	= this.RingGeometry(this.config.saturn.ring.innerRadius*scale,
 					    this.config.saturn.ring.outerRadius*scale, 128, true);
 	var mesh	= new THREE.Mesh(geometry, material);
-	var normal=new THREE.Vector3(0,0,1).normalize();
+	var normal=new THREE.Vector3(0,1,0).normalize();
 	var offset;
 	if (side === THREE.BackSide) {
 	    mesh.name       = "saturnringbottom";
@@ -730,7 +730,8 @@ function Bodies() {
 	offset=normal.clone().multiplyScalar(this.config.saturn.ring.thickness*scale); // offset so shadow is not messed up...
 	mesh.position.set(offset.x,offset.y,offset.z);
 	mesh.lookAt(normal);
-	mesh.rotation.x=Math.PI/2;
+	// mesh.rotation.x = Math.PI/2;
+	// mesh.rotation.y = - Math.PI/2;
 	mesh.radius=radius;
 	return mesh	
     };
@@ -744,7 +745,7 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(radius, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material);
 	mesh.name="uranus";
-	//mesh.rotation.x=Math.PI/2;
+	mesh.rotation.y= - Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	mesh.radius=radius;
@@ -763,7 +764,7 @@ function Bodies() {
 	var geometry	= this.RingGeometry(this.config.uranus.ring.innerRadius*scale,
 					    this.config.uranus.ring.outerRadius*scale, 128, true);
 	var mesh	= new THREE.Mesh(geometry, material);
-	var normal=new THREE.Vector3(0,0,1).normalize();
+	var normal=new THREE.Vector3(0,1,0).normalize();
 	var offset;
 	if (side === THREE.BackSide) {
 	    mesh.name       ="uranusringbottom";
@@ -778,7 +779,8 @@ function Bodies() {
 	offset=normal.clone().multiplyScalar(this.config.uranus.ring.thickness*scale); // offset so shadow is not messed up...
 	mesh.position.set(offset.x,offset.y,offset.z);
 	mesh.lookAt(normal);
-	mesh.rotation.x=Math.PI/2;
+	//mesh.rotation.x = Math.PI/2;
+	//mesh.rotation.y = - Math.PI/2;
 	mesh.radius=radius;
 	return mesh	
     };
@@ -792,7 +794,7 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(radius, 32, 32);
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = "neptune";
-	// mesh.rotation.x=Math.PI/2;
+	mesh.rotation.y=- Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	mesh.radius=radius;
@@ -810,7 +812,7 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = "pluto";
-	// mesh.rotation.x=Math.PI/2;
+	mesh.rotation.y= - Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	mesh.radius=radius;
@@ -826,7 +828,7 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = "deathstar";
-	mesh.rotation.x=Math.PI/2;
+	mesh.rotation.y= - Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	mesh.radius=radius;
@@ -850,7 +852,7 @@ function Bodies() {
 	var geometry	= new THREE.SphereGeometry(radius, 32, 32)
 	var mesh	= new THREE.Mesh(geometry, material)
 	mesh.name       = name;
-	// mesh.rotation.x=Math.PI/2;
+	mesh.rotation.y= - Math.PI/2;
 	mesh.castShadow = true;
 	mesh.receiveShadow = true;
 	mesh.radius=radius;
@@ -858,7 +860,7 @@ function Bodies() {
 };
     this.createLight    = function(target,name,scene) {
 	if (name === "sun") {
-	    return new THREE.AmbientLight('#ffff88',1000);
+	    return new THREE.AmbientLight('#ffff88',1);// 1000
 	} else {
 	    var light   = new THREE.DirectionalLight( 0xffffff, 1, 100 )
 	    light.position.set(0,0,0);
@@ -950,6 +952,7 @@ function Bodies() {
 	flare.visible=true;
 	flare.mg=this.config[name].mg;
 	flare.md=this.config[name].md;
+	flare.amag=Math.max(-4.5,Math.min(50,flare.mg - 5.0*this.log10(flare.md) + 5.0));  // dist is in au
 	return flare;
     }
     this.updateConfig = function(state,config,observer) {
@@ -1050,10 +1053,10 @@ function Bodies() {
 	    let z=(pos.z-obs.z);
 	    dist=Math.sqrt(x*x+y*y+z*z);
 	    group.position.set(x*scale,y*scale,z*scale);
-	    let alpha=Math.max(0.0,Math.min(1,2*radius/(dist+radius)));
+	    let alpha=Math.max(0.0,Math.min(1,radius/(dist+radius*0.001)));
 	    this.makeTransparent(state,name,scene,group,alpha);
 	    let rot   = this.config[name].rotation;
-	    this.setRotation(group,rot);
+	    this.setRotation(group,rot,name);
 	    this.direction.setFromMatrixPosition( group.matrixWorld );
 	    this.location.setFromMatrixPosition( body.matrixWorld );
 	    this.updateLight(light,pos,obs,scale);
@@ -1073,21 +1076,22 @@ function Bodies() {
 		y=y*e/dist;
 		z=z*e/dist;
 	    };
-	    //console.log("Pos:",name,x,y,z,height,radius);
 	    body.position.set(x*scale,y*scale,z*scale);
 	    this.updateLight(light,pos,obs,scale);
 	    this.updateShadowCamera(light,pos,obs,scale,shadow);
-	    let alpha=Math.max(0.0,Math.min(1,2*radius/(dist+radius)));
+	    let alpha=Math.max(0.0,Math.min(1,radius/(dist+height)));
+	    //alpha=0 ; // debugging rotation...
+	    //console.log("Pos:",name,height,radius,dist,alpha);
 	    //console.log("Transparent:",name,alpha);
 	    this.makeTransparent(state,name,scene,body,alpha);
 	    let rot   = this.config[name].rotation;
-	    this.setRotation(body,rot);
+	    this.setRotation(body,rot,name);
 	    if (alpha < 0.5) {
 		scene.cameraAngle=this.cameradir.angleTo(body.position);
 	    } else {
 		scene.cameraAngle=999.99;
 	    };
-	} else { // sun and other planets
+	} else { // sun, other planets and moons
 	    let x=(pos.x-obs.x);
 	    let y=(pos.y-obs.y);
 	    let z=(pos.z-obs.z);
@@ -1097,11 +1101,11 @@ function Bodies() {
 		this.updateLight(light,pos,obs,scale);
 		this.updateShadowCamera(light,pos,obs,scale,shadow);
 	    };
-	    let alpha=Math.max(0.0,Math.min(1,2*radius/(dist+radius)));
+	    let alpha=Math.max(0.0,Math.min(1,radius/(dist+radius*0.001)));
 	    this.makeTransparent(state,name,scene,body,alpha);
 	    //console.log("Pos:",name,pos);
 	    let rot   = this.config[name].rotation;
-	    this.setRotation(body,rot);
+	    this.setRotation(body,rot,name);
 	    scene.cameraAngle=this.cameradir.angleTo(body.position);
 	};
 	// update light-helper and light position
@@ -1127,6 +1131,7 @@ function Bodies() {
 	} else {
 	    material.transparent=true;
 	    material.opacity=1-alpha;
+	    //console.log("Transparent:",name,alpha);
 	};
     };
     this.updateSatellites = function(state,mainCamera,observer,name,scene) {
@@ -1142,6 +1147,7 @@ function Bodies() {
 		     this.config[satellite].position!==undefined) { // dynamic position
 		    this.config[satellite].orbits=name;
 		    let spos=this.config[satellite].position;
+		    let srot=this.config[satellite].rotation;
 		    let obs=observer.position;
 		    let range=Math.max(1,Math.sqrt((spos.x-pos.x)*(spos.x-pos.x)+
 						    (spos.y-pos.y)*(spos.y-pos.y)+
@@ -1153,6 +1159,7 @@ function Bodies() {
 		    let opacity=1-Math.min(1,Math.max(0,mainCamera.fov/visible-1));
 		    //console.log("Opacity:",satellite,range,dist,range/dist,mainCamera.fov,opacity);
 		    body.position.set((spos.x-obs.x)*scale,(spos.y-obs.y)*scale,(spos.z-obs.z)*scale);
+		    this.setRotation(body,srot,satellite);
 		    this.updateLabel(state,mainCamera,observer,satellite,scene,scale,opacity);
 		}
 	    };
@@ -1272,7 +1279,9 @@ function Bodies() {
 	    console.log("No label found...",name);
 	};
     };
-    
+    this.getDiameter=function(mag,fov,fact=1) { // calculate aura diameter from magnitude and FOV
+	return Math.sqrt(Math.max(0,fact*Math.pow(10,1-(mag/2.5))/(fov*fov))); // fovx*fovy
+    };
     this.updateFlare=function(state,mainCamera,observer,name,scene,scale,time,highlight) {
 	if (highlight===undefined) {highlight=false;};
 	var flare=scene.getObjectByName("flare"+name);
@@ -1288,15 +1297,16 @@ function Bodies() {
 	    this.direction.normalize();
 	    let vis=1;
 	    if (name !== "sun") {vis=(1+this.direction.dot(pos)/pos.length())/2;} // fraction of disk visible (by sun)
-	    let mg=flare.mg; // brightness at md
-	    let md=flare.md; // in AU
-	    var amag=Math.max(-6.5,Math.min(50,mg - 5.0*this.log10(md) + 5.0));  // dist is in au
-            let size = vis*dist*0.05*Math.pow(10,-amag/5)/mainCamera.fov;
-	    //console.log("Size:",name,size/(0.01*dist),dist,amag,mg,md);
+	    var mg=flare.mg;
+	    var distau=dist/(this.AU);
+	    var fact = (flare.md*flare.md)/(distau*distau);
+	    var diam=this.getDiameter(mg,mainCamera.fov,fact);
+	    var size=vis*Math.min(1,diam/Math.PI)*dist*scale/100;
 	    //size=0.01*dist;
-	    flare.size=size*scale;
+	    flare.size=size;
 	    //flare.material.size=size*scale;
-	    let omega= Math.max(0,Math.min(1,(10000*radius)/(dist*mainCamera.fov)))
+	    let omega= Math.max(0,Math.min(1,(radius*5000)/(dist*mainCamera.fov)))
+	    //console.log("Size:",name,distau,fact,mg,diam,size,distau,dist,omega);
 	    flare.material.opacity=1-omega*omega;
 	    //if (name === "saturn") {console.log(name,size/dist,radius/dist);} //saturn 0.04 0.00007365623774267448
 	    // reposition...
@@ -1641,20 +1651,21 @@ function Bodies() {
 	};
 	return bdy;
     }
-    this.setRotation=function(body,rot) {
+    this.setRotation=function(body,rot,name) {
 	if (body !== undefined) {
 	    // rotational axis is aligned with y-axis
 	    if (rot.dec !== undefined && rot.ra !== undefined) {
-		body.rotation.x=-rot.dec*this.deg2rad;  // assign declination
-		body.rotation.y=rot.ra*this.deg2rad- Math.PI/2; // assign right-ascencion
-	    // 	console.log("Rotation for:", body.name,body,rot,rot.dec, rot.ra);
+		body.rotation.x = -rot.dec*this.deg2rad +Math.PI;  // assign declination
+		body.rotation.y =  rot.ra*this.deg2rad - Math.PI/2 + rot.w; // assign right-ascencion
+		// console.log("Rotation:",body.name,rot.w,rot.ra,rot.dec,JSON.stringify(body.rotation));
+		// 	console.log("Rotation for:", body.name,body,rot,rot.dec, rot.ra);
 	    // } else {
 	    // 	console.log("No rotation for:", body.name,body,rot,rot.dec, rot.ra);
 	    };
 	    //console.log("*** Rotating:",body,rot,this.deg2rad,body.rotation);
 	    //body.setRotationFromAxisAngle(rot,rot.w);
 	} else {
-	    console.log("*** Attempt to rotate undefined body.");
+	    console.log("*** Attempt to rotate undefined body:",name);
 	};
 	return body;
     }

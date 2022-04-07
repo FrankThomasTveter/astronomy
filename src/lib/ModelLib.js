@@ -29,7 +29,7 @@ function Model() {
     this.lastTime = (new moment().valueOf())-10000.0;
     this.seq=0;
     // time is contained in Events: targettime=state.Events.getModelTime(state)
-    // new requests are pushed to "this.requests"
+    // New requests are pushed to "this.requests"
     // events are updated async with body state
     // downloaded events are put into the stack
     // the config contains the state interpolated from the stack
@@ -282,8 +282,7 @@ function Model() {
     this.getOrbits=function(state) {
 	return state.Model.orbits;
     };
-    this.getCurrentConfig = function (state) {
-	var ttrg=state.Events.getModelTime(state); // current target time
+    this.getConfig = function (state) {
 	//
 	//this.requestAnimFrame(this.update);
 	var config=undefined;
@@ -301,12 +300,13 @@ function Model() {
 	    // };
 	}
 	this.sendRequests(state);
-	if (this.completeRequests(state)) { 
+	if (this.completeRequests(state)) { // set new target time 
 	    this.offzoom(0.5);
 	    this.step=0;
 	};
 	this.cleanRequests(state);	
 	//if (this.step === 0) {
+	var ttrg=state.Events.getModelTime(state); // current target time
 	this.updateConfig(state,ttrg);
 	 if (state.React !== undefined && state.React.Model !== undefined) {
 	     config=this.config;
@@ -415,7 +415,7 @@ function Model() {
 	cfg.epoch=cfg.epoch;
 	cfg.hrs=Math.max(0,Math.min(24,(cfg.hrs || 24)));
 	cfg.label=cfg.label || "";
-	cfg.target=cfg.target;
+	cfg.spot=cfg.spot;
 	cfg.fov=cfg.fov;
 	cfg.dir=cfg.dir;
 	cfg.con=cfg.con || 0;
@@ -486,7 +486,7 @@ function Model() {
 		// 		cfg.lat===ll.latitude,
 		// 		cfg.lon===ll.longitude,
 		// 		cfg.epoch===rr.epoch,
-		// 		cfg.target===rr.target,
+		// 		cfg.spot===rr.spot,
 		// 		cfg.fov===rr.fov,
 		// 		cfg.dir===rr.dir,
 		// 		cfg.con===rr.con,ll,rr,cfg);
@@ -496,7 +496,7 @@ function Model() {
 		    cfg.lat===ll.latitude &&
 		    cfg.lon===ll.longitude &&
 		    cfg.epoch===rr.epoch &&
-		    cfg.target===rr.target &&
+		    cfg.spot===rr.spot &&
 		    cfg.fov===rr.fov &&
 		    cfg.dir===rr.dir &&
 		    cfg.con===rr.con
@@ -550,7 +550,7 @@ function Model() {
 	    let epoch=(new moment(dtgs[tt])).valueOf();
 	    events.push({reqId : tt+1,
 			 label: cfg.label,
-			 target : cfg.target,
+			 spot : cfg.spot,
 			 dir : dir,
 			 fov : cfg.fov,
 			 con : cfg.con,
@@ -714,7 +714,9 @@ function Model() {
 		stack["initial"][name]["rotation"]["dwdt"]=+bod.getAttribute("dwdt")*this.deg2rad;
 		stack["initial"][name]["main"]=bod.getAttribute("main");
 		stack["initial"][name]["xmu"]=+bod.getAttribute("xmu");
-		//console.log("Rotation:",name,req.initial[name].rotation,bod);
+		// w is not set on server...
+		// dwdt is rad/day
+		//console.log("Rotation:",name,JSON.stringify(stack.initial[name].rotation),bod);
 	    }
 	    // store time data
 	    var event=req.event; // target event
@@ -797,7 +799,14 @@ function Model() {
 			    + stack["initial"][name]["rotation"]["dwdt"] * jd2000;
 			body["name"]=name;
 			stack["events"][ss]["state"][name]=body;
-
+			if (name === "earth") {
+			    body["rotation"]["w"]=+stack["initial"][name]["rotation"]["w"]
+				+ 360.9856 * this.deg2rad * jd2000; // more precise rotation
+			} else if (name === "moon") {
+			    body["rotation"]["w"]= -0.9//+stack["initial"][name]["rotation"]["w"]
+				+ 13.176358 * this.deg2rad * jd2000; // more precise rotation
+			    //console.log("Rot:",name,JSON.stringify(body.rotation),360.99 * this.deg2rad,stack.initial[name].rotation.dwdt);
+			};
 		    };
 		    // add analytical orbits for satellites...
 		    this.orbits.forEach( (sat,ind) => {
@@ -827,9 +836,9 @@ function Model() {
 				state.Orbit.elements2state(body["position"],sat.orbit,mainbody["position"],mu);
 				//console.log("Orbit:",sat.name,around,sat,jd2000,body.position);
 			    }
-			    body["rotation"]["ra"]=+rotation.ra;
-			    body["rotation"]["dec"]=+rotation.dec
-			    body["rotation"]["w"]=+rotation.w0+rotation.dwdt*jd2000;
+			    body["rotation"]["ra"] = +rotation.ra;
+			    body["rotation"]["dec"] = +rotation.dec
+			    body["rotation"]["w"] = +rotation.w0 + rotation.dwdt * jd2000;
 			    body.name=sat.name;
 			};
 		    });
@@ -841,6 +850,7 @@ function Model() {
 		this.cleanStack(state,stack,target);
 		stack.received= req.received;
 		this.stack=stack;
+		//console.log("#### Loaded new stack...");
 		// console.log("Stack changed...",new moment(target).toISOString(),stack.event,this.stack.dtgs.length-1);
 		// for (var ii=0; ii < stack.dtgs.length;ii=ii+5) {
 		//     var ss="";
@@ -887,10 +897,16 @@ function Model() {
 		 req.processed === undefined) { // we have a new target
 		let request=req.events[req.event]
 		let ttrg=request.epoch;
-		let target=request.target;
-		//console.log("Setting model time:",ttrg,target,req,new moment(ttrg).toISOString());
+		let fov=request.fov;
+		let spot=request.spot;
+		//console.log("Setting model time:",ttrg,spot,req,new moment(ttrg).toISOString());
 		state.Events.setModelTime(state,ttrg);
-		this.setNewTarget(state,target);
+		if (spot !== undefined) {
+		    this.newSpot=spot;
+		    this.newFov=fov;
+		    this.newTtrg=ttrg;
+		    console.log("#### Setting new spotting (check):",spot,fov,ttrg,state.Events.getModelTime(state));		    
+		};
 		req.processed = new moment().valueOf();
 		this.stack.processed=req.processed;
 		//console.log("Calculated orbital elements:",req);
@@ -898,19 +914,6 @@ function Model() {
 	    };
 	});
 	return ret;
-    };
-    this.setNewTarget=function(state,target) {
-	if ( target !== undefined) {
-	    let body=this.config.bodies[target];
-	    let origo=this.config.observer.position;
-	    if (body !== undefined && body.position !== undefined && origo !== undefined &&
-		state.React !== undefined && state.React.Model !== undefined) {
-		let x=body.position.x-origo.x;
-		let y=body.position.y-origo.y;
-		let z=body.position.z-origo.z;
-		state.React.Model.setNewTarget(state,x,y,z);
-	    };
-	};
     };
     // update 3D config of the solar system...
     this.updateConfig = function (state,ttrg) {
@@ -1062,8 +1065,6 @@ function Model() {
 	    ret=false;
 	};
 	if (ret) {
-
-	    
 	    //console.log("Before:",JSON.stringify(stack.events[prev].observer.position));
 
 	    //console.log("F:",f,prev,next);
@@ -1076,7 +1077,16 @@ function Model() {
 	    config.epoch = ttrg;
 	    config.dtg=new moment(config.epoch).toISOString();
 
-
+	    // update the spotting target
+	    if (this.newSpot !== undefined) {
+		config.newFov=this.newFov;
+		config.newSpot=this.newSpot;
+		config.newTtrg=this.newTtrg;
+		console.log("#### New spot:",this.newSpot,config,prev,next,ttrg,this.newTtrg);
+		this.newSpot=undefined;
+	    } else {
+		config.newSpot=undefined;
+	    };
 	    //console.log("After:",JSON.stringify(stack.events[prev].observer.position));
 
 
