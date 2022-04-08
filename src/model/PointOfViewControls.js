@@ -44,6 +44,7 @@ var PointOfViewControls = function ( object, domElement, model ) {
 
     this.target = new THREE.Vector3();
     this.reference = undefined; // used to shift target
+    this.spot = undefined; // name of target to spot...
     
     var EPS = 0.000001;
 
@@ -182,6 +183,7 @@ var PointOfViewControls = function ( object, domElement, model ) {
 
 	    if ( angle ) {
 
+		_this.spot=undefined;
 		_eye.copy( _this.object.position ).sub( _this.target );
 
 		eyeDirection.copy( _eye ).normalize();
@@ -261,6 +263,7 @@ var PointOfViewControls = function ( object, domElement, model ) {
 
     this.panCamera = ( function() {
 
+	_this.spot=undefined;
 	var mouseChange = new THREE.Vector2(),
 	    objectUp = new THREE.Vector3(),
 	    pan = new THREE.Vector3();
@@ -397,7 +400,6 @@ var PointOfViewControls = function ( object, domElement, model ) {
 	    _this.panCamera();
 
 	}
-
 	_this.target.subVectors( _this.object.position, _eye );
 
 	_this.checkDistances();

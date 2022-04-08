@@ -73,7 +73,7 @@ function Model() {
     // satellites with analytical orbits...
     this.orbits = [
 	{name:"phobos",
-	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:180.0}, // 0.5119, 0.2304, 0.8379 *360 (tumbeling motion)
 	 orbit:{
 	     around:"mars",
 	     a : 55989, // semi-major axis
@@ -84,7 +84,7 @@ function Model() {
 	     o : 125.08*this.deg2rad  // longitude of ascending node
 	 }},
 	{name:"deimos",
-	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:260*1.26}, // synchronous
 	 orbit:{
 	     around:"mars",
 	     a : 23463.2, // semi-major axis
@@ -94,8 +94,108 @@ function Model() {
 	     m0: 135.29*this.deg2rad, // mean anomaly at epoch
 	     o : 125.08*this.deg2rad  // longitude of ascending node
 	 }},
+	// https://nssdc.gsfc.nasa.gov/planetary/factsheet/joviansatfact.html
+	{name:"io",
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:360*24/42.5},
+	 orbit:{
+	     around:"jupiter",
+	     a : 421800.0, // semi-major axis
+	     e : 0.004, // eccentricity
+	     i : 0*0.04*this.deg2rad,   // inclination
+	     w : 318.15*this.deg2rad, // argument of periapsis
+	     m0: 135.27*this.deg2rad, // mean anomaly at epoch
+	     o : 125.08*this.deg2rad  // longitude of ascending node
+	 }},
+	{name:"europa",
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:360*24/85.2},
+	 orbit:{
+	     around:"jupiter",
+	     a : 671100, // semi-major axis
+	     e : 0.009, // eccentricity
+	     i : 0*0.47*this.deg2rad,   // inclination
+	     w : 318.15*this.deg2rad, // argument of periapsis
+	     m0: 135.27*this.deg2rad, // mean anomaly at epoch
+	     o : 125.08*this.deg2rad  // longitude of ascending node
+	 }},
+	{name:"ganymede",
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:360.0*24/171.7},
+	 orbit:{
+	     around:"jupiter",
+	     a : 107400, // semi-major axis
+	     e : 0.009, // eccentricity
+	     i : 0*0.18*this.deg2rad,   // inclination
+	     w : 318.15*this.deg2rad, // argument of periapsis
+	     m0: 135.27*this.deg2rad, // mean anomaly at epoch
+	     o : 125.08*this.deg2rad  // longitude of ascending node
+	 }},
+	{name:"callisto",
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:360.0*24/400.5},
+	 orbit:{
+	     around:"jupiter",
+	     a : 1882700, // semi-major axis
+	     e : 0.007, // eccentricity
+	     i : 0*0.19*this.deg2rad,   // inclination
+	     w : 318.15*this.deg2rad, // argument of periapsis
+	     m0: 135.27*this.deg2rad, // mean anomaly at epoch
+	     o : 125.08*this.deg2rad  // longitude of ascending node
+	 }},
+	{name:"titan",
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:360.0*24/15.945},
+	 orbit:{
+	     around:"saturn",
+	     a : 1221830.0, // semi-major axis
+	     e : 0.0292, // eccentricity
+	     i : 0.33*this.deg2rad,   // inclination
+	     w : 318.15*this.deg2rad, // argument of periapsis
+	     m0: 135.27*this.deg2rad, // mean anomaly at epoch
+	     o : 125.08*this.deg2rad  // longitude of ascending node
+	 }},
+	{name:"rhea",
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:360.0/6.4},
+	 orbit:{
+	     around:"saturn",
+	     a : 527040.0, // semi-major axis
+	     e : 0.001, // eccentricity
+	     i : 0.35*this.deg2rad,   // inclination
+	     w : 318.15*this.deg2rad, // argument of periapsis
+	     m0: 135.27*this.deg2rad, // mean anomaly at epoch
+	     o : 125.08*this.deg2rad  // longitude of ascending node
+	 }},
+	{name:"Titania",
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:360.0/6.4},
+	 orbit:{
+	     around:"uranus",
+	     a : 436300.0, // semi-major axis
+	     e : 0.0011, // eccentricity
+	     i : 0.08*this.deg2rad,   // inclination
+	     w : 318.15*this.deg2rad, // argument of periapsis
+	     m0: 135.27*this.deg2rad, // mean anomaly at epoch
+	     o : 125.08*this.deg2rad  // longitude of ascending node
+	 }},
+	{name:"Oberon",
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:360.0/6.4},
+	 orbit:{
+	     around:"uranus",
+	     a : 583500.0, // semi-major axis
+	     e : 0.0014, // eccentricity
+	     i : 0.07*this.deg2rad,   // inclination
+	     w : 318.15*this.deg2rad, // argument of periapsis
+	     m0: 135.27*this.deg2rad, // mean anomaly at epoch
+	     o : 125.08*this.deg2rad  // longitude of ascending node
+	 }},
+	{name:"triton",
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:360.0/6.4},
+	 orbit:{
+	     around:"neptune",
+	     a : 354760, // semi-major axis
+	     e : 0.000016, // eccentricity
+	     i : 157.345*this.deg2rad,   // inclination
+	     w : 318.15*this.deg2rad, // argument of periapsis
+	     m0: 135.27*this.deg2rad, // mean anomaly at epoch
+	     o : 125.08*this.deg2rad  // longitude of ascending node
+	 }},
 	{name:"charon",
-	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:0.001},
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:360.0/6.4},
 	 orbit:{
 	     around:"pluto",
 	     a : 19591.4, // semi-major axis
@@ -257,7 +357,7 @@ function Model() {
 		   o : -0.01183482*this.deg2rad
 		  }},
 	{name:"deathstar",
-	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:-0.001},
+	 rotation: {ra:0.0, dec:90.0,w0:0.0,dwdt:0.0},
 	 orbit:{
 	     around:"saturn",
 	     x:-100000,
@@ -706,16 +806,21 @@ function Model() {
 	    for (ii=0; ii<inino; ii++) { // this does not change....
 		let bod=inibod[ii];
 		let name=bod.getAttribute("name");
-		stack["initial"][name]={};
-		stack["initial"][name]["rotation"]={};
-		stack["initial"][name]["rotation"]["ra"]=+bod.getAttribute("ra");
-		stack["initial"][name]["rotation"]["dec"]=+bod.getAttribute("dec");
-		stack["initial"][name]["rotation"]["w"]=+bod.getAttribute("w")*this.deg2rad;
-		stack["initial"][name]["rotation"]["dwdt"]=+bod.getAttribute("dwdt")*this.deg2rad;
-		stack["initial"][name]["main"]=bod.getAttribute("main");
-		stack["initial"][name]["xmu"]=+bod.getAttribute("xmu");
+		stack.initial[name]={};
+		stack.initial[name]["rotation"]={};
+		stack.initial[name].rotation.ra=+bod.getAttribute("ra");
+		stack.initial[name].rotation.dec=+bod.getAttribute("dec");
+		stack.initial[name].rotation.w=+bod.getAttribute("w")*this.deg2rad;
+		stack.initial[name].rotation.dwdt=+bod.getAttribute("dwdt")*this.deg2rad;
+		stack.initial[name]["main"]=bod.getAttribute("main");
+		stack.initial[name]["xmu"]=+bod.getAttribute("xmu");
 		// w is not set on server...
 		// dwdt is rad/day
+		//if (name === "sun") {
+		    //console.log("Sun:",stack.initial[name].rotation);
+		    //stack.initial[name].rotation.ra=90*this.deg2rad;
+		    //stack.initial[name].rotation.dec=90*this.deg2rad;
+		//};
 		//console.log("Rotation:",name,JSON.stringify(stack.initial[name].rotation),bod);
 	    }
 	    // store time data
@@ -793,20 +898,20 @@ function Model() {
 			body["position"]["vx"]=+bod.getAttribute("vx");
 			body["position"]["vy"]=+bod.getAttribute("vy");
 			body["position"]["vz"]=+bod.getAttribute("vz");
-			body["rotation"]["ra"]=+stack["initial"][name]["rotation"]["ra"]; 
-			body["rotation"]["dec"]=+stack["initial"][name]["rotation"]["dec"]; 
-			body["rotation"]["w"]=+stack["initial"][name]["rotation"]["w"]
-			    + stack["initial"][name]["rotation"]["dwdt"] * jd2000;
+			body.rotation.ra=+stack.initial[name].rotation.ra; 
+			body["rotation"]["dec"]=+stack.initial[name]["rotation"]["dec"]; 
+			body["rotation"]["w"]=+stack.initial[name]["rotation"]["w"]
+			    + stack.initial[name]["rotation"]["dwdt"] * jd2000;
 			body["name"]=name;
-			stack["events"][ss]["state"][name]=body;
 			if (name === "earth") {
-			    body["rotation"]["w"]=+stack["initial"][name]["rotation"]["w"]
+			    body["rotation"]["w"]=+stack.initial[name]["rotation"]["w"]
 				+ 360.9856 * this.deg2rad * jd2000; // more precise rotation
 			} else if (name === "moon") {
-			    body["rotation"]["w"]= -0.9//+stack["initial"][name]["rotation"]["w"]
+			    body["rotation"]["w"]= -0.9//+stack.initial[name]["rotation"]["w"]
 				+ 13.176358 * this.deg2rad * jd2000; // more precise rotation
 			    //console.log("Rot:",name,JSON.stringify(body.rotation),360.99 * this.deg2rad,stack.initial[name].rotation.dwdt);
 			};
+			stack["events"][ss]["state"][name]=body;
 		    };
 		    // add analytical orbits for satellites...
 		    this.orbits.forEach( (sat,ind) => {
@@ -817,29 +922,32 @@ function Model() {
 			    stack.events[ss].state[sat.name]={"position":new Vector3(),"rotation":new Vector3()};
 			    //console.log("Around:",around,req,stack);
 			    let mainbody=stack.events[ss].state[around];
+			    let maininit=stack.initial[around];
 			    let body=stack.events[ss].state[sat.name];
 			    let orbit=sat.orbit;
 			    let rotation=sat.rotation;
 			    if (sat.orbit.x !== undefined && sat.orbit.y !== undefined && sat.orbit.z !== undefined) {
-				body["position"].x=sat.orbit.x + mainbody.position.x;
-				body["position"].y=sat.orbit.y + mainbody.position.y;
-				body["position"].z=sat.orbit.z + mainbody.position.z;
-				body["position"].vx=0.0;
-				body["position"].vy=0.0;
-				body["position"].vz=0.0;
+				body.position.x=sat.orbit.x + mainbody.position.x;
+				body.position.y=sat.orbit.y + mainbody.position.y;
+				body.position.z=sat.orbit.z + mainbody.position.z;
+				body.position.vx=0.0;
+				body.position.vy=0.0;
+				body.position.vz=0.0;
 			    } else if (body !== undefined && mainbody !== undefined){ // sat.orbital elements
 				// get mean motion
 				let mu = this.MU[around];
 				sat.orbit.n=state.Orbit.getMeanMotion(sat.orbit.a,mu);
 				sat.orbit.m = sat.orbit.m0 + jd2000 * sat.orbit.n;
 				state.Orbit.anomalies2elements(sat.orbit); // get v and c
-				state.Orbit.elements2state(body["position"],sat.orbit,mainbody["position"],mu);
+				state.Orbit.elements2state(body.position,sat.orbit,mainbody.position,mu);
 				//console.log("Orbit:",sat.name,around,sat,jd2000,body.position);
 			    }
-			    body["rotation"]["ra"] = +rotation.ra;
-			    body["rotation"]["dec"] = +rotation.dec
-			    body["rotation"]["w"] = +rotation.w0 + rotation.dwdt * jd2000;
+			    state.Orbit.orbitalPlane(sat.name,body.position,mainbody.position,maininit)
+			    body.rotation.ra  = +rotation.ra;
+			    body.rotation.dec = +rotation.dec
+			    body.rotation.w   = +rotation.w0 + rotation.dwdt * jd2000;
 			    body.name=sat.name;
+			    // rotate to orbital coordinate system...
 			};
 		    });
 		};

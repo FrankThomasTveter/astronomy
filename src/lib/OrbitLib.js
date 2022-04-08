@@ -587,6 +587,27 @@ function Orbit(){
 	if (a<1.0) {a=1.0;};
 	return Math.sqrt(mu/(a*a*a));
     }
-
+    this.deg2rad = Math.PI/180.0;
+    this.orbitalPlane = function(name,pos,origo,main) {
+	if (main !== undefined && main.rotation !== undefined) {
+	    let dx=pos.x-origo.x; // origo
+	    let dy=pos.y-origo.y;
+	    let dz=pos.z-origo.z;
+	    let ra=main.rotation.ra;
+	    let dec=main.rotation.dec;
+	    let sa=Math.sin(ra);
+	    let ca=Math.cos(ra);
+	    let sd=Math.sin(dec);
+	    let cd=Math.cos(dec);
+	    let nx= sa*dx - ca*cd * dy - ca * sd * dz
+	    let ny=            +    sd * dy -      cd * dz
+	    let nz= ca*dx + sa*cd * dy + sa * sd * dz
+	    //console.log("Orbital plane:",name,ra,dec," : ",dx,dy,dz,"->",nx,ny,nz);
+	    pos.x=nx+origo.x;
+	    pos.y=ny+origo.y;
+	    pos.z=nz+origo.z;
+	};
+    }
+    
 };
 export default Orbit;

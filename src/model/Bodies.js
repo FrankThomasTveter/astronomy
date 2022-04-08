@@ -322,6 +322,115 @@ function Bodies() {
 	    rotation : new THREE.Vector3(0,0,1),
 	    position : new THREE.Vector3()
 	},
+	// https://nssdc.gsfc.nasa.gov/planetary/factsheet/joviansatfact.html
+	io : {
+	    title : 'Io',
+	    visible: true,
+	    mass : 0,
+	    radius : 1821.5,
+	    map : 'moons/charonmap.jpg',
+	    bumpMap : 'moons/charonbump.jpg',
+	    bumpScale : 0.1,
+	    color : '#ffffff',
+	    rotation : new THREE.Vector3(0,0,1),
+	    position : new THREE.Vector3()
+	},
+	europa : {
+	    title : 'Europa',
+	    visible: true,
+	    mass : 0,
+	    radius : 1560.8,
+	    map : 'moons/charonmap.jpg',
+	    bumpMap : 'moons/charonbump.jpg',
+	    bumpScale : 0.1,
+	    color : '#ffffff',
+	    rotation : new THREE.Vector3(0,0,1),
+	    position : new THREE.Vector3()
+	},
+	ganymede : {
+	    title : 'Ganymede',
+	    visible: true,
+	    mass : 0,
+	    radius : 2631.3,
+	    map : 'moons/charonmap.jpg',
+	    bumpMap : 'moons/charonbump.jpg',
+	    bumpScale : 0.1,
+	    color : '#ffffff',
+	    rotation : new THREE.Vector3(0,0,1),
+	    position : new THREE.Vector3()
+	},
+	callisto : {
+	    title : 'Callisto',
+	    visible: true,
+	    mass : 0,
+	    radius : 2410.3,
+	    map : 'moons/charonmap.jpg',
+	    bumpMap : 'moons/charonbump.jpg',
+	    bumpScale : 0.1,
+	    color : '#ffffff',
+	    rotation : new THREE.Vector3(0,0,1),
+	    position : new THREE.Vector3()
+	},
+	titan : {
+	    title : 'Titan',
+	    visible: true,
+	    mass : 0,
+	    radius : 2575.0,
+	    map : 'moons/charonmap.jpg',
+	    bumpMap : 'moons/charonbump.jpg',
+	    bumpScale : 0.1,
+	    color : '#ffffff',
+	    rotation : new THREE.Vector3(0,0,1),
+	    position : new THREE.Vector3()
+	},
+	rhea : {
+	    title : 'Rhea',
+	    visible: true,
+	    mass : 0,
+	    radius : 762.3,
+	    map : 'moons/charonmap.jpg',
+	    bumpMap : 'moons/charonbump.jpg',
+	    bumpScale : 0.1,
+	    color : '#ffffff',
+	    rotation : new THREE.Vector3(0,0,1),
+	    position : new THREE.Vector3()
+	},
+	titania : {
+	    title : 'Titania',
+	    visible: true,
+	    mass : 0,
+	    radius : 788.9,
+	    map : 'moons/charonmap.jpg',
+	    bumpMap : 'moons/charonbump.jpg',
+	    bumpScale : 0.1,
+	    color : '#ffffff',
+	    rotation : new THREE.Vector3(0,0,1),
+	    position : new THREE.Vector3()
+	},
+	oberon : {
+	    title : 'Oberon',
+	    visible: true,
+	    mass : 0,
+	    radius : 761.4,
+	    map : 'moons/charonmap.jpg',
+	    bumpMap : 'moons/charonbump.jpg',
+	    bumpScale : 0.1,
+	    color : '#ffffff',
+	    rotation : new THREE.Vector3(0,0,1),
+	    position : new THREE.Vector3()
+	},
+	triton : {
+	    title : 'Triton',
+	    visible: true,
+	    mass : 0,
+	    radius : 1353.4,
+	    map : 'moons/charonmap.jpg',
+	    bumpMap : 'moons/charonbump.jpg',
+	    bumpScale : 0.1,
+	    color : '#ffffff',
+	    rotation : new THREE.Vector3(0,0,1),
+	    position : new THREE.Vector3()
+	},
 	charon : {
 	    title : 'Charon',
 	    visible: true,
@@ -978,9 +1087,23 @@ function Bodies() {
 		    const intersects = raycaster.intersectObjects( item.scene.children,true );
 		    var cnt=intersects.length;
 		    for ( let i = 0; i < intersects.length; i ++ ) {
+			var nam=intersects[ i ].object.name;
 			//console.log(">>>>> Pointing at:",cnt,i,intersects[ i ].object.name,item.scene,mouse);
-			objects.push(intersects[i].object);
-			//intersects[ i ].object.material.color.set( 0xff0000 );
+			let nam1=nam.match(/^label(\w+)$/);
+			let nam2=nam.match(/^flare(\w+)$/);
+			if ( ! nam.match(/earth/) && nam1===null && nam2===null ) { 
+			    objects.push(intersects[i].object);
+			    //console.log("Name:",nam);
+			    //intersects[ i ].object.material.color.set( 0xff0000 );
+			} else if (objects.length===0 && nam1 !== null && nam1.length > 1) {
+			    let obj=item.scene.getObjectByName(nam1[1]);
+			    objects.push(obj);
+			    //console.log("Name:",nam1[1]);
+			} else if (objects.length===0 && nam2 !== null && nam2.length > 1) {
+			    let obj=item.scene.getObjectByName(nam2[1]);
+			    objects.push(obj);
+			    //console.log("Name:",nam2[1]);
+			};
 		    };
 		}
 	    }
@@ -1039,7 +1162,7 @@ function Bodies() {
 	let dist;
 	let pos   = this.config[name].position;
 	let body  = scene.getObjectByName(name);
-	let obs=observer.position;
+	let obs   = observer.position;
 	let scale = this.config[name].scale;
 	let radius=this.config[name].radius;
 	this.updateCamera(state,mainCamera,observer,name,scene);
@@ -1655,14 +1778,14 @@ function Bodies() {
 	if (body !== undefined) {
 	    // rotational axis is aligned with y-axis
 	    if (rot.dec !== undefined && rot.ra !== undefined) {
-		body.rotation.x = -rot.dec*this.deg2rad +Math.PI;  // assign declination
-		body.rotation.y =  rot.ra*this.deg2rad - Math.PI/2 + rot.w; // assign right-ascencion
+		body.rotation.x = -rot.dec +Math.PI;  // assign declination
+		body.rotation.y =  rot.ra - Math.PI/2 + rot.w; // assign right-ascencion
 		// console.log("Rotation:",body.name,rot.w,rot.ra,rot.dec,JSON.stringify(body.rotation));
 		// 	console.log("Rotation for:", body.name,body,rot,rot.dec, rot.ra);
 	    // } else {
 	    // 	console.log("No rotation for:", body.name,body,rot,rot.dec, rot.ra);
 	    };
-	    //console.log("*** Rotating:",body,rot,this.deg2rad,body.rotation);
+	    //console.log("*** Rotating:",body,rot,body.rotation);
 	    //body.setRotationFromAxisAngle(rot,rot.w);
 	} else {
 	    console.log("*** Attempt to rotate undefined body:",name);
@@ -1673,9 +1796,9 @@ function Bodies() {
 	var bdy=group.getObjectByName(body);
 	if (bdy !== undefined) {
 	    // rotational axis is aligned with y-axis
-	    bdy.rotation.x=-rot.dec*this.deg2rad+Math.PI/2;  // assign declination
-	    bdy.rotation.y=rot.ra*this.deg2rad- Math.PI/2; // assign right-ascencion 
-	    //console.log("*** Rotating:",body,rot,this.deg2rad,bdy.rotation);
+	    bdy.rotation.x=-rot.dec+Math.PI/2;  // assign declination
+	    bdy.rotation.y=rot.ra- Math.PI/2; // assign right-ascencion 
+	    //console.log("*** Rotating:",body,rot,bdy.rotation);
 	    //bdy.setRotationFromAxisAngle(rot,rot.w);
 	} else {
 	    console.log("*** Attempt to rotate undefined body.");

@@ -129,44 +129,61 @@ export default class Model {
 	this.animationFrameId = requestAnimationFrame(this.animate.bind(this));
     }
 
+    cameraLookDir() {
+        var vector = new THREE.Vector3(0, 0, -1);
+        vector.applyEuler(this.mainCamera.rotation, this.mainCamera.rotation.order);
+        return vector;
+    }
+    
     render(time) {
 	//console.log("Rendering...");
 	this.renderer.sortObjects = false;
-	// process controls (point camera)
+	// update model config
+	var config=this.state.Model.getConfig(this.state);
+	this.updateConfig(this.state,config,time);
+
+	//check if we have a new config...
+	//this.updateTarget(this.state,config,time);
+
+	// update main camera position (to observer)...
+	this.updateMainCamera(this.state,config,time);
+
+	// update controls (manipulates camera)
+	this.controls.setReference(this.Bodies.getTarget());
 	this.controls.update(time);
-	this.updateModel(time);
+
+	// update camera matrixes
+	this.mainCamera.updateMatrixWorld(true);
+	this.mainCamera.updateProjectionMatrix();
+
+	// update scenes
+	this.updateScenes(this.state,this.mainCamera,time);
+
+	if (this.controls.target !== undefined) {
+	    var look=this.cameraLookDir();
+	    var deno=look.length()*this.controls.target.length();
+	    var angle=Math.acos(Math.min(1,look.dot(this.controls.target)/deno))*180/Math.PI;
+	    //console.log("Angle:",angle);
+	};
+
+	// do the actual rendering
 	this.renderInitial(time);
 	this.renderBackdrop(time);
 	this.renderBodies(time);
 	//TWEEN.update();
     }
 
-    updateModel(time) {
-	// update the information sprite...
-
-	// update model config
-	var config=this.state.Model.getConfig(this.state);
-	this.updateConfig(this.state,config,time);
-
-	//check if we have a new config...
-	this.updateTarget(this.state,config,time);
-
-	// update main camera position (to observer)...
-	this.updateMainCamera(this.state,config,time);
-
-	// update scenes
-	this.updateScenes(this.state,this.mainCamera,time);
-
-	// update the control-target
-	this.controls.setReference(this.Bodies.getTarget());
-    };
-
     updateRaycaster (state) {
-	var objects=[];
-	this.Bodies.updateRaycaster(state,this.raycaster,this.mouse,this.mainCamera,objects);
-	this.Backdrop.updateRaycaster(state,this.raycaster,this.mouse,this.mainCamera,objects);
-	//console.log("Ray:",this.mouse,objects);
-	return objects;
+	var bodies=[];
+	this.Bodies.updateRaycaster(state,this.raycaster,this.mouse,this.mainCamera,bodies);
+	var stars=[];
+	this.Backdrop.updateRaycaster(state,this.raycaster,this.mouse,this.mainCamera,stars);
+	
+	for (var index in bodies) {
+	    var name=bodies[index].name;
+	    this.controls.spot=name;
+	}
+	return bodies;
     };
 
     onMouseUp(event) { // called by pointController...
@@ -200,18 +217,24 @@ export default class Model {
 	//this.mainCamera.position.set(pos.x,pos.y,pos.z);
 	this.mainCamera.position.set(0,0,0);
 	//console.log("Up:",zen.x,zen.y,zen.z);
-	if (config.newSpot !== undefined) {
-	    var spot=config.newSpot;
+	if (config.newSpot !== undefined || this.controls.spot !== undefined) {
+	    var spot=config.newSpot || this.controls.spot;
+	    this.controls.spot=spot;
 	    var fov=config.newFov;
-	    var body=config.bodies[spot];
-	    var obs=config.observer;
+	    var body=this.Bodies.config[spot];
+	    var obs=this.Bodies.config.observer;
 	    if (body !== undefined && body.position !== undefined) {
 		var x = body.position.x - obs.position.x;
 		var y = body.position.y - obs.position.y;
 		var z = body.position.z - obs.position.z;
-		this.controls.target=new THREE.Vector3(x,y,z);
-		console.log("#### New target:",config.newSpot, config.newFov, x,y,z, config.newTtrg);
-		this.mainCamera.fov=fov;
+		if (this.controls.target !== undefined) {
+		    this.controls.target.set(x,y,z);
+		    //console.log("Target:",x,y,z,this.controls.spot);
+		} else {
+		    this.mainCamera.fov=fov;
+		    this.controls.target=new THREE.Vector3(x,y,z);
+		    console.log("#### New target:",config.newSpot, config.newFov, x,y,z, config.newTtrg);
+		}
 	    } else {
 		console.log("MIssing target:",spot);
 	    };
@@ -219,7 +242,7 @@ export default class Model {
 	};
 	this.mainCamera.up.set(zen.x,zen.y,zen.z); // up is always towards observer zenith...
 	//this.mainCamera.updateMatrixWorld(true);
-	this.mainCamera.updateProjectionMatrix();
+	//this.mainCamera.updateProjectionMatrix();
     }
 
     updateTarget(state) {
