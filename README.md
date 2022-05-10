@@ -3,7 +3,7 @@ The WebGL React client for astro-api is open source and is currently available a
 
       git clone https://github.com/FrankThomasTveter/astronomy.git
 
-The following Ubuntu terminal commands will run it on your browser:
+The following Ubuntu terminal commands will run the (development) client on your browser:
 
       cd astronomy
       sudo apt-get install npm
