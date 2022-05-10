@@ -20,3 +20,5 @@ a long todo list:
    * adjustable observer height (0->10ly)
    * seamless zooming and "targetting"
    * semless window management
+
+Here is a short demo https://www.youtube.com/watch?v=wxiSrnrCdBI
