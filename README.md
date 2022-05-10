@@ -1,11 +1,15 @@
 # astronomy
 The WebGL React client for astro-api is open source and is currently available at:
-  git clone https://github.com/FrankThomasTveter/astronomy.git
+
+      git clone https://github.com/FrankThomasTveter/astronomy.git
+
 The following Ubuntu terminal commands will run it on your browser:
-  cd astronomy
-  sudo apt-get install npm
-  npm install
-  npm start
+
+      cd astronomy
+      sudo apt-get install npm
+      npm install
+      npm start
+
 The framework is loosely based on the met.no boilerplate. It still has
 a long todo list:
    * correct earth/moon shadow (shader level)
